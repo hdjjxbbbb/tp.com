@@ -204,10 +204,6 @@ function userKey(s, addr) { return s + "_" + addr; }
 function getInner(addr) { return Number(localStorage.getItem(userKey("inner", addr)) || 0); }
 function setInner(addr, v) { localStorage.setItem(userKey("inner", addr), v); }
 
-function key(s) { return s + "_" + account; }
-function get(s, d=0) { return Number(localStorage.getItem(key(s)) || d); }
-function set(s, v) { localStorage.setItem(key(s), v); }
-
 function getAllUsers() {
   return JSON.parse(localStorage.getItem("all_users") || "[]");
 }
