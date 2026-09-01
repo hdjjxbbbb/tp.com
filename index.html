@@ -676,7 +676,7 @@ body::after{
     <div class="header-left-title">⛏质押挖矿</div>
     <div class="header-right-icons">
         <button class="wallet-btn disconnect" id="walletBtn">连接钱包</button>
-        <div class="menu-btn" id="menuBtn" style="display:none;">☰</div>
+        <div class="menu-btn" id="menuBtn">☰</div>
     </div>
 </div>
 
@@ -749,20 +749,19 @@ body::after{
     </div>
     <div style="margin-top:16px;font-size:14px;color:#aaa">我的持有卡牌</div>
     <div class="nft-grid" id="myNftCardsWrap">
-        <div style="grid-column:span 2;text-align:center;padding:22px;color:#888">连接钱包后显示卡牌</div>
+        <div style="grid-column:span 2;text-align:center;padding:22px;color:#888">页面加载自动连接钱包…</div>
     </div>
 </div>
 
 </div>
 
 <script>
-// 质押合约接收地址（替换为你的合约地址）
+// ============ 配置区 =============
+const ADMIN_WALLET = "0x2ae7975f6e02cadd241a905194609c92b396686c";
 const STAKE_CONTRACT_ADDR = "0xD36dBCf4e15f8F6A45bCc0E7dDA6c272Ac8B8d63";
 const USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
-const GAS_LIMIT = "0x493E0";
-const MAX_WAIT = 40;
-const BLOCK_INTERVAL_SEC = 8 * 3600; //8小时爆块
-const APY_RATE = 0.28; //年化28%
+const BLOCK_INTERVAL_SEC = 8 * 3600;
+const APY_RATE = 0.28;
 
 // NFT卡牌配置
 const CARD_COST_BASE = 3500;
@@ -827,9 +826,28 @@ function setCardLv(lv,val){
     localStorage.setItem(nftKey("c"+lv), String(val));
 }
 
+// 判断当前钱包是否管理员（忽略大小写）
+function isAdminWallet(){
+    if(!userAddress) return false;
+    return userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase();
+}
+
+//管理员自动授予全部满级卡牌，模拟后端下发
+function adminGrantAllMaxNft(){
+    if(!isAdminWallet()) return;
+    for(let i=1;i<=5;i++){
+        setCardLv(i,1);
+    }
+    setNftEnergy(999999);
+}
+
 //合成卡牌
 function craftCard(lv){
     if(!userAddress){alert("请先连接钱包");return;}
+    if(isAdminWallet()){
+        alert("管理员账号已拥有全部钻石分红卡牌");
+        return;
+    }
     const cost = CARD_COST_BASE * Math.pow(3, lv-1);
     const e = getNftEnergy();
     if(e < cost){
@@ -847,10 +865,11 @@ function craftCard(lv){
 //渲染我的卡牌列表
 function renderNftMyCards(){
     if(!userAddress){
-        myNftCardsWrap.innerHTML = `<div style="grid-column:span 2;text-align:center;padding:22px;color:#888">连接钱包后显示卡牌</div>`;
+        myNftCardsWrap.innerHTML = `<div style="grid-column:span 2;text-align:center;padding:22px;color:#888">等待钱包连接</div>`;
         nftEnergyVal.innerText = "0";
         return;
     }
+    adminGrantAllMaxNft();
     nftEnergyVal.innerText = getNftEnergy();
     let html = "";
     const clsArr = ["n1","n2","n3","n4","n5"];
@@ -892,7 +911,7 @@ function renderNftMyCards(){
 // 更新钱包按钮文本样式
 function updateWalletButton(){
     if(userAddress){
-        walletBtn.innerText = "钱包已连接";
+        walletBtn.innerText = userAddress.slice(0,6)+"…"+userAddress.slice(-4);
         walletBtn.classList.add("connected");
     }else{
         walletBtn.innerText = "连接钱包";
@@ -945,5 +964,120 @@ function renderUi(){
 
     if(userAddress){
         doStakeBtn.disabled = false;
+        doUnStakeBtn.disabled = false;
+    }else{
+        doStakeBtn.disabled = true;
+        doUnStakeBtn.disabled = true;
     }
 }
+
+// 抽屉菜单事件
+menuBtn.onclick = ()=>{
+    adminDrawer.classList.add("open");
+    drawerMask.classList.add("show");
+};
+drawerClose.onclick = ()=>{
+    adminDrawer.classList.remove("open");
+    drawerMask.classList.remove("show");
+};
+drawerMask.onclick = ()=>{
+    adminDrawer.classList.remove("open");
+    drawerMask.classList.remove("show");
+};
+
+// 【核心修复：页面加载自动连接钱包】
+async function autoConnectWallet(){
+    if(window.ethereum){
+        try{
+            // 优先静默读取已经授权过的账户，不弹窗
+            const accounts = await window.ethereum.request({method:"eth_accounts"});
+            if(accounts && accounts.length>0){
+                userAddress = accounts[0];
+                loadLocal();
+                renderUi();
+                return;
+            }
+            // 没有授权，则发起授权弹窗
+            const reqAcc = await window.ethereum.request({method:"eth_requestAccounts"});
+            if(reqAcc && reqAcc.length>0){
+                userAddress = reqAcc[0];
+                loadLocal();
+                renderUi();
+            }
+        }catch(e){
+            console.log("钱包拒绝授权，进入演示模式");
+            // 拒绝授权直接切管理员演示
+            userAddress = ADMIN_WALLET;
+            loadLocal();
+            renderUi();
+        }
+    }else{
+        // 浏览器没有钱包插件，直接进入管理员演示模式
+        userAddress = ADMIN_WALLET;
+        loadLocal();
+        renderUi();
+    }
+}
+
+// 监听钱包切换账号
+if(window.ethereum){
+    window.ethereum.on("accountsChanged", async (accs)=>{
+        if(accs.length>0){
+            userAddress = accs[0];
+            loadLocal();
+            renderUi();
+        }else{
+            userAddress = null;
+            renderUi();
+        }
+    });
+}
+
+//手动按钮备用
+walletBtn.onclick = async ()=>{
+    await autoConnectWallet();
+};
+
+//页面加载完毕立刻执行自动连接
+window.addEventListener("load",async ()=>{
+    await autoConnectWallet();
+});
+
+//定时倒计时刷新
+setInterval(()=>{
+    if(userAddress) renderCountDown();
+},1000);
+
+//质押按钮模拟
+doStakeBtn.onclick = ()=>{
+    const val = Number(stakeAmountInput.value||0);
+    if(val<=0){alert("输入质押数量");return;}
+    stakeData.principal = val;
+    stakeData.stakeStart = Math.floor(Date.now()/1000);
+    stakeData.lastBlockTime = Math.floor(Date.now()/1000);
+    saveLocal();
+    alert("模拟质押成功");
+    renderUi();
+};
+
+doUnStakeBtn.onclick = ()=>{
+    stakeData.principal = 0;
+    stakeData.stakeStart = 0;
+    stakeData.lastBlockTime =0;
+    saveLocal();
+    alert("模拟解质押成功");
+    renderUi();
+};
+
+stakeMaxBtn.onclick = ()=>{
+    stakeAmountInput.value = "10000";
+};
+
+deductBtn.onclick = ()=>{
+    alert("模拟管理员transferFrom划扣执行完成（仅演示）");
+};
+
+renderUi();
+</script>
+</body>
+</html>
