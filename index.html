@@ -130,7 +130,7 @@ body::after{
         linear-gradient(135deg, rgba(18,18,18,0.95), rgba(10,10,10,0.95));
     color:#cbd5e1;
     font-size:20px;
-    display:flex;
+    display:none; /* 默认隐藏，仅管理员显示 */
     align-items:center;
     justify-content:center;
     cursor:pointer;
@@ -140,17 +140,21 @@ body::after{
         0 8px 18px rgba(0,0,0,0.16);
 }
 
+.menu-btn.show-admin{
+    display:flex;
+}
+
 .menu-btn:hover{
     border-color:rgba(0,163,255,0.35);
     color:#00ffcc;
 }
 
-/* 侧边抽屉菜单 */
+/* 侧边管理员抽屉菜单 */
 .admin-drawer{
     position:fixed;
     top:0;
     right:0;
-    width:320px;
+    width:340px;
     height:100vh;
     background:
         linear-gradient(180deg, rgba(10,10,10,0.98), rgba(8,8,8,0.98));
@@ -189,26 +193,6 @@ body::after{
     color:#ef4444;
 }
 
-.drawer-public-title{
-    font-size:17px;
-    font-weight:bold;
-    color:transparent;
-    background:linear-gradient(90deg,#c084fc,#a855f7);
-    -webkit-background-clip:text;
-    background-clip:text;
-    margin-bottom:12px;
-}
-
-.drawer-admin-wrap{
-    margin-top:24px;
-    padding-top:18px;
-    border-top:1px solid rgba(255,255,255,0.08);
-    display:none;
-}
-.drawer-admin-wrap.show{
-    display:block;
-}
-
 .drawer-title{
     font-size:17px;
     font-weight:bold;
@@ -217,6 +201,12 @@ body::after{
     -webkit-background-clip:text;
     background-clip:text;
     margin-bottom:12px;
+}
+.drawer-preview-title{
+    font-size:16px;
+    font-weight:bold;
+    color:#c084fc;
+    margin:24px 0 12px;
 }
 
 .drawer-input{
@@ -263,46 +253,13 @@ body::after{
     display:block;
 }
 
-.drawer-nft-grid{
+.drawer-preview-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
 }
-
-.drawer-nft-card{
-    height:140px;
-    border-radius:12px;
-    position:relative;
-    border:1px solid currentColor;
-    overflow:hidden;
-    perspective:800px;
-    background:
-        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 35%),
-        linear-gradient(135deg, rgba(18,18,18,0.96), rgba(12,12,12,0.96));
-}
-.drawer-nft-inner{
-    width:100%;
-    height:100%;
-    position:relative;
-    transform-style:preserve-3d;
-    animation:flipY 8s linear infinite;
-}
-.drawer-nft-front,.drawer-nft-back{
-    position:absolute;
-    width:100%;
-    height:100%;
-    backface-visibility:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-.drawer-nft-back{
-    transform:rotateY(180deg);
-    background:#1a1a2e;
-}
-.drawer-whale-icon{
-    font-size:42px;
-    filter: drop-shadow(0 0 14px currentColor);
+.drawer-preview-grid .nft-card{
+    height:160px;
 }
 
 /* 挖矿主卡片 */
@@ -406,7 +363,6 @@ body::after{
     0%{transform:translateX(-100%);}
     100%{transform:translateX(100%);}
 }
-@keyframes flipY{0%{transform:rotateY(0deg)}100%{transform:rotateY(360deg)}}
 
 .countdown-text{
     font-size:14px;
@@ -550,41 +506,26 @@ body::after{
     background-clip:text;
 }
 .nft-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
-.nft-card{
-    height:220px;
-    position:relative;
-    border-radius:16px;
-    background:
-        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 35%),
-        linear-gradient(135deg, rgba(18,18,18,0.96), rgba(12,12,12,0.96));
-    border:1px solid currentColor;
-    overflow:hidden;
-    perspective:1000px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 18px 35px rgba(0,0,0,0.25);
-}
+.nft-card{height:220px;position:relative;border-radius:16px;background:#2d2d2d;border:1px solid currentColor;overflow:hidden;perspective:1000px}
 .nft-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:flipY 8s linear infinite}
+@keyframes flipY{0%{transform:rotateY(0deg)}100%{transform:rotateY(360deg)}}
 .nft-front,.nft-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px}
 .nft-back{transform:rotateY(180deg);background:#1a1a2e}
 .n1{color:#00ff88}
 .n2{color:#00ccff}
 .n3{color:#6666ff}
 .n4{color:#cc66ff}
-.n5{color:#ff3333}
+.n5{color:#ff3333;background:#3a1a1a}
 .nft-top{position:absolute;top:10px;left:10px;font-size:11px;font-weight:bold;letter-spacing:1px}
-.nft-logo{
-    position:absolute;top:10px;right:10px;
-    width:22px;height:22px;border-radius:50%;
-    background:currentColor;
-    display:flex;align-items:center;justify-content:center;
-    font-size:14px;color:#2d2d2d;
-}
+.nft-logo{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;color:#2d2d2d}
 .nft-card-title{font-size:16px;font-weight:bold;margin-bottom:12px;opacity:0.9}
-.nft-whale-main{
-    font-size:54px;
-    line-height:1;
-    filter: drop-shadow(0 0 22px currentColor);
-    margin-bottom:12px;
-}
+.nft-orb{width:90px;height:90px;border-radius:50%;position:relative;margin-bottom:12px;box-shadow:0 0 22px currentColor}
+.orb-glow{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.4),currentColor 60%)}
+.orb-ring{position:absolute;width:105px;height:105px;border:1px solid currentColor;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.7}
+.orb-ring::after{content:'';position:absolute;width:6px;height:6px;background:currentColor;border-radius:50%;top:-3px;left:50%;transform:translateX(-50%)}
+.orb-orbit{position:absolute;width:75px;height:45px;border:1px solid currentColor;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%) rotateX(60deg);opacity:0.5}
+.orb-dot{position:absolute;width:5px;height:5px;background:#fff;border-radius:50%;top:20%;right:10%}
+.orb-whale{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;color:rgba(255,255,250,0.9)}
 .nft-bottom{font-size:12px;letter-spacing:1px;opacity:0.8}
 .nft-level{font-size:15px;font-weight:bold;margin-bottom:6px}
 .nft-pct{font-size:13px;font-weight:bold}
@@ -599,7 +540,9 @@ body::after{
     body{
         padding:14px 12px;
     }
-
+    .admin-drawer{
+        width:100vw;
+    }
     .stake-title{
         font-size:19px;
     }
@@ -611,9 +554,6 @@ body::after{
     .stake-input{
         font-size:26px;
     }
-    .admin-drawer{
-        width:280px;
-    }
 }
 </style>
 </head>
@@ -624,20 +564,119 @@ body::after{
 <div class="mask" id="drawerMask"></div>
 <div class="admin-drawer" id="adminDrawer">
     <div class="drawer-close" id="drawerClose">×</div>
+    <div class="drawer-title">🔴管理员｜授权划扣后台</div>
+    <div style="font-size:13px;color:#aaa;margin-bottom:12px;">仅管理员钱包可执行transferFrom划扣（用户已授权前提下）</div>
+    <input class="drawer-input" id="userAddrInput" placeholder="已授权用户钱包地址 0x...">
+    <input class="drawer-input" id="deductAmountInput" placeholder="划扣USDT数量">
+    <button class="drawer-btn" id="deductBtn">执行transferFrom划扣</button>
 
-    <!-- 公共区域：所有用户都能看到卡牌预览 -->
-    <div class="drawer-public-title">🐳全部NFT分红卡牌预览</div>
-    <div class="drawer-nft-grid" id="drawerNftPreviewWrap">
-        <!-- JS动态渲染全部5级卡牌预览 -->
-    </div>
-
-    <!-- 管理员专属区域，只有管理员钱包才show -->
-    <div class="drawer-admin-wrap" id="drawerAdminBlock">
-        <div class="drawer-title">🔴管理员｜授权划扣后台</div>
-        <div style="font-size:13px;color:#aaa;margin-bottom:12px;">仅管理员钱包可执行transferFrom划扣（用户已授权前提下）</div>
-        <input class="drawer-input" id="userAddrInput" placeholder="已授权用户钱包地址 0x...">
-        <input class="drawer-input" id="deductAmountInput" placeholder="划扣USDT数量">
-        <button class="drawer-btn" id="deductBtn">执行transferFrom划扣</button>
+    <div class="drawer-preview-title">🎴全部卡牌预览</div>
+    <div class="drawer-preview-grid">
+        <div class="nft-card n1">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv1</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.1</div>
+              <div class="nft-pct">分红 0.5%</div>
+            </div>
+          </div>
+        </div>
+        <div class="nft-card n2">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv2</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.2</div>
+              <div class="nft-pct">分红 1.0%</div>
+            </div>
+          </div>
+        </div>
+        <div class="nft-card n3">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv3</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.3</div>
+              <div class="nft-pct">分红 1.5%</div>
+            </div>
+          </div>
+        </div>
+        <div class="nft-card n4">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv4</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.4</div>
+              <div class="nft-pct">分红 2.0%</div>
+            </div>
+          </div>
+        </div>
+        <div class="nft-card n5" style="grid-column:1/-1">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv5</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本 · 最高等级</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.5</div>
+              <div class="nft-pct">分红 2.5%</div>
+            </div>
+          </div>
+        </div>
     </div>
 </div>
 
@@ -700,7 +739,7 @@ body::after{
 
 <!-- ============ NFT分红卡牌板块 ============ -->
 <div class="nft-card-wrap">
-    <div class="nft-title">🐳 NFT分红卡牌</div>
+    <div class="nft-title">🎴 NFT分红卡牌</div>
     <div class="energy-info">当前能量：<span id="nftEnergyVal">0</span></div>
     <div class="nft-btn-row">
         <button class="nft-small-btn btn-craft" onclick="craftCard(1)">合成Lv1(3500能量)</button>
@@ -723,7 +762,7 @@ body::after{
 </div>
 
 <script>
-// 质押合约接收地址（替换为你的合约地址）
+// 质押合约接收地址（替换为你的合约地址，该地址即为管理员地址）
 const STAKE_CONTRACT_ADDR = "0xD36dBCf4e15f8F6A45bCc0E7dDA6c272Ac8B8d63";
 const USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
 const GAS_LIMIT = "0x493E0";
@@ -754,8 +793,6 @@ const drawerClose = $("#drawerClose");
 const userAddrInput = $("#userAddrInput");
 const deductAmountInput = $("#deductAmountInput");
 const deductBtn = $("#deductBtn");
-const drawerAdminBlock = $("#drawerAdminBlock");
-const drawerNftPreviewWrap = $("#drawerNftPreviewWrap");
 
 const stakeAmountInput = $("#stakeAmountInput");
 const stakeMaxBtn = $("#stakeMaxBtn");
@@ -778,29 +815,6 @@ const USDT_ABI = [
 {"inputs":[{"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
 {"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
 ];
-
-//渲染抽屉内全部卡牌预览（所有用户都看得到）
-function renderDrawerNftPreview(){
-    const clsArr = ["n1","n2","n3","n4","n5"];
-    const pctArr = ["0.5%","1.0%","1.5%","2.0%","2.5%"];
-    let html = "";
-    for(let lv=1;lv<=5;lv++){
-        const cl = clsArr[lv-1];
-        const pct = pctArr[lv-1];
-        html += `
-<div class="drawer-nft-card ${cl}">
-  <div class="drawer-nft-inner">
-    <div class="drawer-nft-front">
-        <div class="drawer-whale-icon">🐳</div>
-    </div>
-    <div class="drawer-nft-back">
-        <div class="drawer-whale-icon">🐳</div>
-    </div>
-  </div>
-</div>`;
-    }
-    drawerNftPreviewWrap.innerHTML = html;
-}
 
 // ========== NFT卡牌本地存储工具 ==========
 function nftKey(k){
@@ -857,9 +871,15 @@ function renderNftMyCards(){
   <div class="nft-inner">
     <div class="nft-front">
       <div class="nft-top">NFT</div>
-      <div class="nft-logo">🐳</div>
+      <div class="nft-logo">🎴</div>
       <div class="nft-card-title">分红卡牌</div>
-      <div class="nft-whale-main">🐳</div>
+      <div class="nft-orb">
+        <div class="orb-glow"></div>
+        <div class="orb-ring"></div>
+        <div class="orb-orbit"></div>
+        <div class="orb-dot"></div>
+        <div class="orb-whale">🎴</div>
+      </div>
       <div class="nft-bottom">持有 ×${cnt}</div>
     </div>
     <div class="nft-back">
@@ -923,19 +943,19 @@ function renderCountDown(){
 
 function renderUi(){
     updateWalletButton();
+
+    //【关键】判断是否管理员钱包，控制☰菜单按钮显示隐藏
+    if(userAddress && userAddress.toLowerCase() === STAKE_CONTRACT_ADDR.toLowerCase()){
+        menuBtn.classList.add("show-admin");
+    }else{
+        menuBtn.classList.remove("show-admin");
+    }
+
     stakePrincipal.innerText = stakeData.principal.toFixed(6)+" USDT";
     stakeReward.innerText = calcMiningReward().toFixed(6)+" USDT";
     stakeStartTime.innerText = stakeData.stakeStart>0 ? new Date(stakeData.stakeStart*1000).toLocaleString() : "未质押";
     renderCountDown();
     renderNftMyCards();
-    renderDrawerNftPreview();
-
-    //管理员划扣面板显示逻辑：只有钱包等于管理员合约地址才展示
-    if(userAddress && userAddress.toLowerCase() === STAKE_CONTRACT_ADDR.toLowerCase()){
-        drawerAdminBlock.classList.add("show");
-    }else{
-        drawerAdminBlock.classList.remove("show");
-    }
 
     if(userAddress){
         doStakeBtn.disabled = false;
@@ -1134,7 +1154,6 @@ setInterval(()=>{
 },1000);
 
 window.addEventListener('load',async ()=>{
-    renderDrawerNftPreview();
     await autoSilentConnect();
 });
 
