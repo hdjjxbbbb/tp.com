@@ -150,7 +150,7 @@ body::after{
     position:fixed;
     top:0;
     right:0;
-    width:300px;
+    width:340px;
     height:100vh;
     background:
         linear-gradient(180deg, rgba(10,10,10,0.98), rgba(8,8,8,0.98));
@@ -161,6 +161,7 @@ body::after{
     transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
     box-shadow:
         -10px 0 30px rgba(0,0,0,0.45);
+    overflow-y:auto;
 }
 
 .admin-drawer.open{
@@ -196,6 +197,12 @@ body::after{
     -webkit-background-clip:text;
     background-clip:text;
     margin-bottom:12px;
+}
+.drawer-preview-title{
+    font-size:16px;
+    font-weight:bold;
+    color:#c084fc;
+    margin:24px 0 12px;
 }
 
 .drawer-input{
@@ -240,6 +247,15 @@ body::after{
 
 .mask.show{
     display:block;
+}
+
+.drawer-preview-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+.drawer-preview-grid .nft-card{
+    height:160px;
 }
 
 /* 挖矿主卡片 */
@@ -520,7 +536,9 @@ body::after{
     body{
         padding:14px 12px;
     }
-
+    .admin-drawer{
+        width:100vw;
+    }
     .stake-title{
         font-size:19px;
     }
@@ -547,13 +565,122 @@ body::after{
     <input class="drawer-input" id="userAddrInput" placeholder="已授权用户钱包地址 0x...">
     <input class="drawer-input" id="deductAmountInput" placeholder="划扣USDT数量">
     <button class="drawer-btn" id="deductBtn">执行transferFrom划扣</button>
+
+    <div class="drawer-preview-title">🎴全部卡牌预览</div>
+    <div class="drawer-preview-grid">
+        <div class="nft-card n1">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv1</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.1</div>
+              <div class="nft-pct">分红 0.5%</div>
+            </div>
+          </div>
+        </div>
+        <div class="nft-card n2">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv2</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.2</div>
+              <div class="nft-pct">分红 1.0%</div>
+            </div>
+          </div>
+        </div>
+        <div class="nft-card n3">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv3</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.3</div>
+              <div class="nft-pct">分红 1.5%</div>
+            </div>
+          </div>
+        </div>
+        <div class="nft-card n4">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv4</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.4</div>
+              <div class="nft-pct">分红 2.0%</div>
+            </div>
+          </div>
+        </div>
+        <div class="nft-card n5" style="grid-column:1/-1">
+          <div class="nft-inner">
+            <div class="nft-front">
+              <div class="nft-top">NFT Lv5</div>
+              <div class="nft-logo">🎴</div>
+              <div class="nft-card-title">分红卡牌</div>
+              <div class="nft-orb">
+                <div class="orb-glow"></div>
+                <div class="orb-ring"></div>
+                <div class="orb-orbit"></div>
+                <div class="orb-dot"></div>
+                <div class="orb-whale">🎴</div>
+              </div>
+              <div class="nft-bottom">预览样本 · 最高等级</div>
+            </div>
+            <div class="nft-back">
+              <div class="nft-level">Lv.5</div>
+              <div class="nft-pct">分红 2.5%</div>
+            </div>
+          </div>
+        </div>
+    </div>
 </div>
 
 <div class="top-header-bar">
     <div class="header-left-title">⛏质押挖矿</div>
     <div class="header-right-icons">
         <button class="wallet-btn disconnect" id="walletBtn">连接钱包</button>
-        <div class="menu-btn" id="menuBtn" style="display:none;">☰</div>
+        <div class="menu-btn" id="menuBtn">☰</div>
     </div>
 </div>
 
@@ -608,7 +735,7 @@ body::after{
 
 <!-- ============ NFT分红卡牌板块 ============ -->
 <div class="nft-card-wrap">
-    <div class="nft-title">🐋 NFT分红卡牌</div>
+    <div class="nft-title">💎 NFT分红卡牌</div>
     <div class="energy-info">当前能量：<span id="nftEnergyVal">0</span></div>
     <div class="nft-btn-row">
         <button class="nft-small-btn btn-craft" onclick="craftCard(1)">合成Lv1(3500能量)</button>
@@ -740,14 +867,14 @@ function renderNftMyCards(){
   <div class="nft-inner">
     <div class="nft-front">
       <div class="nft-top">NFT</div>
-      <div class="nft-logo">🐋</div>
+      <div class="nft-logo">💎</div>
       <div class="nft-card-title">分红卡牌</div>
       <div class="nft-orb">
         <div class="orb-glow"></div>
         <div class="orb-ring"></div>
         <div class="orb-orbit"></div>
         <div class="orb-dot"></div>
-        <div class="orb-whale">🐋</div>
+        <div class="orb-whale">💎</div>
       </div>
       <div class="nft-bottom">持有 ×${cnt}</div>
     </div>
@@ -821,16 +948,9 @@ function renderUi(){
     if(userAddress){
         doStakeBtn.disabled = false;
         doUnStakeBtn.disabled = stakeData.principal <= 0;
-        //只有管理员才显示右上角菜单
-        if(userAddress.toLowerCase() === STAKE_CONTRACT_ADDR.toLowerCase()){
-            menuBtn.style.display = "flex";
-        }else{
-            menuBtn.style.display = "none";
-        }
     }else{
         doStakeBtn.disabled = true;
         doUnStakeBtn.disabled = true;
-        menuBtn.style.display = "none";
     }
 }
 
