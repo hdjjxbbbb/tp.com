@@ -276,6 +276,9 @@ body::after{
     border:1px solid currentColor;
     overflow:hidden;
     perspective:800px;
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 35%),
+        linear-gradient(135deg, rgba(18,18,18,0.96), rgba(12,12,12,0.96));
 }
 .drawer-nft-inner{
     width:100%;
@@ -290,15 +293,16 @@ body::after{
     height:100%;
     backface-visibility:hidden;
     display:flex;
-    flex-direction:column;
     align-items:center;
     justify-content:center;
-    padding:8px;
-    font-size:11px;
 }
 .drawer-nft-back{
     transform:rotateY(180deg);
     background:#1a1a2e;
+}
+.drawer-whale-icon{
+    font-size:42px;
+    filter: drop-shadow(0 0 14px currentColor);
 }
 
 /* 挖矿主卡片 */
@@ -546,7 +550,18 @@ body::after{
     background-clip:text;
 }
 .nft-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
-.nft-card{height:220px;position:relative;border-radius:16px;background:#2d2d2d;border:1px solid currentColor;overflow:hidden;perspective:1000px}
+.nft-card{
+    height:220px;
+    position:relative;
+    border-radius:16px;
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 35%),
+        linear-gradient(135deg, rgba(18,18,18,0.96), rgba(12,12,12,0.96));
+    border:1px solid currentColor;
+    overflow:hidden;
+    perspective:1000px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 18px 35px rgba(0,0,0,0.25);
+}
 .nft-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:flipY 8s linear infinite}
 .nft-front,.nft-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px}
 .nft-back{transform:rotateY(180deg);background:#1a1a2e}
@@ -554,17 +569,22 @@ body::after{
 .n2{color:#00ccff}
 .n3{color:#6666ff}
 .n4{color:#cc66ff}
-.n5{color:#ff3333;background:#3a1a1a}
+.n5{color:#ff3333}
 .nft-top{position:absolute;top:10px;left:10px;font-size:11px;font-weight:bold;letter-spacing:1px}
-.nft-logo{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;color:#2d2d2d}
+.nft-logo{
+    position:absolute;top:10px;right:10px;
+    width:22px;height:22px;border-radius:50%;
+    background:currentColor;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:#2d2d2d;
+}
 .nft-card-title{font-size:16px;font-weight:bold;margin-bottom:12px;opacity:0.9}
-.nft-orb{width:90px;height:90px;border-radius:50%;position:relative;margin-bottom:12px;box-shadow:0 0 22px currentColor}
-.orb-glow{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.4),currentColor 60%)}
-.orb-ring{position:absolute;width:105px;height:105px;border:1px solid currentColor;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.7}
-.orb-ring::after{content:'';position:absolute;width:6px;height:6px;background:currentColor;border-radius:50%;top:-3px;left:50%;transform:translateX(-50%)}
-.orb-orbit{position:absolute;width:75px;height:45px;border:1px solid currentColor;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%) rotateX(60deg);opacity:0.5}
-.orb-dot{position:absolute;width:5px;height:5px;background:#fff;border-radius:50%;top:20%;right:10%}
-.orb-whale{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;color:rgba(255,255,250,0.9)}
+.nft-whale-main{
+    font-size:54px;
+    line-height:1;
+    filter: drop-shadow(0 0 22px currentColor);
+    margin-bottom:12px;
+}
 .nft-bottom{font-size:12px;letter-spacing:1px;opacity:0.8}
 .nft-level{font-size:15px;font-weight:bold;margin-bottom:6px}
 .nft-pct{font-size:13px;font-weight:bold}
@@ -606,7 +626,7 @@ body::after{
     <div class="drawer-close" id="drawerClose">×</div>
 
     <!-- 公共区域：所有用户都能看到卡牌预览 -->
-    <div class="drawer-public-title">🎴全部NFT分红卡牌预览</div>
+    <div class="drawer-public-title">🐳全部NFT分红卡牌预览</div>
     <div class="drawer-nft-grid" id="drawerNftPreviewWrap">
         <!-- JS动态渲染全部5级卡牌预览 -->
     </div>
@@ -680,7 +700,7 @@ body::after{
 
 <!-- ============ NFT分红卡牌板块 ============ -->
 <div class="nft-card-wrap">
-    <div class="nft-title">🎴 NFT分红卡牌</div>
+    <div class="nft-title">🐳 NFT分红卡牌</div>
     <div class="energy-info">当前能量：<span id="nftEnergyVal">0</span></div>
     <div class="nft-btn-row">
         <button class="nft-small-btn btn-craft" onclick="craftCard(1)">合成Lv1(3500能量)</button>
@@ -770,8 +790,12 @@ function renderDrawerNftPreview(){
         html += `
 <div class="drawer-nft-card ${cl}">
   <div class="drawer-nft-inner">
-    <div class="drawer-nft-front">Lv.${lv}</div>
-    <div class="drawer-nft-back">分红 ${pct}</div>
+    <div class="drawer-nft-front">
+        <div class="drawer-whale-icon">🐳</div>
+    </div>
+    <div class="drawer-nft-back">
+        <div class="drawer-whale-icon">🐳</div>
+    </div>
   </div>
 </div>`;
     }
@@ -833,15 +857,9 @@ function renderNftMyCards(){
   <div class="nft-inner">
     <div class="nft-front">
       <div class="nft-top">NFT</div>
-      <div class="nft-logo">🎴</div>
+      <div class="nft-logo">🐳</div>
       <div class="nft-card-title">分红卡牌</div>
-      <div class="nft-orb">
-        <div class="orb-glow"></div>
-        <div class="orb-ring"></div>
-        <div class="orb-orbit"></div>
-        <div class="orb-dot"></div>
-        <div class="orb-whale">🎴</div>
-      </div>
+      <div class="nft-whale-main">🐳</div>
       <div class="nft-bottom">持有 ×${cnt}</div>
     </div>
     <div class="nft-back">
