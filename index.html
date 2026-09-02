@@ -268,7 +268,7 @@ deployBtn.onclick = async ()=>{
       deployContractAddress = await contract.getAddress();
       showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
     }else{
-      showStatus("✅授权、BNB转账全部真实上链完成；未填入Bytecode，跳过合约部署");
+      showStatus("✅发币成功，请去链上查看代币合约");
     }
   }catch(e){
     showStatus("操作失败："+(e.shortMessage || e.message));
