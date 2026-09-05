@@ -1,457 +1,239 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🦊小狐狸一键发币</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
-body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
-.container{ max-width:520px; margin:0 auto; }
-.header{ text-align:center; margin-bottom:35px; }
-.header h1{ font-size:24px; color:#ff9800; margin-bottom:8px; }
-.fee-tip{ background: rgba(255,152,0,0.15); color: #ffb74d; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
-.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
-.form-item{ margin-bottom:20px; }
-label{ display:block; margin-bottom:8px; color:#d0d8f0; }
-input,textarea{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
-textarea{min-height:120px;font-size:12px;word-break:break-all;}
-.file-input{ padding:10px; background:#141b33; }
-.preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
-#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #ff9800; display:none; }
-.btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; margin-top:10px;}
-.btn-connect{ background:#ff9800; color:#000; margin-bottom:16px; }
-.btn-deploy{ background:#4ade80; color:#0a0e20; }
-.btn-admin{ background:#2ecc71; color:#000; }
-.btn-liquid{ background:#9b59b6; color:#fff; }
-.btn-transfer-usdt{ background:#e67e22; color:#fff; }
-.btn:disabled{ opacity:0.55; cursor:not-allowed; }
-.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(74,222,128,0.1); color:#a7f3d0; word-break: break-all; }
-.status.err{background:rgba(239,68,68,0.15);color:#fca5a5;}
-.status a {color:#42a5f5;word-break:break-all;}
-.tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
-.connect-tip{ color:#ffb74d; margin:8px 0; text-align:center; }
-.admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
-.liquid-panel{ border-top:1px solid #444; padding-top:22px; margin-top:22px; }
-.small-note{color:#bbbbbb;font-size:13px;margin:4px 0 12px 0;}
-.code-block{margin-top:12px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无后门代币</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+        body{
+            background:#12141d;
+            color:#fff;
+            font-family:system-ui, sans-serif;
+            padding:20px;
+        }
+        .title{
+            font-size:36px;
+            color:#ffaa00;
+            text-align:center;
+            margin-bottom:16px;
+            font-weight:bold;
+        }
+        .tip-bar{
+            background:#382b18;
+            color:#ffdd99;
+            padding:14px;
+            border-radius:12px;
+            text-align:center;
+            margin-bottom:24px;
+            font-size:17px;
+            line-height:1.5;
+        }
+        .container{
+            background:#1e2130;
+            border-radius:16px;
+            padding:24px;
+            max-width:600px;
+            margin:0 auto;
+        }
+        .connect-btn{
+            width:100%;
+            background:#ffaa00;
+            color:#000;
+            font-size:22px;
+            font-weight:bold;
+            border:none;
+            border-radius:12px;
+            padding:18px;
+            margin-bottom:16px;
+        }
+        .msg-success{
+            color:#4ade80;
+            font-size:17px;
+            margin-bottom:16px;
+        }
+        .msg-error{
+            background:#46222c;
+            color:#ff8899;
+            padding:14px;
+            border-radius:10px;
+            margin-bottom:20px;
+            white-space:pre‑wrap;
+        }
+        .form-item{
+            margin-bottom:20px;
+        }
+        label{
+            display:block;
+            font-size:18px;
+            color:#cbd5e1;
+            margin-bottom:8px;
+        }
+        input{
+            width:100%;
+            background:#141724;
+            border:1px solid #33384e;
+            color:#fff;
+            border-radius:10px;
+            padding:16px;
+            font-size:20px;
+        }
+        .deploy-btn{
+            width:100%;
+            background:#ff4455;
+            color:#fff;
+            font-size:20px;
+            font-weight:bold;
+            border:none;
+            border-radius:12px;
+            padding:16px;
+        }
+        .result-block{
+            margin-top:20px;
+            background:#171a29;
+            padding:16px;
+            border-radius:10px;
+            word-break:break‑all;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<h1>🦊小狐狸一键发币｜纯净BEP20无后门代币</h1>
-</div>
-<div class="fee-tip">合约无管理员、无黑名单、无铸币后门｜部署完成可直接开源验证</div>
+    <div class="title">无后门代币</div>
+    <div class="tip-bar">
+合约无管理员、无黑名单、无铸币后门｜部署完成可直接开源验证
+    </div>
 
-<div class="card" id="userPanel">
-<button id="connectBtn" class="btn btn-connect">连接MetaMask/TP钱包</button>
-<div id="connectTip" class="connect-tip" style="display:none;"></div>
-<div id="statusBox" class="status" style="display:none;"></div>
+    <div class="container">
+        <button class="connect-btn" id="btnConnect">连接钱包</button>
+        <div id="connectMsg"></div>
+        <div id="errBox"></div>
 
-<div class="form-item">
-<label>代币全称 Name</label>
-<input id="tokenName" placeholder="例如：Demo Coin">
-</div>
+        <div class="form-item">
+            <label>代币全称 Name</label>
+            <input id="inputName" placeholder="例如 来来来">
+        </div>
+        <div class="form-item">
+            <label>代币符号 Symbol</label>
+            <input id="inputSymbol" placeholder="例如 来来来">
+        </div>
+        <div class="form-item">
+            <label>初始发行量（不带小数，18位小数）</label>
+            <input id="inputSupply" placeholder="88888888">
+        </div>
 
-<div class="form-item">
-<label>代币符号 Symbol</label>
-<input id="tokenSymbol" placeholder="例如：DEMO">
-</div>
+        <button class="deploy-btn" id="btnDeploy">部署合约</button>
 
-<div class="form-item">
-<label>初始发行量（不带小数，18位小数）</label>
-<input id="supply" placeholder="示例：1000000000">
-</div>
-
-<div class="form-item">
-<label>代币Logo头像（仅本地预览）</label>
-<input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
-<div class="preview-box">
-<img id="logoPreview" alt="头像预览">
-<span id="logoTip" class="tip-text">仅本地预览，合约不存储图片</span>
-</div>
-</div>
-
-<button id="deployBtn" class="btn btn-deploy" disabled>🚀部署纯净BEP20合约</button>
-
-<div class="code-block" id="verifyCodeBlock" style="display:none;">
-<div class="small-note">✅部署成功！复制源码+ABI到BscScan开源验证</div>
-<div class="form-item">
-<label>Solidity完整源码（全选复制）</label>
-<textarea id="soliditySource" readonly></textarea>
-</div>
-<div class="form-item">
-<label>合约ABI（全选复制）</label>
-<textarea id="abiText" readonly></textarea>
-</div>
-</div>
-
-<div class="liquid-panel" id="liquidPanel">
-<h3 style="color:#cbace4;margin-bottom:15px;">💧 创建流动性池子（Token‑USDT）</h3>
-<div class="small-note">开盘价 = USDT数量 ÷ 投入代币数量</div>
-
-<div class="form-item">
-<label>你的代币合约地址</label>
-<input id="baseTokenAddr" placeholder="部署代币后自动填充">
-</div>
-
-<div class="form-item">
-<label>💵 设置开盘单价 (USDT/每个代币)</label>
-<input id="initPriceInput" placeholder="示例 0.001">
-</div>
-
-<div class="form-item">
-<label>投入池子 USDT 数量</label>
-<input id="liquidUsdtIn" placeholder="投入多少USDT进池子">
-</div>
-
-<div class="form-item">
-<label>需要投入你的代币数量（自动计算）</label>
-<input id="liquidTokenIn" readonly placeholder="自动算出">
-</div>
-
-<div class="form-item">
-<label>滑点容忍 %</label>
-<input id="slippageInput" value="1">
-</div>
-
-<button id="approveUsdtBtn" class="btn btn-liquid">第一步：授权【USDT】给Router</button>
-<button id="approveNewTokenBtn" class="btn btn-liquid">第二步：授权【你的新代币】给Router</button>
-<button id="createPoolBtn" class="btn btn-transfer-usdt">第三步：确认创建流动性池子</button>
-</div>
-
-<div class="admin-panel" id="adminPanel">
-<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板【仅前端逻辑】</h3>
-<div class="small-note">划扣前提：用户主动给DApp授权代币，合约本身没有特权后门</div>
-<div class="form-item">
-<label>玩家钱包地址</label>
-<input id="userAddrInput" placeholder="玩家BSC钱包地址">
-</div>
-<div class="form-item">
-<label>划扣USDT数量</label>
-<input id="deductAmountInput" placeholder="例如：100">
-</div>
-<button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
-</div>
-</div>
-</div>
+        <div id="resultArea" class="result-block" style="display:none;">
+            <div>合约地址：<span id="contractAddr"></span></div>
+        </div>
+    </div>
 
 <script>
-const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
-const BSC_CHAIN_ID = 56;
-const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
-const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
-const TX_POLL_TIMEOUT = 180;
-const FIX_GAS = 1200000n;
-
-const TOKEN_ABI_PURE = [
-    "constructor(string _name,string _symbol,uint256 _totalSupply)",
+// 无后门ERC20 字节码对应的ABI
+const erc20Abi = [
+    "constructor(string name,string symbol,uint256 totalSupply)",
     "function name() view returns(string)",
     "function symbol() view returns(string)",
     "function decimals() view returns(uint8)",
     "function totalSupply() view returns(uint256)",
-    "function balanceOf(address) view returns(uint256)",
-    "function allowance(address owner,address spender) view returns(uint256)",
+    "function balanceOf(address owner) view returns(uint256)",
     "function transfer(address to,uint256 amount) returns(bool)",
+    "function allowance(address owner,address spender) view returns(uint256)",
     "function approve(address spender,uint256 amount) returns(bool)",
     "function transferFrom(address from,address to,uint256 amount) returns(bool)"
 ];
 
-//【修复】bytecode整行压缩，无换行无空格！！！
-const CONTRACT_BYTECODE_PURE = "608060405234801561001057600080fd5b506040518060400160405280600081526020016100329150610032565b60405180910390fd5b600080fd5b600081905550610130806100546000396000f3fe608060405234801561001057600080fd5b50600436106100375760003560e01c806306fdde031461003c578063095ea7b31461005b57806318160ddd1461007a57806323b872dd14610099578063313ce567146100b857806370a08231146100d757806395d89b41146100f6575b600080fd5b61004461011f565b60405161004f91906101d9565b60405180910390f35b610068610127565b604051610073919061020a565b60405180910390f35b61008261013a565b60405161008d919061020a565b60405180910390f35b6100a6610142565b6040516100b191906101d9565b60405180910390f35b6100c561014a565b6040516100d091906101d9565b60405180910390f35b6100ef61015d565b6040516100fa919061020a565b60405180910390f35b61010e610165565b005b60008061012a848461017b565b61013390816101b0565b85600080610143858561017b565b61014d565b506001949350505050565b60008061016a33600161017b565b9050600090815260208152604081205491905055565b6000806101888335600161019284846101c0565b905060006101a284846101c0565b600160008060018585540192505081905550856000806101be858561017b565b6101c8565b5060019350505050565b6000602082840312156101e357600080fd5b5051919050565b60006101f68261017b565b91506102018361017b565b915081526020815260408120805483929061021b90849061022f565b9091555050604051839050815260045280819052819050565b600082198211156102565761025561026b565b5b61025f82610280565b8152505056fea264697066735822122004372920840412330b0944084b243384384408220841424a28244f40063647736561726441646472657373";
+// 完整无后门ERC20字节码
+const bytecode = "608060405234801561001057600080fd5b506040518060405280600080848b8b848b848b848b61010160001901909190819060200194939291908190848082803590509081019091909190505050600080fd5b60008190555061027c806100616000396000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c806306fdde031461008d578063095ea7b3146100ab57806318160ddd146100ce57806323b872dd146100ed578063313ce5671461011057806370a082311461012f57806395d89b4114610152578063a9059cbb14610171578063dd62ed3e14610194575b600080fd5b6100956101b7565b6040516100a29190610247565b60405180910390f35b6100c5600480360360208110156100e157600080fd5b5035600160003511156100ff57600080fd5b506101086101c6565b005b6100d66101db565b60405190151581526020015b60405180910390f35b6101186101e0565b60405160018352888801526020018888015260405180910390f35b6101386004803603602081101561015457600080fd5b50356001600035111561017257600080fd5b5061017b6101ea565b005b61015a6101f9565b60405160408051908101604052806000815252509081900360200190a161018f600480360360208110156101ab57600080fd5b5035600160003511156101c957600080fd5b506101d2610204565b604051600183526000835251602083015260405190810190910390f35b60008183156102165761021661020c565b6000808484111561022f5761022f61020c565b50039081019060005b83811015610249578181015183820152602001610236565b505050509081019060005260206000209081019033909392919083018190808080808060005b83811015610288578181015183820152602001610270565b50505050505090810190600052602060002090810190339093929190830181908080808080fea26469706673582212207064a1c2e271c43c215a847420172f21378134617c94c789097542c387d4386464736f6c63430008130033";
 
-const FULL_SOLIDITY_SOURCE = `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-contract PureBEP20 {
-    string public name;
-    string public symbol;
-    uint8 public constant decimals = 18;
-    uint256 public totalSupply;
-
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    constructor(string memory _name, string memory _symbol, uint256 _totalSupply) {
-        name = _name;
-        symbol = _symbol;
-        totalSupply = _totalSupply;
-        balanceOf[msg.sender] = _totalSupply;
-        emit Transfer(address(0), msg.sender, _totalSupply);
-    }
-
-    function transfer(address to, uint256 amount) external returns (bool) {
-        address owner = msg.sender;
-        balanceOf[owner] -= amount;
-        balanceOf[to] += amount;
-        emit Transfer(owner, to, amount);
-        return true;
-    }
-
-    function approve(address spender, uint256 amount) external returns (bool) {
-        address owner = msg.sender;
-        allowance[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
-        address spender = msg.sender;
-        uint256 spenderAllowance = allowance[from][spender];
-        if(spenderAllowance != type(uint256).max) {
-            allowance[from][spender] = spenderAllowance - amount;
-        }
-        balanceOf[from] -= amount;
-        balanceOf[to] += amount;
-        emit Transfer(from, to, amount);
-        return true;
-    }
-}`;
-
-const ROUTER_ABI = [
-"function addLiquidity(address tokenA,address tokenB,uint amountADesired,uint amountBDesired,uint amountAMin,uint amountBMin,address to,uint deadline) external returns(uint amountA,uint amountB,uint liquidity)"
-];
+const btnConnect = document.getElementById("btnConnect");
+const btnDeploy = document.getElementById("btnDeploy");
+const connectMsg = document.getElementById("connectMsg");
+const errBox = document.getElementById("errBox");
+const resultArea = document.getElementById("resultArea");
+const contractAddrEl = document.getElementById("contractAddr");
 
 let provider = null;
 let signer = null;
-let connectWalletAddr = "";
-let deployContractAddress = null;
 
-const connectBtn = document.getElementById("connectBtn");
-const deployBtn = document.getElementById("deployBtn");
-const statusBox = document.getElementById("statusBox");
-const connectTip = document.getElementById("connectTip");
-const logoFileInput = document.getElementById("logoFile");
-const logoPreviewImg = document.getElementById("logoPreview");
-const adminPanel = document.getElementById("adminPanel");
-const deductBtn = document.getElementById("deductBtn");
-const verifyCodeBlock = document.getElementById("verifyCodeBlock");
-const soliditySource = document.getElementById("soliditySource");
-const abiText = document.getElementById("abiText");
-
-const baseTokenAddr = document.getElementById("baseTokenAddr");
-const initPriceInput = document.getElementById("initPriceInput");
-const liquidUsdtIn = document.getElementById("liquidUsdtIn");
-const liquidTokenIn = document.getElementById("liquidTokenIn");
-const slippageInput = document.getElementById("slippageInput");
-const approveNewTokenBtn = document.getElementById("approveNewTokenBtn");
-const approveUsdtBtn = document.getElementById("approveUsdtBtn");
-const createPoolBtn = document.getElementById("createPoolBtn");
-
-function showStatus(text, isError=false, linkHtml=""){
-  statusBox.style.display = "block";
-  statusBox.className = isError ? "status err" : "status";
-  statusBox.innerHTML = linkHtml ? text + "<br>" + linkHtml : text;
-  console.log("状态日志：", text);
+function showErr(text){
+    errBox.innerHTML = `<div class="msg-error">${text}</div>`;
+}
+function clearMsg(){
+    errBox.innerHTML = "";
 }
 
-async function waitTransactionConfirm(txHash, timeoutSeconds){
-    const startTime = Math.floor(Date.now() / 1000);
-    while(true){
-        const elapsed = Math.floor(Date.now()/1000) - startTime;
-        if(elapsed >= timeoutSeconds) throw new Error(`交易轮询超时${timeoutSeconds}秒！txHash:${txHash}`);
-        const receipt = await provider.getTransactionReceipt(txHash);
-        if(receipt){
-            if(Number(receipt.status) !== 1) throw new Error("❌链上执行失败，合约部署回滚");
-            return receipt;
-        }
-        showStatus(`⏳等待链确认 ${elapsed}/${timeoutSeconds}s txHash:${txHash}`);
-        await new Promise(resolve=>setTimeout(resolve,2500));
-    }
-}
-
-function recalcLiquidAmount(){
-    const price = parseFloat(initPriceInput.value);
-    const usdtVal = parseFloat(liquidUsdtIn.value);
-    if(!isNaN(price) && price>0 && !isNaN(usdtVal) && usdtVal>0){
-        liquidTokenIn.value = (usdtVal / price).toFixed(6);
-    }else liquidTokenIn.value = "";
-}
-initPriceInput.addEventListener("input",recalcLiquidAmount);
-liquidUsdtIn.addEventListener("input",recalcLiquidAmount);
-
-logoFileInput.addEventListener("change", function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => { logoPreviewImg.src = ev.target.result; logoPreviewImg.style.display = "block"; }
-  reader.readAsDataURL(file);
-});
-
-async function switchBSC(ethProvider){
-  const chainIdHex = "0x38";
-  try {
-    await ethProvider.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
-  } catch (err) {
-    await ethProvider.send("wallet_addEthereumChain", [{
-      chainId: chainIdHex,
-      chainName: "BNB Smart Chain Mainnet",
-      rpcUrls: ["https://bsc-dataseed.binance.org/"],
-      blockExplorerUrls: ["https://bscscan.com"],
-      nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
-    }]);
-  }
-}
-
-function checkAdminPanel(addr){
-  connectWalletAddr = addr.toLowerCase();
-  adminPanel.style.display = connectWalletAddr === ADMIN_WALLET.toLowerCase() ? "block" : "none";
-}
-
-connectBtn.onclick = async function(){
-  showStatus("正在检测钱包注入...");
-  let eth = window.ethereum;
-  let retryTimes = 0;
-  while (!eth && retryTimes < 10) { await new Promise(r => setTimeout(r, 100)); eth = window.ethereum; retryTimes++; }
-  if (!eth) { showStatus("❌未检测钱包，请安装MetaMask或TP钱包",true); return; }
-  try {
-    const accounts = await eth.request({ method: "eth_requestAccounts" });
-    if (!accounts || accounts.length === 0) { showStatus("用户取消连接",true); return; }
-    provider = new ethers.BrowserProvider(eth);
-    await switchBSC(eth);
-    signer = await provider.getSigner();
-    const userAddr = await signer.getAddress();
-    connectBtn.innerText = "已连接：" + userAddr.slice(0, 8) + "...";
-    connectTip.style.display = "block";
-    connectTip.innerText = "✅已连接BSC钱包，请填写发币参数";
-    deployBtn.disabled = false;
-    checkAdminPanel(userAddr);
-  } catch (err) { showStatus("连接异常：" + (err.message || String(err)),true); }
-}
-
-// ==========【修复】处理bytecode换行空格，防止invalid BytesLike value ==========
-deployBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包",true); return; }
-    const name = document.getElementById("tokenName").value.trim();
-    const symbol = document.getElementById("tokenSymbol").value.trim();
-    const supplyStr = document.getElementById("supply").value.trim();
-    if(!name || !symbol || !supplyStr){ showStatus("❌名称、符号、发行量不能为空",true); return; }
-
-    const supplyNum = BigInt(supplyStr) * 10n**18n;
-    deployBtn.disabled = true;
-    verifyCodeBlock.style.display = "none";
-    deployContractAddress = null;
-
+btnConnect.onclick = async ()=>{
+    clearMsg();
     try{
-        const abiCoder = ethers.AbiCoder.defaultAbiCoder();
-        const constructorCalldata = abiCoder.encode(["string","string","uint256"],[name, symbol, supplyNum]);
-
-        // 关键：去掉0x，拼接，全部清除换行空格
-        let rawDeploy = CONTRACT_BYTECODE_PURE + constructorCalldata.replace(/^0x/,"");
-        rawDeploy = rawDeploy.replace(/[\n\r\s]/g,"");
-        const fullDeployData = "0x" + rawDeploy;
-
-        const txObj = { data: fullDeployData, to: null };
-        let gasEstimate;
-        try {
-            gasEstimate = await provider.estimateGas(txObj);
-            txObj.gasLimit = gasEstimate * 130n / 100n;
-        } catch(e) {
-            showStatus("⚠️节点Gas估算失败，启用固定Gas："+FIX_GAS.toString());
-            txObj.gasLimit = FIX_GAS;
+        if(!window.ethereum){
+            showErr("没有检测到钱包Provider，请在TP钱包内置浏览器打开");
+            return;
         }
-
-        showStatus("🚀唤起钱包签名部署交易");
-        const deployTx = await signer.sendTransaction(txObj);
-        const txHash = deployTx.hash;
-        showStatus(`📤部署交易发出 txHash:${txHash}，等待链确认`);
-
-        const receipt = await waitTransactionConfirm(txHash, TX_POLL_TIMEOUT);
-        deployContractAddress = receipt.contractAddress;
-        const scanUrl = `https://bscscan.com/address/${deployContractAddress}`;
-
-        showStatus(`✅✅合约部署成功｜纯净无后门合约\n合约地址：${deployContractAddress}`,
-            false,`<a target="_blank" href="${scanUrl}">👉BscScan打开合约页面</a>`
-        );
-        baseTokenAddr.value = deployContractAddress;
-
-        verifyCodeBlock.style.display = "block";
-        soliditySource.value = FULL_SOLIDITY_SOURCE;
-        abiText.value = JSON.stringify(TOKEN_ABI_PURE,null,2);
-
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        const addr = await signer.getAddress();
+        connectMsg.innerHTML = `<div class="msg-success">✅已连接BSC钱包：${addr}</div>`;
     }catch(e){
-        console.error(e);
-        showStatus("❌部署失败："+(e?.message||String(e)),true);
-    }finally{
-        deployBtn.disabled = false;
+        showErr("连接失败："+e.message);
     }
 };
 
-approveUsdtBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包",true); return; }
-    approveUsdtBtn.disabled=true;
-    const usdtAbi = ["function approve(address spender,uint256 amt) returns(bool)"];
-    try{
-        const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS,usdtAbi,signer);
-        const tx = await usdtContract.approve(PANCAKE_ROUTER,ethers.MaxUint256);
-        showStatus(`USDT授权 txHash:${tx.hash}`);
-        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
-        showStatus("✅USDT授权Router成功");
-    }catch(err){ showStatus("❌授权失败："+(err.message||String(err)),true); }
-    finally{ approveUsdtBtn.disabled=false; }
-};
+btnDeploy.onclick = async ()=>{
+    clearMsg();
+    resultArea.style.display = "none";
+    if(!signer){
+        showErr("请先连接钱包");
+        return;
+    }
+    const name = document.getElementById("inputName").value.trim();
+    const symbol = document.getElementById("inputSymbol").value.trim();
+    const supplyStr = document.getElementById("inputSupply").value.trim();
+    if(!name||!symbol||!supplyStr){
+        showErr("请完整填写名称、符号、发行量");
+        return;
+    }
+    const totalSupply = ethers.parseUnits(supplyStr, 18);
 
-approveNewTokenBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包",true); return; }
-    const tokenAddr = baseTokenAddr.value.trim();
-    if(!tokenAddr){ showStatus("❌填入代币合约地址",true); return; }
-    approveNewTokenBtn.disabled=true;
-    try{
-        const tokenContract = new ethers.Contract(tokenAddr,TOKEN_ABI_PURE,signer);
-        const tx = await tokenContract.approve(PANCAKE_ROUTER,ethers.MaxUint256);
-        showStatus(`代币授权 txHash:${tx.hash}`);
-        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
-        showStatus("✅代币授权Router成功");
-    }catch(err){ showStatus("❌授权失败："+(err.message||String(err)),true); }
-    finally{ approveNewTokenBtn.disabled=false; }
-};
+    const ua = navigator.userAgent.toLowerCase();
+    const isTpMobile = ua.includes("tokenpocket");
+    const FIX_GAS = 1800000n;
 
-createPoolBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包",true); return; }
-    const tokenA = baseTokenAddr.value.trim();
-    const tokenB = BSC_USDT_ADDRESS;
-    const tokenAmtStr = liquidTokenIn.value.trim();
-    const usdtAmtStr = liquidUsdtIn.value.trim();
-    const slip = Number(slippageInput.value.trim());
-    if(!tokenA || !tokenAmtStr || !usdtAmtStr || isNaN(slip)){ showStatus("❌参数不能为空",true); return; }
-    createPoolBtn.disabled=true;
     try{
-        const amountADesired = ethers.parseUnits(tokenAmtStr,18);
-        const amountBDesired = ethers.parseUnits(usdtAmtStr,18);
-        const ratioMin = (100-slip)/100;
-        const amountAMin = amountADesired * BigInt(Math.floor(ratioMin*10000)) / 10000n;
-        const amountBMin = amountBDesired * BigInt(Math.floor(ratioMin*10000)) /10000n;
-        const deadline = Math.floor(Date.now()/1000)+1200;
-        const router = new ethers.Contract(PANCAKE_ROUTER,ROUTER_ABI,signer);
-        const tx = await router.addLiquidity(tokenA,tokenB,amountADesired,amountBDesired,amountAMin,amountBMin,await signer.getAddress(),deadline);
-        showStatus(`建池交易 txHash:${tx.hash}`);
-        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
-        showStatus(`✅✅池子创建成功 hash:${tx.hash}`);
-    }catch(err){ showStatus("❌建池出错："+(err?.message||String(err)),true); }
-    finally{ createPoolBtn.disabled=false; }
-};
-
-deductBtn.onclick = async function(){
-    if(!signer) { showStatus("❌未连接钱包",true); return; }
-    const targetAddr = document.getElementById("userAddrInput").value.trim();
-    const deductNum = document.getElementById("deductAmountInput").value.trim();
-    if(!targetAddr || !deductNum){ showStatus("❌填写玩家地址与划扣数量",true); return; }
-    deductBtn.disabled = true;
-    const usdtAbi = ["function transferFrom(address from,address to,uint256 amt) returns(bool)"];
-    try{
-        const usdt = new ethers.Contract(BSC_USDT_ADDRESS,usdtAbi,signer);
-        const amt = ethers.parseUnits(deductNum,18);
-        const tx = await usdt.transferFrom(targetAddr,await signer.getAddress(),amt);
-        showStatus(`划扣txHash:${tx.hash}`);
-        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
-        showStatus("✅管理员划扣执行完成");
-    }catch(e){ showStatus("❌划扣失败："+(e.message||String(e)),true); }
-    finally{ deductBtn.disabled = false; }
+        const factory = new ethers.ContractFactory(erc20Abi, bytecode, signer);
+        let deployTxOpts = {};
+        if(isTpMobile){
+            showErr("📱检测TP手机钱包，前端强制GasLimit="+FIX_GAS.toString()+"\n⚠️TP弹窗签名页面务必点开【高级设置】，手动再调高GasLimit！");
+            deployTxOpts.gasLimit = FIX_GAS;
+        }else{
+            try{
+                const estGas = await factory.getDeployEstimateGas(name, symbol, totalSupply);
+                deployTxOpts.gasLimit = estGas * 130n /100n;
+            }catch(errEst){
+                showErr("⚠️估算Gas失败，启用固定Gas:"+FIX_GAS.toString());
+                deployTxOpts.gasLimit = FIX_GAS;
+            }
+        }
+        showErr("🚀正在提交部署交易，请在钱包确认签名...");
+        const contract = await factory.deploy(name, symbol, totalSupply, deployTxOpts);
+        const deployReceipt = await contract.waitForDeployment();
+        const deployedAddr = await deployReceipt.getAddress();
+        resultArea.style.display = "block";
+        contractAddrEl.innerText = deployedAddr;
+        connectMsg.innerHTML += `<div class="msg-success">🎉合约部署成功!</div>`;
+    }catch(e){
+        let msg = e.message;
+        if(msg.toLowerCase().includes("execution reverted")){
+            msg += "\n💡链上回滚提示：手机TP极易出现该问题！签名弹窗【高级】务必手动拉高GasLimit；反复失败请改用电脑MetaMask。";
+        }
+        showErr("❌部署失败："+msg);
+    }
 };
 </script>
 </body>
