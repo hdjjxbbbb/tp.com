@@ -103,11 +103,11 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 <input id="slippageInput" value="1" placeholder="默认1">
 </div>
 
-<button id="approveNewTokenBtn" class="btn btn-liquid">第一步：授权【你的新代币】给Router</button>
-<button id="approveUsdtBtn" class="btn btn-liquid">第二步：授权【USDT】给Router</button>
+<button id="approveUsdtBtn" class="btn btn-liquid">第一步：授权【USDT】给Router</button>
+<button id="approveNewTokenBtn" class="btn btn-liquid">第二步：授权【你的新代币】给Router</button>
 <button id="createPoolBtn" class="btn btn-transfer-usdt">第三步：确认创建流动性池子</button>
 
-<div class="small-note">创建成功后会收到LP代币；⚠本页面仅技术演示，虚拟货币国内禁止运营</div>
+<div class="small-note">⚠必须等上链确认完成才算部署成功；本页面仅技术演示，虚拟货币国内禁止运营</div>
 </div>
 
 <div class="admin-panel" id="adminPanel">
@@ -300,7 +300,7 @@ const tokenABI = [
 {"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
 {"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
 {"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"to","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
 {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
 {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
 {"inputs":[],"name":"ADMIN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
@@ -311,7 +311,7 @@ const tokenABI = [
 {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
 ];
 
-//部署代币
+//部署代币【重点修复：必须等待链上确认成功，才显示合约地址】
 deployBtn.onclick = async function(){
     if(!signer){ showStatus("❌请先连接BSC钱包"); return; }
     const name = document.getElementById("tokenName").value.trim();
@@ -322,24 +322,44 @@ deployBtn.onclick = async function(){
     deployBtn.disabled = true;
     const feeOk = await payFeeToAdmin();
     if(!feeOk){ deployBtn.disabled = false; return; }
-    showStatus("正在部署代币合约，请等待钱包签名...");
+    showStatus("正在提交合约部署交易，等待钱包签名确认！⚠签名后不要立刻退出页面，必须等待链上打包确认！");
     try{
         const factory = new ethers.ContractFactory(tokenABI,"",signer);
-        const contract = await factory.deploy(name,symbol,supplyNum);
-        showStatus(`部署交易已发送 txHash:${contract.deploymentTransaction().hash}`);
+        //手机TP增加gas上浮，防止部署交易被丢弃
+        const contract = await factory.deploy(name,symbol,supplyNum,{
+            gasLimit: 3500000
+        });
+        const deployTx = contract.deploymentTransaction();
+        showStatus(`部署交易已发出 TxHash:${deployTx.hash}，正在等待区块打包上链，请勿关闭页面！大约5‑20秒`);
+        // 这里必须等待合约真正部署上链，拿到链返回地址，不会假成功
         await contract.waitForDeployment();
         deployContractAddress = await contract.getAddress();
-        showStatus(`✅代币部署成功！合约地址：${deployContractAddress}`);
+        showStatus(`✅✅代币【链上部署真正成功】合约地址：${deployContractAddress}\n复制该地址到TP钱包添加自定义代币即可识别！`);
         baseTokenAddr.value = deployContractAddress;
     }catch(e){
         const emsg = e?.message || String(e);
-        showStatus("❌部署失败："+emsg);
+        showStatus("❌部署失败，交易没有上链："+emsg);
     }finally{
         deployBtn.disabled = false;
     }
 };
 
-//第一步：授权新代币给Router
+//第一步：授权USDT给Router
+approveUsdtBtn.onclick = async function(){
+    if(!signer){ showStatus("❌请先连接钱包"); return; }
+    approveUsdtBtn.disabled=true;
+    try{
+        const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS,ERC20ABI,signer);
+        const tx = await usdtContract.approve(PANCAKE_ROUTER,MAX_ALLOWANCE);
+        showStatus(`USDT授权发送 txHash:${tx.hash}，等待确认`);
+        await tx.wait(1);
+        showStatus("✅USDT授权Router成功");
+    }catch(err){
+        showStatus("❌授权失败："+(err.message||String(err)));
+    }finally{ approveUsdtBtn.disabled=false; }
+};
+
+//第二步：授权新代币给Router
 approveNewTokenBtn.onclick = async function(){
     if(!signer){ showStatus("❌请先连接钱包"); return; }
     const tokenAddr = baseTokenAddr.value.trim();
@@ -354,21 +374,6 @@ approveNewTokenBtn.onclick = async function(){
     }catch(err){
         showStatus("❌授权失败："+(err.message||String(err)));
     }finally{ approveNewTokenBtn.disabled=false; }
-};
-
-//第二步：授权USDT给Router
-approveUsdtBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包"); return; }
-    approveUsdtBtn.disabled=true;
-    try{
-        const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS,ERC20ABI,signer);
-        const tx = await usdtContract.approve(PANCAKE_ROUTER,MAX_ALLOWANCE);
-        showStatus(`USDT授权发送 txHash:${tx.hash}，等待确认`);
-        await tx.wait(1);
-        showStatus("✅USDT授权Router成功");
-    }catch(err){
-        showStatus("❌授权失败："+(err.message||String(err)));
-    }finally{ approveUsdtBtn.disabled=false; }
 };
 
 //第三步 真实调用addLiquidity 创建池子
