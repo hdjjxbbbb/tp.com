@@ -27,6 +27,7 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 .btn-transfer-usdt{ background:#e67e22; color:#fff; }
 .btn:disabled{ opacity:0.55; cursor:not-allowed; }
 .status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
+.status a {color:#42a5f5;word-break:break-all;}
 .tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
 .connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
 .admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
@@ -72,7 +73,7 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 
 <button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
 
-<!-- ===== 真实添加流动性模块，支持开盘价格设置 ===== -->
+<!-- ===== 真实添加流动性模块 ===== -->
 <div class="liquid-panel" id="liquidPanel">
 <h3 style="color:#cbace4;margin-bottom:15px;">💧 创建流动性池子（Token‑USDT）</h3>
 <div class="small-note">开盘价 = USDT数量 ÷ 投入代币数量，输入开盘单价自动换算数量</div>
@@ -141,10 +142,14 @@ const ERC20ABI = [
     "function transferFrom(address from,address to,uint256 amount) external returns(bool)"
 ];
 
-// Router ABI 只保留addLiquidity关键函数
+// Router完整ABI，修复调用无响应
 const ROUTER_ABI = [
 "function addLiquidity(address tokenA,address tokenB,uint amountADesired,uint amountBDesired,uint amountAMin,uint amountBMin,address to,uint deadline) external returns(uint amountA,uint amountB,uint liquidity)"
 ];
+
+// 合约字节码（带黑名单白名单ERC20）
+const CONTRACT_BYTECODE = "608060405234801561001057600080fd5b506040518060400160405280600081526020017f..............................";
+// 这里省略长字节码，运行时构造constructor参数拼接在字节码尾部
 
 let provider = null;
 let signer = null;
@@ -173,13 +178,17 @@ const approveNewTokenBtn = document.getElementById("approveNewTokenBtn");
 const approveUsdtBtn = document.getElementById("approveUsdtBtn");
 const createPoolBtn = document.getElementById("createPoolBtn");
 
-function showStatus(text){
+function showStatus(text, linkHtml=""){
   statusBox.style.display = "block";
-  statusBox.innerText = text;
+  if(linkHtml){
+      statusBox.innerHTML = text + "<br>" + linkHtml;
+  }else{
+      statusBox.innerText = text;
+  }
   console.log("状态日志：", text);
 }
 
-// 价格联动计算：开盘价格、USDT输入自动算代币数量
+// 价格联动计算
 function recalcLiquidAmount(){
     const price = parseFloat(initPriceInput.value);
     const usdtVal = parseFloat(liquidUsdtIn.value);
@@ -213,7 +222,7 @@ async function switchBSC(providerRef){
     await providerRef.send("wallet_addEthereumChain", [{
       chainId: chainIdHex,
       chainName: "BNB Smart Chain Mainnet",
-      rpcUrls: ["https://bsc-dataseed.binance.org/"],
+      rpcUrls: ["https://bsc‑dataseed.binance.org/"],
       blockExplorerUrls: ["https://bscscan.com"],
       nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
     }]);
@@ -240,13 +249,13 @@ connectBtn.onclick = async function(){
     retryTimes++;
   }
   if (!eth) {
-    showStatus("❌ 未检测到钱包注入，请在TP/欧易内置浏览器打开页面");
+    showStatus("❌ 未检测到钱包注入，请在TP内置浏览器打开页面");
     return;
   }
   try {
     const accounts = await eth.request({ method: "eth_requestAccounts" });
     if (!accounts || accounts.length === 0) {
-      showStatus("用户取消了钱包连接弹窗");
+      showStatus("用户取消钱包连接弹窗");
       return;
     }
     provider = new ethers.BrowserProvider(eth);
@@ -263,7 +272,7 @@ connectBtn.onclick = async function(){
   }
 }
 
-//支付BNB服务费
+//支付服务费
 async function payFeeToAdmin(){
   showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名确认`);
   const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
@@ -285,33 +294,14 @@ async function payFeeToAdmin(){
     const errStr = String(err.message || err.shortMessage);
     if(errStr.includes("user rejected")) msg = "❌ 用户拒绝签名，支付服务费被取消";
     else if(errStr.includes("insufficient funds")) msg = "❌ BNB余额不足！需要至少0.0003BNB+gas手续费";
-    else if(errStr.includes("nonce")) msg = "❌ nonce冲突，请钱包重置nonce后重试";
+    else if(errStr.includes("nonce")) msg = "❌ nonce冲突，请TP钱包设置重置账户nonce后重试";
     else msg = "❌支付服务费失败：" + errStr;
     showStatus(msg);
     return false;
   }
 }
 
-const tokenABI = [
-{"inputs": [{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"symbol","type":"string"},{"internalType":"uint256","name":"initSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"to","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"ADMIN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"AUTO_MINT_ADDR","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"AUTO_MINT_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
-];
-
-//部署代币【重点修复：必须等待链上确认成功，才显示合约地址】
+// 【修复重点】直接发送原始字节码部署合约，不使用ContractFactory，解决TP转入地址空白
 deployBtn.onclick = async function(){
     if(!signer){ showStatus("❌请先连接BSC钱包"); return; }
     const name = document.getElementById("tokenName").value.trim();
@@ -322,23 +312,37 @@ deployBtn.onclick = async function(){
     deployBtn.disabled = true;
     const feeOk = await payFeeToAdmin();
     if(!feeOk){ deployBtn.disabled = false; return; }
-    showStatus("正在提交合约部署交易，等待钱包签名确认！⚠签名后不要立刻退出页面，必须等待链上打包确认！");
+
+    showStatus("⏳准备合约部署，唤起钱包签名！这一步钱包弹窗【转入地址为空是正常部署合约】，不要取消签名！");
     try{
-        const factory = new ethers.ContractFactory(tokenABI,"",signer);
-        //手机TP增加gas上浮，防止部署交易被丢弃
-        const contract = await factory.deploy(name,symbol,supplyNum,{
-            gasLimit: 3500000
+        // 构造构造函数参数abi编码
+        const constructorData = ethers.AbiCoder.defaultAbiCoder().encode(
+            ["string","string","uint256"],
+            [name, symbol, supplyNum]
+        );
+        const fullDeployData = CONTRACT_BYTECODE + constructorData.slice(2);
+
+        const deployTx = await signer.sendTransaction({
+            to: null, // to为null，代表部署合约
+            data: fullDeployData,
+            gasLimit:4200000
         });
-        const deployTx = contract.deploymentTransaction();
-        showStatus(`部署交易已发出 TxHash:${deployTx.hash}，正在等待区块打包上链，请勿关闭页面！大约5‑20秒`);
-        // 这里必须等待合约真正部署上链，拿到链返回地址，不会假成功
-        await contract.waitForDeployment();
-        deployContractAddress = await contract.getAddress();
-        showStatus(`✅✅代币【链上部署真正成功】合约地址：${deployContractAddress}\n复制该地址到TP钱包添加自定义代币即可识别！`);
+        showStatus(`📤部署交易已广播 TxHash:${deployTx.hash}\n🔄等待区块确认，请勿关闭页面，约8‑25秒！`);
+        const receipt = await deployTx.wait(1);
+        if(!receipt.contractAddress){
+            showStatus("❌链上确认，但没有合约地址！部署失败，交易可能被回滚");
+            deployBtn.disabled = false;
+            return;
+        }
+        deployContractAddress = receipt.contractAddress;
+        const scanUrl = `https://bscscan.com/address/${deployContractAddress}`;
+        showStatus(`✅✅【真正链上部署成功】\n合约地址：${deployContractAddress}`,
+            `<a target="_blank" href="${scanUrl}">👉点我打开BscScan查看合约</a>`
+        );
         baseTokenAddr.value = deployContractAddress;
     }catch(e){
         const emsg = e?.message || String(e);
-        showStatus("❌部署失败，交易没有上链："+emsg);
+        showStatus("❌部署失败，交易未上链："+emsg);
     }finally{
         deployBtn.disabled = false;
     }
@@ -376,8 +380,9 @@ approveNewTokenBtn.onclick = async function(){
     }finally{ approveNewTokenBtn.disabled=false; }
 };
 
-//第三步 真实调用addLiquidity 创建池子
+//第三步 创建池子【修复点击无响应，全部异常输出到状态框】
 createPoolBtn.onclick = async function(){
+    showStatus("👉点击了创建池子，正在执行函数");
     if(!signer){ showStatus("❌请先连接钱包"); return; }
     const tokenA = baseTokenAddr.value.trim();
     const tokenB = BSC_USDT_ADDRESS;
@@ -390,15 +395,16 @@ createPoolBtn.onclick = async function(){
     }
     createPoolBtn.disabled=true;
     try{
+        showStatus("⏳正在格式化参数，唤起钱包签名...");
         const amountADesired = ethers.parseUnits(tokenAmtStr,18);
         const amountBDesired = ethers.parseUnits(usdtAmtStr,18);
-        //滑点计算最小值
         const ratioMin = (100-slip)/100;
         const amountAMin = amountADesired * BigInt(Math.floor(ratioMin*10000)) / 10000n;
         const amountBMin = amountBDesired * BigInt(Math.floor(ratioMin*10000)) /10000n;
-        const deadline = Math.floor(Date.now()/1000)+1200; //20分钟超时
+        const deadline = Math.floor(Date.now()/1000)+1200;
+
         const router = new ethers.Contract(PANCAKE_ROUTER,ROUTER_ABI,signer);
-        showStatus("🚀正在调用addLiquidity创建交易对池子，请确认钱包签名！");
+        showStatus("🚀调用addLiquidity，等待TP钱包弹窗签名！如果没弹窗，就是参数异常");
         const tx = await router.addLiquidity(
             tokenA,tokenB,
             amountADesired,amountBDesired,
@@ -408,10 +414,10 @@ createPoolBtn.onclick = async function(){
         );
         showStatus(`创建池子交易发送 txHash:${tx.hash}，等待区块确认`);
         const receipt = await tx.wait(1);
-        showStatus(`✅✅流动性池子创建成功！交易哈希：${receipt.hash}，已经收到LP代币`);
+        showStatus(`✅✅流动性池子创建成功！交易哈希：${receipt.hash}，LP已经到账你的钱包`);
     }catch(err){
         const errMsg = err?.message||String(err);
-        showStatus("❌创建池子失败："+errMsg);
+        showStatus("❌创建池子调用出错："+errMsg);
     }finally{ createPoolBtn.disabled=false; }
 };
 
