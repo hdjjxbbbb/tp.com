@@ -1,507 +1,247 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>天鹅一键发币</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Solana Token‑2022 一键发币</title>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@solana/spl-token@0.4.9/lib/index.iife.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@solana/spl-token-metadata@0.1.6/lib/index.iife.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@solana/wallet-standard-browser@1.1.0/dist/index.iife.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
-body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
-.container{ max-width:520px; margin:0 auto; }
-.header{ text-align:center; margin-bottom:35px; }
-.header h1{ font-size:32px; color:#f7c04a; margin-bottom:8px; }
-.fee-tip{ background: rgba(247,192,74,0.15); color: #f7c04a; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
-.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
-.form-item{ margin-bottom:20px; }
-label{ display:block; margin-bottom:8px; color:#d0d8f0; }
-input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
-input:disabled{opacity:0.6;}
-.file-input{ padding:10px; background:#141b33; }
-.preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
-#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #f7c04a; display:none; }
-.btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; margin-top:10px;}
-.btn-connect{ background:#3b63e9; margin-bottom:16px; }
-.btn-deploy{ background:#f7c04a; color:#0a0e20; }
-.btn-admin{ background:#2ecc71; color:#000; }
-.btn-liquid{ background:#9b59b6; color:#fff; }
-.btn-transfer-usdt{ background:#e67e22; color:#fff; }
-.btn:disabled{ opacity:0.55; cursor:not-allowed; }
-.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; max-height:320px;overflow-y:auto; }
-.status a {color:#42a5f5;word-break:break-all;}
-.tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
-.connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
-.admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
-.liquid-panel{ display:none;border-top:1px solid #444; padding-top:22px; margin-top:22px; }
-.small-note{color:#bbbbbb;font-size:13px;margin:4px 0 12px 0;}
-.warn-red{color:#ff8888;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system}
+body{background:#0E101A;color:#eee;padding:24px 16px;min-height:100vh}
+.container{max-width:580px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.title{font-size:26px;font-weight:700}
+.network-tag{background:#1f243b;padding:6px 12px;border-radius:8px;font-size:14px;color:#73c9ff}
+.card{background:#171a2c;border-radius:16px;padding:24px;margin-bottom:18px;border:1px solid #292d44}
+.form-item{margin-bottom:18px}
+label{display:block;margin-bottom:6px;color:#c2c8e8;font-size:15px}
+input{width:100%;padding:13px 14px;border-radius:10px;background:#0f1222;border:1px solid #333854;color:#fff;font-size:15px}
+input:focus{outline:none;border-color:#4988ff}
+.check-row{display:flex;gap:8px;align-items:center}
+.btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px}
+.btn-connect{background:#2563eb;color:#fff}
+.btn-go{background:#22c55e;color:#000}
+.btn:disabled{opacity:0.45;cursor:not-allowed}
+.log-box{margin-top:16px;padding:14px;background:#0f1222;border-radius:10px;max-height:260px;overflow:auto;font-size:13px;white-space:pre-wrap;color:#b8c2e8}
+a{color:#4990ff}
+.tip{font-size:13px;color:#888fb8;margin-top:4px}
+.step{margin-bottom:20px;color:#b4bce0}
 </style>
 </head>
 <body>
 <div class="container">
 <div class="header">
-<h1>🦢 天鹅一键发币</h1>
+<div class="title">🚀 Token‑2022 一键发币</div>
+<div class="network-tag" id="netText">Mainnet 主网</div>
 </div>
-<div class="fee-tip">发币服务费：0.0003 BNB｜手机TP部署失败请切换电脑MetaMask</div>
 
-<div class="card" id="userPanel">
-<button id="connectBtn" class="btn btn-connect">连接钱包</button>
-<div id="connectTip" class="connect-tip" style="display:none;"></div>
-<div id="statusBox" class="status" style="display:none;"></div>
+<div class="step">
+1.连接钱包（支持 Phantom / Backpack / Solflare ）私钥本地，不上传服务器<br>
+2.填写代币参数<br>
+3.模拟交易并签名<br>
+4.获取Mint地址，Solscan查看代币
+</div>
+
+<div class="card">
+<button id="connectWalletBtn" class="btn btn-connect">连接钱包</button>
+<div id="walletInfo" style="margin:12px 0;color:#8ee0ff"></div>
 
 <div class="form-item">
-<label>代币全称 Name</label>
-<input id="tokenName" placeholder="例如：Swan Coin">
+<label>代币名称 Name</label>
+<input id="tkName" placeholder="例如 MyCoin">
 </div>
 
 <div class="form-item">
 <label>代币符号 Symbol</label>
-<input id="tokenSymbol" placeholder="例如：SWAN">
+<input id="tkSymbol" placeholder="例如 MYC">
 </div>
 
 <div class="form-item">
-<label>初始发行量（不带小数）</label>
-<input id="supply" placeholder="例如：100000000">
-<div class="small-note">内部自动补18位小数，不要自己后面加0</div>
+<label>小数位数 Decimals（Token‑2022建议9）</label>
+<input id="tkDecimals" value="9" type="number">
 </div>
 
 <div class="form-item">
-<label>代币Logo头像（推荐256×256 透明PNG）</label>
-<input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
-<div class="preview-box">
-<img id="logoPreview" alt="头像预览">
-<span id="logoTip" class="tip-text">上传仅本地预览，合约无法存储图片</span>
-</div>
+<label>初始总供应量（不带小数）</label>
+<input id="tkSupply" placeholder="例如 1000000000">
+<div class="tip">程序内部自动乘以10^decimals</div>
 </div>
 
-<button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
-
-<!-- ===== 真实添加流动性模块 ===== -->
-<div class="liquid-panel" id="liquidPanel">
-<h3 style="color:#cbace4;margin-bottom:15px;">💧 创建流动性池子（Token‑USDT）</h3>
-<div class="small-note">开盘价 = USDT数量 ÷ 投入代币数量，输入开盘单价自动换算数量</div>
-
-<div class="form-item">
-<label>你的代币合约地址</label>
-<input id="baseTokenAddr" placeholder="部署代币后自动填充">
+<div class="form-item check-row">
+<input type="checkbox" id="revokeMint">
+<label for="revokeMint">部署后撤销铸造权限（总量固定）</label>
 </div>
 
-<div class="form-item">
-<label>💵 设置开盘单价 (USDT/每个代币)</label>
-<input id="initPriceInput" placeholder="示例 0.001 代表开盘0.001U一枚">
-<div class="small-note">修改此值，下面投入代币数量会自动更新</div>
+<div class="form-item check-row">
+<input type="checkbox" id="revokeFreeze">
+<label for="revokeFreeze">部署后撤销账户冻结权限</label>
 </div>
 
-<div class="form-item">
-<label>投入池子 USDT 数量</label>
-<input id="liquidUsdtIn" placeholder="投入多少USDT进池子，例如：1000">
+<button id="deployBtn" class="btn btn-go" disabled>🚀 创建Token‑2022代币</button>
+
+<div class="log-box" id="logBox"></div>
 </div>
 
-<div class="form-item">
-<label>需要投入你的代币数量（自动计算）</label>
-<input id="liquidTokenIn" readonly placeholder="根据开盘价自动算出">
-</div>
-
-<div class="form-item">
-<label>滑点容忍 %</label>
-<input id="slippageInput" value="1" placeholder="默认1">
-</div>
-
-<button id="approveUsdtBtn" class="btn btn-liquid">第一步：授权【USDT】给Router</button>
-<button id="approveNewTokenBtn" class="btn btn-liquid">第二步：授权【你的新代币】给Router</button>
-<button id="createPoolBtn" class="btn btn-transfer-usdt">第三步：确认创建流动性池子</button>
-
-<div class="small-note warn-red">⚠必须等上链确认完成才算部署成功；本页面仅技术演示，虚拟货币国内禁止运营</div>
-</div>
-
-<div class="admin-panel" id="adminPanel">
-<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
-<div class="small-note warn-red">注意：划扣transferFrom，需要玩家钱包提前对管理员地址做授权，否则会执行失败</div>
-<div class="form-item">
-<label>请输入玩家钱包地址</label>
-<input id="userAddrInput" placeholder="玩家BSC钱包地址">
-</div>
-<div class="form-item">
-<label>请输入划扣USDT数量</label>
-<input id="deductAmountInput" placeholder="例如：100">
-</div>
-<button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
-</div>
-</div>
 </div>
 
 <script>
-const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
-const DEPLOY_FEE_BNB = "0.0003";
-const BSC_CHAIN_ID = 56;
-const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
-const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
-const MAX_ALLOWANCE = ethers.MaxUint256;
-const TX_POLL_TIMEOUT = 120;
-const POLL_INTERVAL = 2500;
-// 修复：ethers6 需要显式拿到AbiCoder
-const {AbiCoder} = ethers;
+const {Connection,clusterApiUrl,Keypair,LAMPORTS_PER_SOL,PublicKey}=solanaWeb3;
+const {TOKEN_2022_PROGRAM_ID,createMint,createMintToInstruction,getAssociatedTokenAddress,createAssociatedTokenAccountInstruction}=solanaSplToken;
+const {createInitializeInstruction}=solanaSplTokenMetadata;
+const {getWallets}=window['@solana/wallet-standard-browser'];
 
-// =========内置完整带黑名单ERC20合约部署字节码=========
-const CONTRACT_BYTECODE = "608060405234801561001057600080fd5b506004361061009e5760003560e01c806370a082311161006657806370a082311461012d57806395d89b411461014d578063a9059cbb14610155578063dd62ed3e14610168578063f851a4401461019357600080fd5b806306fdde03146100a3578063095ea7b3146100c157806318160ddd146100e457806323b872dd146100fb578063313ce5671461010e575b600080fd5b6100ab6101d2565b6040516100b8919061055e565b60405180910390f35b6100d46100cf3660046105c8565b610260565b60405190151581526020016100b8565b6100ed60035481565b6040519081526020016100b8565b6100d46101093660046105f2565b6102ce565b60025461011b9060ff1681565b60405160ff90911681526020016100b8565b6100ed61013b36600461062e565b60046020526000908152604090205481565b6100ab6103eb565b6100d46101633660046105c8565b6103f8565b6100ed610176366004610650565b600560209081526000928352604080842090915290825290205481565b6101ba7f00000000000000000000000047542770f3a8eea43d3321867b155c3ac01160d881565b6040516001600160a01b0390911681526020016100b8565b600080546101df90610683565b80601f016020809104026020016040519081016040528092919081815260200182805461020b90610683565b80156102585780601f1061022d57610100808354040283529160200191610258565b820191906000526020600020905b81548152906001019060200180831161023b57829003601f168201915b5050505081565b3360008181526005602090815260408083206001600160a01b03871680855292528083208590555191929182907f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925906102bc9087815260200190565b60405180910390a35060019392505050565b6000336001600160a01b037f00000000000000000000000047542770f3a8eea43d3321867b155c3ac01160d816146103405760405162461bcd60e51b815260206004820152601060248201526f37b7363c9039bab832b91030b236b4b760811b60448201526064015b60405180910390fd5b6001600160a01b0384166000908152600560209081526040808320338452909152902054828110156103ad5760405162461bcd60e51b8152602060048201526016602482015275185b1b1bddd85b98d9481a5b9cdd59999a58da595b9d60521b6044820152606401610337565b6001600160a01b0385166000908152600560209081526040808320338452909152902083820390556103e0858585610410565b506001949350505050565b600180546101df90610683565b600033610406818585610410565b5060019392505050565b6001600160a01b0383166104525760405162461bcd60e51b81526020600482015260096024820152687a65726f2066726f6d60b81b6044820152606401610337565b6001600160a01b0382166104925760405162461bcd60e51b81526020600482015260076024820152667a65726f20746f60c81b6044820152606401610337565b6001600160a01b038316600090815260046020526040902054818110156104f05760405162461bcd60e51b81526020600482015260126024820152710c4c2d8c2dcc6ca40dcdee840cadcdeeaced60731b6044820152606401610337565b6001600160a01b0380851660008181526004602052604080822086860390559286168082529083902080548601905591517fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef906105509086815260200190565b60405180910390a350505050565b600060208083528351808285015260005b8181101561058b5785810183015185820160400152820161056f565b506000604082860101526040601f19601f8301168501019250505092915050565b80356001600160a01b03811681146105c357600080fd5b919050565b600080604083850312156105db57600080fd5b6105e4836105ac565b946020939093013593505050565b60008060006060848603121561060757600080fd5b610610846105ac565b925061061e602085016105ac565b9150604084013590509250925092565b60006020828403121561064057600080fd5b610649826105ac565b9392505050565b6000806040838503121561066357600080fd5b61066c836105ac565b915061067a602084016105ac565b90509250929050565b600181811c9082168061069757607f821691505b6020821081036106b757634e487b7160e01b600052602260045260246000fd5b5091905056fea2646970667358221220b3fd74c1dff48b85af7c697cd8fc67efcbfb4730b803c9b68db60c183aa7117364736f6c63430008140033";
+let connection=null;
+let selectedWallet=null;
+let userPubKey=null;
+const logBox=document.getElementById("logBox");
+const connectBtn=document.getElementById("connectWalletBtn");
+const deployBtn=document.getElementById("deployBtn");
+const walletInfoDom=document.getElementById("walletInfo");
+const netTextDom=document.getElementById("netText");
 
-// ERC20 ABI
-const ERC20ABI = [
-    "function approve(address spender, uint256 amount) external returns (bool)",
-    "function allowance(address owner, address spender) view returns(uint256)",
-    "function transfer(address to,uint256 amount) external returns(bool)",
-    "function transferFrom(address from,address to,uint256 amount) external returns(bool)"
-];
+//切换主网
+function setMainnet(){
+    connection=new Connection(clusterApiUrl("mainnet-beta"),"confirmed");
+    netTextDom.innerText="Mainnet 主网";
+}
+setMainnet();
 
-// Router完整ABI
-const ROUTER_ABI = [
-"function addLiquidity(address tokenA,address tokenB,uint amountADesired,uint amountBDesired,uint amountAMin,uint amountBMin,address to,uint deadline) external returns(uint amountA,uint amountB,uint liquidity)"
-];
-
-let provider = null;
-let signer = null;
-let connectWalletAddr = "";
-let deployContractAddress = null;
-let logoFileObj = null;
-let pollAbort = false;
-
-const connectBtn = document.getElementById("connectBtn");
-const deployBtn = document.getElementById("deployBtn");
-const statusBox = document.getElementById("statusBox");
-const connectTip = document.getElementById("connectTip");
-const logoFileInput = document.getElementById("logoFile");
-const logoPreviewImg = document.getElementById("logoPreview");
-const adminPanel = document.getElementById("adminPanel");
-const liquidPanel = document.getElementById("liquidPanel");
-const deductBtn = document.getElementById("deductBtn");
-const userAddrInput = document.getElementById("userAddrInput");
-const deductAmountInput = document.getElementById("deductAmountInput");
-
-//流动性DOM
-const baseTokenAddr = document.getElementById("baseTokenAddr");
-const initPriceInput = document.getElementById("initPriceInput");
-const liquidUsdtIn = document.getElementById("liquidUsdtIn");
-const liquidTokenIn = document.getElementById("liquidTokenIn");
-const slippageInput = document.getElementById("slippageInput");
-const approveNewTokenBtn = document.getElementById("approveNewTokenBtn");
-const approveUsdtBtn = document.getElementById("approveUsdtBtn");
-const createPoolBtn = document.getElementById("createPoolBtn");
-
-window.addEventListener('beforeunload',()=>{pollAbort=true;});
-
-function showStatus(text, linkHtml=""){
-  statusBox.style.display = "block";
-  if(linkHtml){
-      statusBox.innerHTML = text + "<br>" + linkHtml;
-  }else{
-      statusBox.innerText = text;
-  }
-  statusBox.scrollTop = statusBox.scrollHeight;
-  console.log("状态日志：", text);
+function log(text){
+    logBox.innerText+="> "+text+"\n";
+    logBox.scrollTop=logBox.scrollHeight;
+    console.log(text);
 }
 
-/**
- * 安全轮询交易
- */
-async function waitTransactionConfirm(txHash, timeoutSeconds){
-    pollAbort = false;
-    const startTime = Math.floor(Date.now() / 1000);
-    while(true){
-        if(pollAbort) throw new Error("页面跳转，终止交易轮询");
-        const elapsed = Math.floor(Date.now()/1000) - startTime;
-        if(elapsed >= timeoutSeconds){
-            throw new Error(`交易轮询超时${timeoutSeconds}秒，复制哈希去BscScan查询：${txHash}`);
-        }
-        const receipt = await provider.getTransactionReceipt(txHash);
-        if(receipt){
-            return receipt;
-        }
-        showStatus(`⏳正在等待链上确认，已等待${elapsed}秒，txHash:${txHash}`);
-        await new Promise(resolve=>setTimeout(resolve,POLL_INTERVAL));
-    }
-}
-
-// 价格联动计算+数值校验
-function recalcLiquidAmount(){
-    const price = parseFloat(initPriceInput.value);
-    const usdtVal = parseFloat(liquidUsdtIn.value);
-    if(!isNaN(price) && price>0 && !isNaN(usdtVal) && usdtVal>0){
-        const tokenNeed = usdtVal / price;
-        liquidTokenIn.value = tokenNeed.toFixed(6);
-    }else{
-        liquidTokenIn.value = "";
-    }
-}
-initPriceInput.addEventListener("input",recalcLiquidAmount);
-liquidUsdtIn.addEventListener("input",recalcLiquidAmount);
-
-logoFileInput.addEventListener("change", function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  logoFileObj = file;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    logoPreviewImg.src = ev.target.result;
-    logoPreviewImg.style.display = "block";
-  }
-  reader.readAsDataURL(file);
-});
-
-async function switchBSC(providerRef){
-  const chainIdHex = ethers.toBeHex(BSC_CHAIN_ID);
-  try {
-    await providerRef.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
-  } catch (err) {
-    await providerRef.send("wallet_addEthereumChain", [{
-      chainId: chainIdHex,
-      chainName: "BNB Smart Chain Mainnet",
-      rpcUrls: ["https://bsc-dataseed.binance.org/"],
-      blockExplorerUrls: ["https://bscscan.com"],
-      nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
-    }]);
-  }
-}
-
-function checkAdminPanel(addr){
-  connectWalletAddr = addr.toLowerCase();
-  if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
-    adminPanel.style.display = "block";
-  }else{
-    adminPanel.style.display = "none";
-  }
-}
-
-// 连接钱包
-connectBtn.onclick = async function(){
-  showStatus("正在检测钱包注入...");
-  let eth = window.ethereum;
-  let retryTimes = 0;
-  while (!eth && retryTimes < 12) {
-    await new Promise(r => setTimeout(r, 120));
-    eth = window.ethereum;
-    retryTimes++;
-  }
-  if (!eth) {
-    showStatus("❌ 未检测到钱包注入，请在TP内置浏览器打开页面");
-    return;
-  }
-  try {
-    const accounts = await eth.request({ method: "eth_requestAccounts" });
-    if (!accounts || accounts.length === 0) {
-      showStatus("用户取消钱包连接弹窗");
-      return;
-    }
-    provider = new ethers.BrowserProvider(eth);
-    await switchBSC(eth);
-    signer = await provider.getSigner();
-    const userAddr = await signer.getAddress();
-    connectBtn.innerText = "已连接：" + userAddr.slice(0, 8) + "...";
-    connectTip.style.display = "block";
-    connectTip.innerText = "✅已连接BSC钱包，请填写发币参数";
-    deployBtn.disabled = false;
-    checkAdminPanel(userAddr);
-  } catch (err) {
-    const msg = err?.message || err?.shortMessage || String(err);
-    if(msg.includes("user rejected")) showStatus("❌用户拒绝钱包授权");
-    else showStatus("连接异常：" + msg);
-  }
-}
-
-//支付服务费
-async function payFeeToAdmin(){
-  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名确认`);
-  const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
-  const gasPriceRaw = await provider.send("eth_gasPrice", []);
-  //修复：ethers6，把hex转为wei
-  const gasPriceBig = ethers.parseUnits(gasPriceRaw, "wei");
-  const gasPriceAdd = gasPriceBig * 120n / 100n;
-  try{
-    const tx = await signer.sendTransaction({
-      to: ADMIN_WALLET,
-      value: feeWei,
-      gasPrice: gasPriceAdd
-    });
-    showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认`);
-    await waitTransactionConfirm(tx.hash, TX_POLL_TIMEOUT);
-    showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
-    return true;
-  }catch(err){
-    let msg = "";
-    const errStr = String(err.message || err.shortMessage);
-    if(errStr.includes("user rejected")) msg = "❌ 用户拒绝签名，支付服务费被取消";
-    else if(errStr.includes("insufficient funds")) msg = "❌ BNB余额不足！需要至少0.0003BNB+gas手续费";
-    else msg = "❌支付服务费失败：" + errStr;
-    showStatus(msg);
-    return false;
-  }
-}
-
-// 部署合约【核心修复：改用ContractFactory，不再手动拼接字节码+编码，解决TP移动端status=0】
-deployBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接BSC钱包"); return; }
-    const name = document.getElementById("tokenName").value.trim();
-    const symbol = document.getElementById("tokenSymbol").value.trim();
-    const supplyStr = document.getElementById("supply").value.trim();
-
-    //表单校验
-    if(!name || !symbol || !supplyStr){ showStatus("❌名称、符号、发行量不能为空"); return; }
-    if(!/^[0-9]+$/.test(supplyStr)){showStatus("❌发行量只能输入纯数字");return;}
-    const supplyNum = BigInt(supplyStr) * 10n**18n;
-    if(supplyNum <=0){showStatus("❌发行量必须大于0");return;}
-
-    deployBtn.disabled = true;
-    const feeOk = await payFeeToAdmin();
-    if(!feeOk){ deployBtn.disabled = false; return; }
-
-    showStatus("⏳准备合约部署，唤起钱包签名！部署交易to=null属于正常，请勿取消签名！");
-    try{
-        // 修复：使用ContractFactory，由ethers内部处理字节码+构造参数编码，避免手动拼接出错
-        const factory = new ethers.ContractFactory(CONTRACT_BYTECODE, [], signer);
-
-        // 预模拟部署，提前捕获参数错误，避免链上回滚status=0
-        let estimatedGas;
-        try{
-            estimatedGas = await factory.getDeployGas(name, symbol, supplyNum);
-        }catch(simErr){
-            showStatus(`❌预模拟部署失败，参数异常：${simErr.message.slice(0,150)}`);
-            deployBtn.disabled = false;
-            return;
-        }
-        // gas上浮40%做安全缓冲，适配TP移动端
-        const safeGasLimit = BigInt(Math.floor(Number(estimatedGas)*1.4));
-
-        const deployTx = await factory.deploy(name, symbol, supplyNum, {
-            gasLimit: safeGasLimit
-        });
-
-        const txHash = deployTx.deploymentTransaction().hash;
-        showStatus(`📤部署交易已经发出！TxHash:${txHash}\n🔄等待BSC节点确认，请勿关闭页面`);
-        
-        const receipt = await deployTx.waitForDeployment();
-        deployContractAddress = await receipt.getAddress();
-
-        const scanUrl = `https://bscscan.com/address/${deployContractAddress}`;
-        showStatus(`✅✅【部署成功】\n合约地址：${deployContractAddress}`,
-            `<a target="_blank" href="${scanUrl}">👉BscScan打开合约</a>`
-        );
-        baseTokenAddr.value = deployContractAddress;
-        liquidPanel.style.display="block";
-    }catch(e){
-        const emsg = e?.message || String(e);
-        if(e.code === 4001){
-            showStatus("❌你拒绝了钱包签名，部署已取消");
-        }else if(emsg.includes("status=0") || emsg.includes("reverted")){
-            showStatus(`❌链回执返回，交易执行回滚(status=0)。
-可能原因：
-1.钱包BNB余额不足（部署合约需要额外gas，不只是服务费0.0003BNB）
-2.发行量数值过大
-3.网络拥堵。
-建议：发行量改小测试，确认钱包BNB余额>0.001`);
-        }else{
-            showStatus("❌部署失败："+emsg);
-        }
-    }finally{
-        deployBtn.disabled = false;
-    }
-};
-
-//第一步：授权USDT给Router
-approveUsdtBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包"); return; }
-    approveUsdtBtn.disabled=true;
-    try{
-        const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS,ERC20ABI,signer);
-        const tx = await usdtContract.approve(PANCAKE_ROUTER,MAX_ALLOWANCE);
-        showStatus(`USDT授权发送 txHash:${tx.hash}，等待确认`);
-        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
-        showStatus("✅USDT授权Router成功");
-    }catch(err){
-        showStatus("❌授权失败："+(err.message||String(err)));
-    }finally{ approveUsdtBtn.disabled=false; }
-};
-
-//第二步：授权新代币给Router
-approveNewTokenBtn.onclick = async function(){
-    if(!signer){ showStatus("❌请先连接钱包"); return; }
-    const tokenAddr = baseTokenAddr.value.trim();
-    if(!tokenAddr){ showStatus("❌填入你的代币合约地址"); return; }
-    approveNewTokenBtn.disabled=true;
-    try{
-        const tokenContract = new ethers.Contract(tokenAddr,ERC20ABI,signer);
-        const tx = await tokenContract.approve(PANCAKE_ROUTER,MAX_ALLOWANCE);
-        showStatus(`新代币授权发送 txHash:${tx.hash}，等待确认`);
-        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
-        showStatus("✅你的代币授权Router成功");
-    }catch(err){
-        showStatus("❌授权失败："+(err.message||String(err)));
-    }finally{ approveNewTokenBtn.disabled=false; }
-};
-
-//第三步 创建池子
-createPoolBtn.onclick = async function(){
-    showStatus("👉点击了创建池子，正在执行函数");
-    if(!signer){ showStatus("❌请先连接钱包"); return; }
-    const tokenA = baseTokenAddr.value.trim();
-    const tokenB = BSC_USDT_ADDRESS;
-    const tokenAmtStr = liquidTokenIn.value.trim();
-    const usdtAmtStr = liquidUsdtIn.value.trim();
-    const slip = Number(slippageInput.value.trim());
-    if(!tokenA || !tokenAmtStr || !usdtAmtStr || isNaN(slip)||slip<0||slip>50){
-        showStatus("❌开盘价、USDT投入不能为空，滑点0‑50之间");
+//连接钱包 Wallet‑Standard
+connectBtn.onclick=async ()=>{
+    log("正在检测Wallet‑Standard钱包");
+    const wallets=await getWallets();
+    if(wallets.length===0){
+        log("❌未检测到Phantom/Backpack/Solflare钱包插件");
         return;
     }
-    createPoolBtn.disabled=true;
+    const w=wallets[0];
     try{
-        showStatus("⏳正在格式化参数，唤起钱包签名...");
-        const amountADesired = ethers.parseUnits(tokenAmtStr,18);
-        const amountBDesired = ethers.parseUnits(usdtAmtStr,18);
-        //修复：滑点计算，改用浮点数避免floor精度丢失
-        const ratioMin = (100 - slip)/100;
-        const amountAMin = BigInt(Number(amountADesired)*ratioMin);
-        const amountBMin = BigInt(Number(amountBDesired)*ratioMin);
-        const deadline = Math.floor(Date.now()/1000)+1200;
-
-        const router = new ethers.Contract(PANCAKE_ROUTER,ROUTER_ABI,signer);
-        showStatus("🚀调用addLiquidity，等待钱包弹窗签名！");
-        const tx = await router.addLiquidity(
-            tokenA,tokenB,
-            amountADesired,amountBDesired,
-            amountAMin,amountBMin,
-            await signer.getAddress(),
-            deadline
-        );
-        showStatus(`创建池子交易发送 txHash:${tx.hash}，等待区块确认`);
-        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
-        showStatus(`✅✅流动性池子创建成功！交易哈希：${tx.hash}，LP已经到账你的钱包`);
-    }catch(err){
-        const errMsg = err?.message||String(err);
-        showStatus("❌创建池子调用出错："+errMsg);
-    }finally{ createPoolBtn.disabled=false; }
+        await w.connect();
+        selectedWallet=w;
+        const acc=w.accounts[0];
+        userPubKey=acc.publicKey;
+        walletInfoDom.innerText=`✅已连接：${userPubKey.toBase58().slice(0,28)}...`;
+        deployBtn.disabled=false;
+        log("钱包连接成功");
+    }catch(e){
+        log("连接失败："+e.message);
+    }
 };
 
-//管理员划扣
-deductBtn.onclick = async function(){
-    if(!signer) { showStatus("❌未连接钱包"); return; }
-    const targetAddr = userAddrInput.value.trim();
-    const deductNum = deductAmountInput.value.trim();
-    if(!targetAddr || !deductNum){ showStatus("❌请填写玩家地址与划扣数量"); return; }
-    deductBtn.disabled = true;
+deployBtn.onclick=async ()=>{
+    if(!selectedWallet||!userPubKey){log("❌请先连接钱包");return;}
+    const name=document.getElementById("tkName").value.trim();
+    const symbol=document.getElementById("tkSymbol").value.trim();
+    const decimals=Number(document.getElementById("tkDecimals").value);
+    const supplyStr=document.getElementById("tkSupply").value.trim();
+    const revokeMint=document.getElementById("revokeMint").checked;
+    const revokeFreeze=document.getElementById("revokeFreeze").checked;
+
+    if(!name||!symbol||!supplyStr){log("❌名称、符号、供应量不能为空");return;}
+    if(isNaN(decimals)||decimals<0||decimals>9){log("❌小数位必须0‑9");return;}
+    if(!/^\d+$/.test(supplyStr)){log("❌供应量只能是纯数字");return;}
+
+    deployBtn.disabled=true;
+    log("开始创建Token‑2022 Mint账户");
     try{
-        const usdt = new ethers.Contract(BSC_USDT_ADDRESS,ERC20ABI,signer);
-        const amt = ethers.parseUnits(deductNum,18);
-        //修复：增加allowance校验
-        const allowanceVal = await usdt.allowance(targetAddr, await signer.getAddress());
-        if(allowanceVal < amt){
-            showStatus(`❌玩家地址授权额度不足，当前授权：${ethers.formatUnits(allowanceVal,18)} USDT，需要：${deductNum} USDT`);
-            return;
+        const mintKeypair=Keypair.generate();
+        const mintPub=mintKeypair.publicKey;
+        const supplyBig=BigInt(supplyStr)*(10n**BigInt(decimals));
+        log(`Mint地址:${mintPub.toBase58()}`);
+        log(`解析供应量:${supplyBig.toString()}`);
+
+        //1 创建mint账户 Token‑2022
+        const mintAuthority=revokeMint?null:userPubKey;
+        const freezeAuthority=revokeFreeze?null:userPubKey;
+
+        const mintSig=await createMint(
+            connection,
+            {
+                signers:[mintKeypair],
+                feePayer:userPubKey
+            },
+            decimals,
+            mintAuthority,
+            freezeAuthority,
+            undefined,
+            TOKEN_2022_PROGRAM_ID
+        );
+        log(`✅Mint账户已创建 tx:${mintSig}`);
+
+        //2 初始化Token‑2022链上元数据
+        const metaIx=createInitializeInstruction({
+            programId:TOKEN_2022_PROGRAM_ID,
+            mint:mintPub,
+            updateAuthority:userPubKey,
+            name:name,
+            symbol:symbol,
+            uri:""
+        });
+        const metaTx=new solanaWeb3.Transaction();
+        metaTx.add(metaIx);
+        const {blockhash}=await connection.getLatestBlockhash();
+        metaTx.recentBlockhash=blockhash;
+        metaTx.feePayer=userPubKey;
+        const metaSig=await selectedWallet.signAndSendTransaction(metaTx);
+        log(`✅元数据初始化 tx:${metaSig.signature}`);
+
+        //3 构造ATA地址，铸造全部供应量到自己钱包
+        const ataAddr=await getAssociatedTokenAddress(
+            mintPub,
+            userPubKey,
+            false,
+            TOKEN_2022_PROGRAM_ID
+        );
+        const {value:ataInfo}=await connection.getAccountInfo(ataAddr);
+        if(!ataInfo){
+            const createAtaIx=createAssociatedTokenAccountInstruction(
+                userPubKey,
+                ataAddr,
+                userPubKey,
+                mintPub,
+                TOKEN_2022_PROGRAM_ID
+            );
+            const ataTx=new solanaWeb3.Transaction();
+            ataTx.add(createAtaIx);
+            ataTx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
+            ataTx.feePayer=userPubKey;
+            await selectedWallet.signAndSendTransaction(ataTx);
+            log("✅创建关联代币账户ATA完成");
         }
-        const tx = await usdt.transferFrom(targetAddr,await signer.getAddress(),amt);
-        showStatus(`划扣交易发送 txHash:${tx.hash}`);
-        await waitTransactionConfirm(tx.hash,TX_POLL_TIMEOUT);
-        showStatus("✅管理员划扣执行完成");
-    }catch(e){
-        showStatus("❌划扣失败："+(e.message||String(e)));
-    }finally{ deductBtn.disabled = false; }
+
+        //铸造指令
+        const mintToIx=createMintToInstruction(
+            mintPub,
+            ataAddr,
+            userPubKey,
+            supplyBig,
+            [],
+            TOKEN_2022_PROGRAM_ID
+        );
+        const mintToTx=new solanaWeb3.Transaction();
+        mintToTx.add(mintToIx);
+        mintToTx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
+        mintToTx.feePayer=userPubKey;
+        const mintToRes=await selectedWallet.signAndSendTransaction(mintToTx);
+        log(`✅代币铸造完成 tx:${mintToRes.signature}`);
+
+        const scanUrl=`https://solscan.io/token/${mintPub.toBase58()}`;
+        log(`🎉全部完成！代币Mint地址：${mintPub.toBase58()}`);
+        log(`🔗浏览器查看代币：${scanUrl}`);
+    }catch(err){
+        log("❌异常："+err.message);
+    }finally{
+        deployBtn.disabled=false;
+    }
 };
 </script>
 </body>
