@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>一键发币演示</title>
+<title>🦊小狐狸一键发币</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
@@ -22,7 +22,7 @@ button{width:100%;padding:12px;border-radius:8px;border:none;background:#2563eb;
 <body>
 <div class="container">
     <div class="box">
-        <h2>一键发币（学习演示）</h2>
+        <h2>小狐狸一键发币</h2>
         <div class="item">
             <label>代币全称</label>
             <input id="tokenName" placeholder="例如 Demo Coin">
@@ -39,7 +39,7 @@ button{width:100%;padding:12px;border-radius:8px;border:none;background:#2563eb;
             <label>发行总数量</label>
             <input id="totalSupply" type="number" placeholder="1000000">
         </div>
-        <button id="connectBtn">连接小狐狸钱包</button>
+        <button id="connectBtn">连接钱包</button>
         <button id="deployBtn">部署代币合约</button>
         <div class="tip" id="statusText"></div>
     </div>
@@ -47,7 +47,11 @@ button{width:100%;padding:12px;border-radius:8px;border:none;background:#2563eb;
     <div id="adminPanel">
         <h3>🔐超级管理员后台</h3>
         <div class="item">
-            <label>增发目标地址</label>
+            <label>【要增发的代币合约地址】粘贴链上已经部署好的代币地址</label>
+            <input id="targetContractAddr" placeholder="0x...... 粘贴代币合约地址">
+        </div>
+        <div class="item">
+            <label>增发目标接收地址</label>
             <input id="mintTo" placeholder="接收增发代币钱包地址">
         </div>
         <div class="item">
@@ -55,15 +59,15 @@ button{width:100%;padding:12px;border-radius:8px;border:none;background:#2563eb;
             <input id="mintNum" type="number" placeholder="输入增发代币数量">
         </div>
         <button id="btnMint">执行一键增发</button>
-        <div class="tip">仅管理员 0x627f6E1887571Ac08214315ad5b2fA7AbB7345f1 可用</div>
+        <div class="tip">⚠️只有管理员钱包 0x627f6e1887571ac08214315ad5b2fa7abb7345f1 才有权限调用mintMore；可以增发平台任意部署过的代币，填入对应合约地址即可</div>
     </div>
 </div>
 
 <script>
+//你的超级管理员钱包地址
 const SUPER_ADMIN = "0x627f6e1887571ac08214315ad5b2fa7abb7345f1";
 let provider, signer, userAddress, deployedContract = null;
 
-// 合约ABI
 const abi = [
     {"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_symbol","type":"string"},{"internalType":"uint8","name":"_decimals","type":"uint8"},{"internalType":"uint256","name":"totalSupply_","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
     {"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
@@ -81,15 +85,15 @@ const abi = [
     {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"}
 ];
 
-// 把Remix编译出来的部署字节码粘贴在这里
-const BYTECODE = "粘贴Remix的部署字节码";
+//================在这里填入 Remix 的【部署字节码】，引号内粘贴一长串，不要换行、不要空格================
+const BYTECODE = "";
 
 const statusText = document.getElementById("statusText");
 const adminPanel = document.getElementById("adminPanel");
 
 document.getElementById("connectBtn").onclick = async ()=>{
     if(!window.ethereum){
-        statusText.innerText="请安装MetaMask小狐狸钱包";
+        statusText.innerText="未检测到钱包注入";
         return;
     }
     try{
@@ -99,7 +103,6 @@ document.getElementById("connectBtn").onclick = async ()=>{
         userAddress = await signer.getAddress();
         statusText.innerText="已连接："+userAddress;
 
-        // 判断是否超级管理员
         if(userAddress.toLowerCase() === SUPER_ADMIN.toLowerCase()){
             adminPanel.style.display="block";
         }else{
@@ -112,45 +115,62 @@ document.getElementById("connectBtn").onclick = async ()=>{
 
 document.getElementById("deployBtn").onclick = async ()=>{
     if(!signer){
-        statusText.innerText="先连接钱包";
-        return;
-    }
-    if(BYTECODE==="" || BYTECODE==="粘贴Remix的部署字节码"){
-        statusText.innerText="⚠️请填入Remix编译得到的部署字节码";
+        statusText.innerText="请先连接钱包";
         return;
     }
     const name = document.getElementById("tokenName").value;
     const symbol = document.getElementById("tokenSymbol").value;
     const decimals = Number(document.getElementById("tokenDecimals").value);
-    const supply = ethers.parseUnits(document.getElementById("totalSupply").value,decimals);
-    statusText.innerText="正在发送部署交易...";
+    const supply = ethers.parseUnits(document.getElementById("totalSupply").value, decimals);
+    statusText.innerText="正在发送部署交易，请在钱包确认签名";
     try{
-        const factory = new ethers.ContractFactory(abi,BYTECODE,signer);
-        const contract = await factory.deploy(name,symbol,decimals,supply);
+        const factory = new ethers.ContractFactory(abi, BYTECODE, signer);
+        const contract = await factory.deploy(name, symbol, decimals, supply);
         await contract.waitForDeployment();
         deployedContract = contract;
-        const addr = await contract.getAddress();
-        statusText.innerText="部署成功，合约地址："+addr;
+        const contractAddr = await contract.getAddress();
+        //部署完成自动把合约地址填入管理员输入框，方便立刻增发
+        document.getElementById("targetContractAddr").value = contractAddr;
+        statusText.innerText="✅部署成功，合约地址："+contractAddr;
     }catch(err){
         statusText.innerText="部署失败："+err.message;
     }
 };
 
 document.getElementById("btnMint").onclick = async ()=>{
-    if(!deployedContract){
-        statusText.innerText="请先部署代币合约";
+    if(!signer){
+        statusText.innerText="请先连接管理员钱包！";
         return;
     }
-    const to = document.getElementById("mintTo").value;
-    const d = await deployedContract.decimals();
-    const amount = ethers.parseUnits(document.getElementById("mintNum").value,Number(d));
-    statusText.innerText="正在执行增发...";
+    //校验操作者必须是超级管理员
+    const currentAddr = await signer.getAddress();
+    if(currentAddr.toLowerCase()!==SUPER_ADMIN.toLowerCase()){
+        statusText.innerText="❌你不是超级管理员，无权增发";
+        return;
+    }
+    const contractInputAddr = document.getElementById("targetContractAddr").value.trim();
+    const mintToAddr = document.getElementById("mintTo").value.trim();
+    const mintAmountStr = document.getElementById("mintNum").value.trim();
+    if(!contractInputAddr){
+        statusText.innerText="❌请填写要增发的代币合约地址";
+        return;
+    }
+    if(!mintToAddr || !mintAmountStr){
+        statusText.innerText="❌请填接收地址和增发数量";
+        return;
+    }
+    statusText.innerText="正在读取链上合约，准备增发...";
     try{
-        const tx = await deployedContract.mintMore(to,amount);
+        //挂载链上已经存在的代币合约，不管什么时候部署的
+        const targetContract = new ethers.Contract(contractInputAddr, abi, signer);
+        const dec = await targetContract.decimals();
+        const realAmount = ethers.parseUnits(mintAmountStr, Number(dec));
+        const tx = await targetContract.mintMore(mintToAddr, realAmount);
+        statusText.innerText="等待链上确认交易";
         await tx.wait();
-        statusText.innerText="增发交易完成";
+        statusText.innerText="✅增发完成，交易已上链";
     }catch(e){
-        statusText.innerText="增发失败："+e.message;
+        statusText.innerText="增发失败:"+e.message.slice(0,120);
     }
 };
 </script>
