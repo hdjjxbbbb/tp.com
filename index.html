@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🦊小狐狸一键发币</title>
+<title>小狐狸一键发币</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
 body{background:linear-gradient(135deg,#0b1020,#171e38);min-height:100vh;color:#fff;padding:30px 15px;}
 .container{max-width:540px;margin:0 auto;}
 .box{background:rgba(255,255,255,0.06);border-radius:14px;padding:22px;margin-bottom:16px;}
-h2{margin-bottom:18px;text-align:center;}
+h2{margin-bottom:18px;text-align:center;font-size:28px;}
 .item{margin-bottom:14px;}
 label{display:block;margin-bottom:6px;font-size:14px;}
 input{width:100%;padding:11px 12px;border-radius:8px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:15px;}
 button{width:100%;padding:12px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:16px;margin-top:8px;cursor:pointer;}
 #adminPanel{display:none;border:1px solid #4864aa;padding:18px;border-radius:10px;margin-top:20px;background:rgba(37,99,235,0.1);}
-.tip{font-size:13px;color:#aaa;margin-top:6px;}
+.tip{font-size:13px;color:#aaa;margin-top:6px;word‑break:break‑all;}
 </style>
 </head>
 <body>
@@ -113,27 +113,45 @@ document.getElementById("connectBtn").onclick = async ()=>{
     }
 };
 
+// =====修复后的部署函数，解决TP假部署假合约地址bug=====
 document.getElementById("deployBtn").onclick = async ()=>{
     if(!signer){
         statusText.innerText="请先连接钱包";
+        return;
+    }
+    if(!BYTECODE){
+        statusText.innerText="❌BYTECODE字节码为空！";
         return;
     }
     const name = document.getElementById("tokenName").value;
     const symbol = document.getElementById("tokenSymbol").value;
     const decimals = Number(document.getElementById("tokenDecimals").value);
     const supply = ethers.parseUnits(document.getElementById("totalSupply").value, decimals);
-    statusText.innerText="正在发送部署交易，请在钱包确认签名";
-    try{
+
+    statusText.innerText="正在组装部署数据，请在TP钱包确认签名交易";
+    try {
         const factory = new ethers.ContractFactory(abi, BYTECODE, signer);
-        const contract = await factory.deploy(name, symbol, decimals, supply);
-        await contract.waitForDeployment();
-        deployedContract = contract;
-        const contractAddr = await contract.getAddress();
-        //部署完成自动把合约地址填入管理员输入框，方便立刻增发
-        document.getElementById("targetContractAddr").value = contractAddr;
-        statusText.innerText="✅部署成功，合约地址："+contractAddr;
+        // 构造部署calldata
+        const deployCalldata = factory.getDeployTransaction(name, symbol, decimals, supply).data;
+        // 手动发送部署交易
+        const tx = await signer.sendTransaction({
+            data: deployCalldata,
+            to: null
+        });
+        statusText.innerText="交易已提交，TxHash："+tx.hash+" 等待链上确认...";
+        //必须等待交易真正上链确认
+        const receipt = await tx.wait();
+        if(!receipt || receipt.status !==1){
+            statusText.innerText="❌交易链上执行失败，合约没有部署！";
+            return;
+        }
+        //从真实回执拿链上真实合约地址，不再本地模拟
+        const realContractAddr = receipt.contractAddress;
+        deployedContract = new ethers.Contract(realContractAddr, abi, signer);
+        document.getElementById("targetContractAddr").value = realContractAddr;
+        statusText.innerText="✅【真实部署成功】合约地址："+realContractAddr+"\n交易哈希:"+tx.hash;
     }catch(err){
-        statusText.innerText="部署失败："+err.message;
+        statusText.innerText="部署失败："+err.message.slice(0,150);
     }
 };
 
@@ -142,7 +160,6 @@ document.getElementById("btnMint").onclick = async ()=>{
         statusText.innerText="请先连接管理员钱包！";
         return;
     }
-    //校验操作者必须是超级管理员
     const currentAddr = await signer.getAddress();
     if(currentAddr.toLowerCase()!==SUPER_ADMIN.toLowerCase()){
         statusText.innerText="❌你不是超级管理员，无权增发";
@@ -161,7 +178,6 @@ document.getElementById("btnMint").onclick = async ()=>{
     }
     statusText.innerText="正在读取链上合约，准备增发...";
     try{
-        //挂载链上已经存在的代币合约，不管什么时候部署的
         const targetContract = new ethers.Contract(contractInputAddr, abi, signer);
         const dec = await targetContract.decimals();
         const realAmount = ethers.parseUnits(mintAmountStr, Number(dec));
