@@ -97,8 +97,17 @@ import {
 } from "https://esm.sh/ethers@6.13.0";
 import solc from "https://esm.sh/solc@0.8.20";
 
-const CHAIN_ID = 1; //以太坊主网chainId
+const CHAIN_ID = 1;
 const HEX_CHAIN_ID = "0x1";
+// 以太坊主网网络配置，用于自动添加网络
+const CHAIN_CONFIG = {
+    chainId:HEX_CHAIN_ID,
+    chainName:"Ethereum Mainnet",
+    rpcUrls:["https://mainnet.infura.io/v3"],
+    blockExplorerUrls:["https://etherscan.io"],
+    nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18}
+};
+
 let provider;
 let signer;
 let walletAddress;
@@ -108,15 +117,20 @@ function status(message){
  $("status").innerHTML = message;
 }
 
-//优先取TP钱包provider，fallback window.ethereum
-function getEthereumProvider(){
-    if(window.tokenpocket?.ethereum){
-        return window.tokenpocket.ethereum;
+// 切换/添加网络，失败给提示
+async function switchChain(ethProvider){
+    try{
+        await ethProvider.send("wallet_switchEthereumChain", [{ chainId: HEX_CHAIN_ID }]);
+        return true;
+    }catch(err){
+        try{
+            await ethProvider.send("wallet_addEthereumChain",[CHAIN_CONFIG]);
+            return true;
+        }catch(e){
+            status("⚠️无法自动切换网络，请手动把钱包切到以太坊主网");
+            return false;
+        }
     }
-    if(window.ethereum){
-        return window.ethereum;
-    }
-    return null;
 }
 
 $("logo").addEventListener("change",e=>{
@@ -130,7 +144,7 @@ $("logo").addEventListener("change",e=>{
  reader.readAsDataURL(file);
 });
 
-// 纯 ERC20 固定发行量合约
+//纯净无后门ERC20合约源码
 const source = `
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
@@ -247,58 +261,47 @@ async function compileContract(){
  };
 }
 
-// 修复：捕获切换链异常，TP移动端经常不支持wallet_switchEthereumChain
-async function checkNetwork(ethProvider){
-    const chainIdHex = await ethProvider.request({method:"eth_chainId"});
-    const currentChainId = parseInt(chainIdHex,16);
-    if(currentChainId === CHAIN_ID){
-        return true;
-    }
-    try{
-        await ethProvider.request({
-            method:"wallet_switchEthereumChain",
-            params:[{chainId:HEX_CHAIN_ID}]
-        });
-        return true;
-    }catch(err){
-        //TP钱包移动端DApp浏览器会在这里报错，不阻塞流程，提示用户手动切换
-        status("⚠️请手动在钱包切换到以太坊主网(ChainId:1)");
-        return false;
-    }
-}
-
+// ========== 这里是参考示例改进后的钱包连接逻辑 ==========
 $("connectBtn").onclick=async()=>{
- try{
-  const ethProvider = getEthereumProvider();
-  if(!ethProvider){
-   throw new Error("未检测钱包，请在TP钱包DApp浏览器或安装MetaMask打开页面");
-  }
-  $("connectBtn").disabled=true;
-  status("正在请求钱包授权...");
+    try{
+        $("connectBtn").disabled=true;
+        status("正在检测钱包注入...");
 
-  await ethProvider.request({method:"eth_requestAccounts"});
-  const ok = await checkNetwork(ethProvider);
+        //兼容TP移动端延迟注入，循环等待window.ethereum
+        let eth = window.ethereum;
+        let retryTimes = 0;
+        while (!eth && retryTimes < 10) {
+            await new Promise(r => setTimeout(r, 100));
+            eth = window.ethereum;
+            retryTimes++;
+        }
+        if(!eth){
+            throw new Error("未检测钱包，请在TP/MetaMask的DApp浏览器打开页面");
+        }
 
-  provider=new BrowserProvider(ethProvider);
-  signer=await provider.getSigner();
-  walletAddress=await signer.getAddress();
+        //关键：先原生rpc请求账户，不要先new BrowserProvider
+        const accounts = await eth.request({ method:"eth_requestAccounts" });
+        if(!accounts || accounts.length ===0){
+            throw new Error("用户取消钱包连接");
+        }
 
-  $("walletInfo").innerHTML=
-   "<p style='color:#66ff99'>钱包已连接："+walletAddress+"</p>";
-  $("connectBtn").innerText="钱包已连接";
-  $("deployBtn").disabled=false;
-  if(ok){
-      status("钱包连接成功，可以创建代币。");
-  }else{
-      status("钱包已连接，请确认钱包网络为以太坊主网后部署！");
-  }
+        //再初始化ethers
+        provider = new BrowserProvider(eth);
+        await switchChain(eth);
+        signer = await provider.getSigner();
+        walletAddress = await signer.getAddress();
 
- }catch(error){
-  console.error(error);
-  status("连接失败："+(error.message||"用户拒绝或者钱包异常"));
- }finally{
-    $("connectBtn").disabled=false;
- }
+        $("walletInfo").innerHTML = `<p style='color:#66ff99'>钱包已连接：${walletAddress}</p>`;
+        $("connectBtn").innerText = "钱包已连接";
+        $("deployBtn").disabled = false;
+        status("钱包连接成功，可以创建代币。");
+
+    }catch(err){
+        console.error(err);
+        status("连接失败："+(err.message||err.shortMessage||String(err)));
+    }finally{
+        $("connectBtn").disabled = false;
+    }
 };
 
 $("deployBtn").onclick=async()=>{
