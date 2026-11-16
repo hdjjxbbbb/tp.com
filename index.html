@@ -1,10 +1,9 @@
-<<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天鹅一键发币</title>
-
 <style>
 *{box-sizing:border-box}
 body{
@@ -45,7 +44,7 @@ button{
 }
 .connect{background:#3b63e9;color:white}
 .deploy{background:#f7c04a;color:#111}
-button:disabled{opacity:.5}
+button:disabled{opacity:.5;cursor:not-allowed;}
 .status{
  margin-top:18px;
  padding:14px;
@@ -64,79 +63,70 @@ button:disabled{opacity:.5}
 }
 </style>
 </head>
-
 <body>
 <div class="container">
-
 <h1>🦢 天鹅一键发币</h1>
-
 <div class="card">
-
 <button class="connect" id="connectBtn">
-连接 MetaMask 钱包
+连接 MetaMask / TP钱包
 </button>
-
 <div id="walletInfo"></div>
-
 <label>代币全称 Name</label>
 <input id="tokenName" placeholder="例如 Swan Coin">
-
 <label>代币符号 Symbol</label>
 <input id="tokenSymbol" placeholder="例如 SWAN">
-
 <label>初始发行量（不带小数）</label>
 <input id="supply" type="number"
 placeholder="例如 100000000">
-
 <label>代币 Logo</label>
 <input id="logo" type="file" accept="image/*">
-
 <img id="preview">
-
 <button class="deploy" id="deployBtn" disabled>
 一键部署代币
 </button>
-
 <div class="status" id="status">
 请先连接钱包。
 </div>
-
 </div>
 </div>
-
 <script type="module">
-
 import {
  BrowserProvider,
  ContractFactory,
  parseUnits
 } from "https://esm.sh/ethers@6.13.0";
-
 import solc from "https://esm.sh/solc@0.8.20";
 
-const CHAIN_ID = 1;
-
+const CHAIN_ID = 1; //以太坊主网chainId
+const HEX_CHAIN_ID = "0x1";
 let provider;
 let signer;
 let walletAddress;
-
 const $ = id => document.getElementById(id);
 
 function status(message){
  $("status").innerHTML = message;
 }
 
+//优先取TP钱包provider，fallback window.ethereum
+function getEthereumProvider(){
+    if(window.tokenpocket?.ethereum){
+        return window.tokenpocket.ethereum;
+    }
+    if(window.ethereum){
+        return window.ethereum;
+    }
+    return null;
+}
+
 $("logo").addEventListener("change",e=>{
  const file=e.target.files[0];
  if(!file)return;
-
  const reader=new FileReader();
-
  reader.onload=event=>{
   $("preview").src=event.target.result;
   $("preview").style.display="block";
  };
-
  reader.readAsDataURL(file);
 });
 
@@ -144,33 +134,24 @@ $("logo").addEventListener("change",e=>{
 const source = `
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
-
 contract SwanToken {
-
     string public name;
     string public symbol;
-
     uint8 public constant decimals = 18;
-
     uint256 public totalSupply;
-
     mapping(address => uint256) public balanceOf;
-
     mapping(address => mapping(address => uint256))
         public allowance;
-
     event Transfer(
         address indexed from,
         address indexed to,
         uint256 value
     );
-
     event Approval(
         address indexed owner,
         address indexed spender,
         uint256 value
     );
-
     constructor(
         string memory tokenName,
         string memory tokenSymbol,
@@ -178,92 +159,67 @@ contract SwanToken {
     ) {
         name = tokenName;
         symbol = tokenSymbol;
-
         totalSupply = initialSupply;
-
         balanceOf[msg.sender] = initialSupply;
-
         emit Transfer(
             address(0),
             msg.sender,
             initialSupply
         );
     }
-
     function transfer(
         address to,
         uint256 amount
     ) external returns (bool) {
-
         require(to != address(0), "Invalid address");
         require(balanceOf[msg.sender] >= amount, "Insufficient balance");
-
         balanceOf[msg.sender] -= amount;
         balanceOf[to] += amount;
-
         emit Transfer(msg.sender, to, amount);
-
         return true;
     }
-
     function approve(
         address spender,
         uint256 amount
     ) external returns (bool) {
-
         allowance[msg.sender][spender] = amount;
-
         emit Approval(msg.sender, spender, amount);
-
         return true;
     }
-
     function transferFrom(
         address from,
         address to,
         uint256 amount
     ) external returns (bool) {
-
         require(to != address(0), "Invalid address");
         require(balanceOf[from] >= amount, "Insufficient balance");
-
         uint256 allowed = allowance[from][msg.sender];
-
         require(allowed >= amount, "Insufficient allowance");
-
         if (allowed != type(uint256).max) {
             allowance[from][msg.sender] = allowed - amount;
         }
-
         balanceOf[from] -= amount;
         balanceOf[to] += amount;
-
         emit Transfer(from, to, amount);
-
         return true;
     }
 }
 `;
 
 async function compileContract(){
-
  status("正在编译 ERC20 智能合约，请稍候...");
-
  const input={
   language:"Solidity",
-
   sources:{
    "SwanToken.sol":{
     content:source
    }
   },
-
   settings:{
    optimizer:{
     enabled:true,
     runs:200
    },
-
    outputSelection:{
     "*":{
      "*":["abi","evm.bytecode.object"]
@@ -271,113 +227,100 @@ async function compileContract(){
    }
   }
  };
-
  const output=JSON.parse(solc.compile(JSON.stringify(input)));
-
  const errors=output.errors || [];
-
  const fatal=errors.filter(
   e=>e.severity==="error"
  );
-
  if(fatal.length){
   throw new Error(
    fatal.map(e=>e.formattedMessage).join("\n")
   );
  }
-
  const contract=output.contracts["SwanToken.sol"]["SwanToken"];
-
  if(!contract.evm.bytecode.object){
   throw new Error("合约编译失败");
  }
-
  return {
   abi:contract.abi,
   bytecode:"0x"+contract.evm.bytecode.object
  };
 }
 
-async function switchNetwork(){
-
- const chainId=await window.ethereum.request({
-  method:"eth_chainId"
- });
-
- if(Number(chainId)===CHAIN_ID)return;
-
- await window.ethereum.request({
-  method:"wallet_switchEthereumChain",
-  params:[{chainId:"0x1"}]
- });
+// 修复：捕获切换链异常，TP移动端经常不支持wallet_switchEthereumChain
+async function checkNetwork(ethProvider){
+    const chainIdHex = await ethProvider.request({method:"eth_chainId"});
+    const currentChainId = parseInt(chainIdHex,16);
+    if(currentChainId === CHAIN_ID){
+        return true;
+    }
+    try{
+        await ethProvider.request({
+            method:"wallet_switchEthereumChain",
+            params:[{chainId:HEX_CHAIN_ID}]
+        });
+        return true;
+    }catch(err){
+        //TP钱包移动端DApp浏览器会在这里报错，不阻塞流程，提示用户手动切换
+        status("⚠️请手动在钱包切换到以太坊主网(ChainId:1)");
+        return false;
+    }
 }
 
 $("connectBtn").onclick=async()=>{
-
  try{
-
-  if(!window.ethereum){
-   throw new Error("请安装 MetaMask 钱包");
+  const ethProvider = getEthereumProvider();
+  if(!ethProvider){
+   throw new Error("未检测钱包，请在TP钱包DApp浏览器或安装MetaMask打开页面");
   }
+  $("connectBtn").disabled=true;
+  status("正在请求钱包授权...");
 
-  status("正在连接钱包...");
+  await ethProvider.request({method:"eth_requestAccounts"});
+  const ok = await checkNetwork(ethProvider);
 
-  await window.ethereum.request({
-   method:"eth_requestAccounts"
-  });
-
-  await switchNetwork();
-
-  provider=new BrowserProvider(window.ethereum);
-
+  provider=new BrowserProvider(ethProvider);
   signer=await provider.getSigner();
-
   walletAddress=await signer.getAddress();
 
   $("walletInfo").innerHTML=
    "<p style='color:#66ff99'>钱包已连接："+walletAddress+"</p>";
-
   $("connectBtn").innerText="钱包已连接";
-
   $("deployBtn").disabled=false;
-
-  status("钱包连接成功，可以创建代币。");
+  if(ok){
+      status("钱包连接成功，可以创建代币。");
+  }else{
+      status("钱包已连接，请确认钱包网络为以太坊主网后部署！");
+  }
 
  }catch(error){
-
-  status("连接失败："+error.message);
-
+  console.error(error);
+  status("连接失败："+(error.message||"用户拒绝或者钱包异常"));
+ }finally{
+    $("connectBtn").disabled=false;
  }
 };
 
 $("deployBtn").onclick=async()=>{
-
  try{
-
   if(!signer){
    throw new Error("请先连接钱包");
   }
-
   const name=$("tokenName").value.trim();
   const symbol=$("tokenSymbol").value.trim();
   const supply=$("supply").value.trim();
-
   if(!name || !symbol || !supply){
    throw new Error("请填写完整代币信息");
   }
-
   if(name.length>64 || symbol.length>16){
    throw new Error("代币名称或符号过长");
   }
-
   if(!/^[1-9][0-9]*$/.test(supply)){
    throw new Error("发行量必须是正整数");
   }
-
   if(supply.length>30){
    throw new Error("发行量超出允许范围");
   }
-
   if(!window.confirm(
    "请确认代币信息：\n"+
    "名称："+name+"\n"+
@@ -388,37 +331,27 @@ $("deployBtn").onclick=async()=>{
   )){
    return;
   }
-
   $("deployBtn").disabled=true;
-
   const compiled=await compileContract();
-
   status("合约编译成功，正在创建部署交易...");
-
   const initialSupply=parseUnits(supply,18);
-
   const factory=new ContractFactory(
    compiled.abi,
    compiled.bytecode,
    signer
   );
-
   const contract=await factory.deploy(
    name,
    symbol,
    initialSupply
   );
-
   status(
    "部署交易已提交。<br>"+
    "交易哈希：<br>"+
    contract.deploymentTransaction().hash
   );
-
   await contract.waitForDeployment();
-
   const address=await contract.getAddress();
-
   status(
    "🎉 代币部署成功！<br><br>"+
    "代币名称："+name+"<br>"+
@@ -431,19 +364,13 @@ $("deployBtn").onclick=async()=>{
    "<br><br>"+
    '<a style="color:#66ff99" target="_blank" href="https://etherscan.io/tx/'+contract.deploymentTransaction().hash+'">查看部署交易</a>'
   );
-
  }catch(error){
-
+  console.error(error);
   status("部署失败："+(error.shortMessage||error.message));
-
  }finally{
-
   $("deployBtn").disabled=false;
-
  }
-
 };
-
 </script>
 </body>
 </html>
