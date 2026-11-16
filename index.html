@@ -89,17 +89,12 @@ placeholder="例如 100000000">
 </div>
 </div>
 </div>
-<script type="module">
-import {
- BrowserProvider,
- ContractFactory,
- parseUnits
-} from "https://esm.sh/ethers@6.13.0";
-import solc from "https://esm.sh/solc@0.8.20";
-
+<!-- 注意：改回普通script，不使用type="module"，解决MetaMask插件注入时序bug -->
+<script src="https://esm.sh/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<script src="https://esm.sh/solc@0.8.20/dist/solc.min.js"></script>
+<script>
 const CHAIN_ID = 1;
 const HEX_CHAIN_ID = "0x1";
-// 以太坊主网网络配置，用于自动添加网络
 const CHAIN_CONFIG = {
     chainId:HEX_CHAIN_ID,
     chainName:"Ethereum Mainnet",
@@ -115,19 +110,33 @@ const $ = id => document.getElementById(id);
 
 function status(message){
  $("status").innerHTML = message;
+ console.log("[状态]",message);
 }
 
-// 切换/添加网络，失败给提示
+// 获取provider，优先TP，fallback MetaMask window.ethereum
+function getProvider(){
+    if(window.tokenpocket?.ethereum){
+        return window.tokenpocket.ethereum;
+    }
+    if(window.ethereum){
+        return window.ethereum;
+    }
+    return null;
+}
+
+// 网络切换逻辑
 async function switchChain(ethProvider){
     try{
-        await ethProvider.send("wallet_switchEthereumChain", [{ chainId: HEX_CHAIN_ID }]);
+        await ethProvider.request({method:"wallet_switchEthereumChain", params:[{chainId:HEX_CHAIN_ID}]});
         return true;
     }catch(err){
+        console.warn("切换链失败",err);
+        // 用户拒绝切换 / 链不存在，尝试添加网络
         try{
-            await ethProvider.send("wallet_addEthereumChain",[CHAIN_CONFIG]);
+            await ethProvider.request({method:"wallet_addEthereumChain", params:[CHAIN_CONFIG]});
             return true;
         }catch(e){
-            status("⚠️无法自动切换网络，请手动把钱包切到以太坊主网");
+            status("⚠️无法自动切换网络，请手动在钱包切换到以太坊主网(ChainId:1)");
             return false;
         }
     }
@@ -261,32 +270,35 @@ async function compileContract(){
  };
 }
 
-// ========== 这里是参考示例改进后的钱包连接逻辑 ==========
+// 钱包连接主逻辑
 $("connectBtn").onclick=async()=>{
     try{
         $("connectBtn").disabled=true;
-        status("正在检测钱包注入...");
+        status("正在检测钱包...");
 
-        //兼容TP移动端延迟注入，循环等待window.ethereum
-        let eth = window.ethereum;
+        // 循环等待钱包provider注入（TP移动端延迟注入兼容）
+        let eth = null;
         let retryTimes = 0;
-        while (!eth && retryTimes < 10) {
-            await new Promise(r => setTimeout(r, 100));
-            eth = window.ethereum;
+        while (!eth && retryTimes < 12) {
+            eth = getProvider();
+            if(eth) break;
+            await new Promise(r => setTimeout(r, 120));
             retryTimes++;
         }
-        if(!eth){
-            throw new Error("未检测钱包，请在TP/MetaMask的DApp浏览器打开页面");
-        }
 
-        //关键：先原生rpc请求账户，不要先new BrowserProvider
+        if(!eth){
+            throw new Error("未检测到钱包扩展，请确认MetaMask已安装或在TP内置浏览器打开");
+        }
+        console.log("检测到钱包provider",eth);
+
+        // 第一步原生调用唤起授权弹窗（关键！顺序不能调换）
         const accounts = await eth.request({ method:"eth_requestAccounts" });
         if(!accounts || accounts.length ===0){
             throw new Error("用户取消钱包连接");
         }
 
-        //再初始化ethers
-        provider = new BrowserProvider(eth);
+        // 第二步初始化ethers6 BrowserProvider
+        provider = new ethers.BrowserProvider(eth);
         await switchChain(eth);
         signer = await provider.getSigner();
         walletAddress = await signer.getAddress();
@@ -294,11 +306,16 @@ $("connectBtn").onclick=async()=>{
         $("walletInfo").innerHTML = `<p style='color:#66ff99'>钱包已连接：${walletAddress}</p>`;
         $("connectBtn").innerText = "钱包已连接";
         $("deployBtn").disabled = false;
-        status("钱包连接成功，可以创建代币。");
+        status("✅钱包连接成功，可以创建代币。");
 
     }catch(err){
-        console.error(err);
-        status("连接失败："+(err.message||err.shortMessage||String(err)));
+        console.error("连接异常",err);
+        // 4001 用户拒绝签名/授权
+        if(err.code === 4001){
+            status("❌用户拒绝钱包授权，请重新点击连接");
+        }else{
+            status("连接失败："+(err.message||String(err)));
+        }
     }finally{
         $("connectBtn").disabled = false;
     }
@@ -337,8 +354,8 @@ $("deployBtn").onclick=async()=>{
   $("deployBtn").disabled=true;
   const compiled=await compileContract();
   status("合约编译成功，正在创建部署交易...");
-  const initialSupply=parseUnits(supply,18);
-  const factory=new ContractFactory(
+  const initialSupply=ethers.parseUnits(supply,18);
+  const factory=new ethers.ContractFactory(
    compiled.abi,
    compiled.bytecode,
    signer
