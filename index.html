@@ -1,436 +1,666 @@
-<!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>一键发币 - Robinhood Chain</title>
-    <!-- 修复：使用稳定可靠的 cdnjs 源 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
+<title>Robinhood Chain 一键发币</title>
 
-        .card {
-            background: white;
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 
-        h1 {
-            font-size: 1.4rem;
-            text-align: center;
-            margin-bottom: 8px;
-            color: #1a1a1a;
-            font-weight: 700;
-        }
+<script src="https://binaries.soliditylang.org/bin/soljson-v0.8.24+commit.e11b9ed9.js"></script>
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            font-size: 0.85rem;
-            margin-bottom: 24px;
-        }
+<style>
+* {
+    box-sizing: border-box;
+}
 
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #333;
-            font-size: 0.9rem;
-        }
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f5f8;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 16px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-            outline: none;
-            background: #fafafa;
-        }
+.card {
+    width: 100%;
+    max-width: 480px;
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 5px 25px rgba(0,0,0,.08);
+}
 
-        input:focus {
-            border-color: #0052ff;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.1);
-        }
+h1 {
+    text-align: center;
+    font-size: 25px;
+}
 
-        button {
-            width: 100%;
-            padding: 14px;
-            background: #0052ff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s, opacity 0.2s;
-            margin-top: 4px;
-        }
+.subtitle {
+    text-align: center;
+    color: #777;
+    margin-bottom: 25px;
+}
 
-        button:hover:not(:disabled) {
-            background: #0041cc;
-        }
+label {
+    display: block;
+    margin: 14px 0 7px;
+    font-weight: bold;
+}
 
-        button:disabled {
-            background: #a0b4e8;
-            cursor: not-allowed;
-        }
+input {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
 
-        #deployBtn {
-            background: #00a86b;
-            margin-top: 12px;
-        }
+button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 9px;
+    margin-top: 14px;
+    background: #0052ff;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
 
-        #deployBtn:hover:not(:disabled) {
-            background: #008c59;
-        }
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
 
-        .status {
-            margin-top: 20px;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            word-break: break-all;
-            display: none;
-        }
+.deploy {
+    background: #00a86b;
+}
 
-        .status.info {
-            display: block;
-            background: #e7f0ff;
-            color: #0052ff;
-            border-left: 4px solid #0052ff;
-        }
+.info {
+    background: #f5f7fa;
+    padding: 13px;
+    border-radius: 9px;
+    margin: 15px 0;
+    font-size: 13px;
+    word-break: break-all;
+}
 
-        .status.success {
-            display: block;
-            background: #e6f7e6;
-            color: #1e7e34;
-            border-left: 4px solid #28a745;
-        }
+.status {
+    display: none;
+    padding: 14px;
+    margin-top: 18px;
+    border-radius: 9px;
+    line-height: 1.7;
+    word-break: break-all;
+    font-size: 13px;
+}
 
-        .status.error {
-            display: block;
-            background: #ffeaea;
-            color: #b02a37;
-            border-left: 4px solid #dc3545;
-        }
+.success {
+    display: block;
+    background: #e5f8ec;
+    color: #16753a;
+}
 
-        .wallet-info {
-            font-size: 0.85rem;
-            color: #555;
-            background: #f8f9fa;
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            border: 1px solid #eee;
-        }
+.error {
+    display: block;
+    background: #ffeaea;
+    color: #c62828;
+}
 
-        .wallet-info span {
-            font-family: monospace;
-            word-break: break-all;
-        }
+.loading {
+    display: block;
+    background: #e8f0ff;
+    color: #0052ff;
+}
 
-        .note {
-            font-size: 0.75rem;
-            color: #888;
-            text-align: center;
-            margin-top: 16px;
-        }
-    </style>
+a {
+    color: #0052ff;
+    word-break: break-all;
+}
+
+.note {
+    text-align: center;
+    color: #888;
+    font-size: 12px;
+    margin-top: 20px;
+}
+</style>
 </head>
+
 <body>
-    <div class="card">
-        <h1>🚀 一键发币</h1>
-        <p class="subtitle">Robinhood Chain (Chain ID: 4663)</p>
 
-        <div class="wallet-info" id="walletInfo">
-            <span>👛 钱包: <span id="walletAddress">未连接</span></span>
-            <span>🌐 网络: <span id="networkName">未知</span></span>
-        </div>
+<div class="card">
 
-        <label for="tokenName">代币名称 (Name)</label>
-        <input type="text" id="tokenName" placeholder="例如: 我的代币" value="Robinhood Token" />
+<h1>🚀 一键发币</h1>
 
-        <label for="tokenSymbol">代币符号 (Symbol)</label>
-        <input type="text" id="tokenSymbol" placeholder="例如: RHT" value="RHT" />
+<p class="subtitle">
+Robinhood Chain ERC-20 Token Creator
+</p>
 
-        <label for="totalSupply">总供应量 (Total Supply)</label>
-        <input type="number" id="totalSupply" placeholder="例如: 1000000" value="1000000" min="1" step="1" />
+<div class="info">
+钱包：<span id="wallet">未连接</span>
+<br><br>
+网络：<span id="network">未连接</span>
+</div>
 
-        <button id="connectBtn">连接钱包并切换网络</button>
-        <button id="deployBtn" disabled>部署代币</button>
+<label>代币名称</label>
+<input id="tokenName" value="Robinhood Token">
 
-        <div class="status" id="status"></div>
+<label>代币符号</label>
+<input id="tokenSymbol" value="RHT">
 
-        <p class="note">⚠️ 请确保您的钱包已处于 Robinhood Chain 网络</p>
-    </div>
+<label>发行总量</label>
+<input id="totalSupply" type="number"
+value="1000000" min="1" step="1">
 
-    <script>
-        // --- 配置目标网络参数 (Robinhood Chain) ---
-        const TARGET_CHAIN_ID = '0x1237'; // 4663 的十六进制
-        const TARGET_CHAIN_PARAMS = {
-            chainId: TARGET_CHAIN_ID,
-            chainName: 'Robinhood Chain',
-            nativeCurrency: {
-                name: 'ETH',
-                symbol: 'ETH',
-                decimals: 18
+<button id="connectBtn" onclick="connectWallet()">
+连接钱包
+</button>
+
+<button id="deployBtn" class="deploy"
+onclick="deployToken()" disabled>
+部署 ERC-20 代币
+</button>
+
+<div id="status" class="status"></div>
+
+<p class="note">
+⚠️ 请确保钱包有足够 ETH 支付 Gas 费用
+<br>
+请先在测试网上验证，再使用主网
+</p>
+
+</div>
+
+<script>
+
+const CHAIN_ID = "0x1237";
+
+const NETWORK = {
+    chainId: CHAIN_ID,
+    chainName: "Robinhood Chain",
+    nativeCurrency: {
+        name: "Ether",
+        symbol: "ETH",
+        decimals: 18
+    },
+    rpcUrls: [
+        "https://rpc.mainnet.chain.robinhood.com"
+    ],
+    blockExplorerUrls: [
+        "https://robinhoodchain.blockscout.com"
+    ]
+};
+
+let provider;
+let signer;
+let userAddress;
+let busy = false;
+
+const statusBox = document.getElementById("status");
+const connectBtn = document.getElementById("connectBtn");
+const deployBtn = document.getElementById("deployBtn");
+
+function status(message, type = "loading") {
+    statusBox.className = "status " + type;
+    statusBox.textContent = message;
+}
+
+async function connectWallet() {
+
+    if (!window.ethereum) {
+        status("未检测到 MetaMask 或兼容钱包", "error");
+        return;
+    }
+
+    try {
+
+        status("正在连接钱包...");
+
+        await window.ethereum.request({
+            method: "eth_requestAccounts"
+        });
+
+        const chain = await window.ethereum.request({
+            method: "eth_chainId"
+        });
+
+        if (chain !== CHAIN_ID) {
+
+            try {
+
+                await window.ethereum.request({
+                    method: "wallet_switchEthereumChain",
+                    params: [{
+                        chainId: CHAIN_ID
+                    }]
+                });
+
+            } catch (e) {
+
+                if (e.code === 4902) {
+
+                    await window.ethereum.request({
+                        method: "wallet_addEthereumChain",
+                        params: [NETWORK]
+                    });
+
+                } else {
+                    throw e;
+                }
+            }
+        }
+
+        provider = new ethers.providers.Web3Provider(
+            window.ethereum
+        );
+
+        signer = provider.getSigner();
+
+        userAddress = await signer.getAddress();
+
+        const currentNetwork = await provider.getNetwork();
+
+        if (currentNetwork.chainId !== 4663) {
+            throw new Error("网络验证失败");
+        }
+
+        document.getElementById("wallet").textContent =
+            userAddress;
+
+        document.getElementById("network").textContent =
+            "Robinhood Chain ✓";
+
+        connectBtn.textContent = "钱包已连接";
+
+        deployBtn.disabled = false;
+
+        status("钱包连接成功，可以开始创建代币", "success");
+
+    } catch (e) {
+
+        status("连接失败：" + e.message, "error");
+
+    }
+}
+
+
+// ERC20 智能合约源码
+const TOKEN_SOURCE = `
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+contract MyToken {
+
+    string public name;
+    string public symbol;
+
+    uint8 public constant decimals = 18;
+
+    uint256 public totalSupply;
+
+    mapping(address => uint256) public balanceOf;
+
+    mapping(address => mapping(address => uint256))
+        public allowance;
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        uint256 supply_
+    ) {
+
+        require(bytes(name_).length > 0, "Empty name");
+        require(bytes(symbol_).length > 0, "Empty symbol");
+        require(supply_ > 0, "Zero supply");
+
+        name = name_;
+        symbol = symbol_;
+
+        uint256 amount = supply_ * 10 ** uint256(decimals);
+
+        totalSupply = amount;
+        balanceOf[msg.sender] = amount;
+
+        emit Transfer(address(0), msg.sender, amount);
+    }
+
+    function transfer(
+        address to,
+        uint256 amount
+    ) public returns (bool) {
+
+        require(to != address(0), "Zero address");
+        require(balanceOf[msg.sender] >= amount, "Balance low");
+
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount;
+
+        emit Transfer(msg.sender, to, amount);
+
+        return true;
+    }
+
+    function approve(
+        address spender,
+        uint256 amount
+    ) public returns (bool) {
+
+        require(spender != address(0), "Zero address");
+
+        allowance[msg.sender][spender] = amount;
+
+        emit Approval(msg.sender, spender, amount);
+
+        return true;
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) public returns (bool) {
+
+        require(to != address(0), "Zero address");
+        require(balanceOf[from] >= amount, "Balance low");
+        require(allowance[from][msg.sender] >= amount, "Allowance low");
+
+        allowance[from][msg.sender] -= amount;
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+
+        emit Transfer(from, to, amount);
+
+        return true;
+    }
+}
+`;
+
+
+// 浏览器编译 Solidity
+function compileContract() {
+
+    if (!window.Module || typeof Module.cwrap !== "function") {
+        throw new Error("Solidity 编译器尚未加载，请刷新页面");
+    }
+
+    const compile = Module.cwrap(
+        "solidity_compile",
+        "string",
+        ["string", "number", "number"]
+    );
+
+    const input = {
+
+        language: "Solidity",
+
+        sources: {
+            "MyToken.sol": {
+                content: TOKEN_SOURCE
+            }
+        },
+
+        settings: {
+
+            optimizer: {
+                enabled: true,
+                runs: 200
             },
-            rpcUrls: ['https://rpc.mainnet.chain.robinhood.com'],
-            blockExplorerUrls: ['https://robinhoodchain.blockscout.com']
-        };
 
-        // 代币合约的 ABI (简化版 ERC20)
-        const TOKEN_ABI = [
-            "constructor(string memory name_, string memory symbol_, uint256 totalSupply_)",
-            "function name() view returns (string)",
-            "function symbol() view returns (string)",
-            "function decimals() view returns (uint8)",
-            "function totalSupply() view returns (uint256)",
-            "function balanceOf(address) view returns (uint256)",
-            "function transfer(address to, uint256 amount) returns (bool)",
-            "event Transfer(address indexed from, address indexed to, uint256 value)"
+            outputSelection: {
+                "*": {
+                    "*": [
+                        "abi",
+                        "evm.bytecode.object"
+                    ]
+                }
+            }
+        }
+    };
+
+    const output = JSON.parse(
+        compile(JSON.stringify(input), 0, 0)
+    );
+
+    if (output.errors) {
+
+        const errors = output.errors.filter(
+            x => x.severity === "error"
+        );
+
+        if (errors.length) {
+            throw new Error(
+                errors.map(x => x.formattedMessage).join("\n")
+            );
+        }
+    }
+
+    const artifact = output.contracts?.["MyToken.sol"]?.MyToken;
+
+    if (!artifact || !artifact.evm.bytecode.object) {
+        throw new Error("合约编译失败，未生成部署字节码");
+    }
+
+    return {
+        abi: artifact.abi,
+        bytecode: "0x" + artifact.evm.bytecode.object
+    };
+}
+
+
+// 部署代币
+async function deployToken() {
+
+    if (busy) return;
+
+    if (!signer) {
+        status("请先连接钱包", "error");
+        return;
+    }
+
+    busy = true;
+    deployBtn.disabled = true;
+    connectBtn.disabled = true;
+
+    try {
+
+        const name = document.getElementById("tokenName")
+            .value.trim();
+
+        const symbol = document.getElementById("tokenSymbol")
+            .value.trim();
+
+        const supply = document.getElementById("totalSupply")
+            .value.trim();
+
+        if (!name || !symbol) {
+            throw new Error("请填写代币名称和符号");
+        }
+
+        if (!/^[1-9][0-9]*$/.test(supply)) {
+            throw new Error("发行量必须为正整数");
+        }
+
+        if (supply.length > 30) {
+            throw new Error("发行量过大");
+        }
+
+        const currentNetwork = await provider.getNetwork();
+
+        if (currentNetwork.chainId !== 4663) {
+            throw new Error("请切换到 Robinhood Chain");
+        }
+
+        status("正在编译 ERC-20 智能合约...");
+
+        const artifact = compileContract();
+
+        status("编译成功，正在估算 Gas...");
+
+        const factory = new ethers.ContractFactory(
+            artifact.abi,
+            artifact.bytecode,
+            signer
+        );
+
+        const args = [
+            name,
+            symbol,
+            supply
         ];
 
-        // 代币合约的字节码 (这是一个简单的 ERC20 合约，方便一键发币)
-        const TOKEN_BYTECODE = "0x608060405234801561001057600080fd5b5060405161005f38038061005f83398101604081905261002f916100e3565b600380546001600160a01b0319163317905561004b838383610053565b5050506101a9565b61005c8361007d565b5061006982826100d0565b6002555050565b6001600160a01b03811661009157600080fd5b600080546001600160a01b0319166001600160a01b0392909216919091179055565b6001600160a01b038116600090815260016020526040812080548392906100c7908490610150565b909155505050565b6001600160a01b038216600090815260016020526040812080548392906100f8908490610150565b9250508190555050565b6000806040838503121561011557600080fd5b82516001600160401b0381111561012b57600080fd5b8301601f8101851361013c57600080fd5b805161014f61014a82610174565b61014f565b81815286602083850101111561016457600080fd5b610175826020830160208601610179565b8094505050509250602083015190509250929050565b6000604051905090565b60005b838110156101b0578181015183820152602001610198565b838111156101bf576000848401525b50505050565b607a806101cb6000396000f3fe608060405260043610601c5760003560e01c8063"; // 注意：为了确保发币成功，建议使用 Remix 编译的标准 ERC20 字节码替换此处
+        const estimatedGas = await factory.signer.estimateGas(
+            await factory.getDeployTransaction(...args)
+        );
 
-        // --- 状态变量 ---
-        let provider = null;
-        let signer = null;
-        let userAddress = null;
+        const gasLimit = estimatedGas.mul(120).div(100);
 
-        // --- DOM 元素 ---
-        const connectBtn = document.getElementById('connectBtn');
-        const deployBtn = document.getElementById('deployBtn');
-        const statusDiv = document.getElementById('status');
-        const walletAddressSpan = document.getElementById('walletAddress');
-        const networkNameSpan = document.getElementById('networkName');
-        const tokenNameInput = document.getElementById('tokenName');
-        const tokenSymbolInput = document.getElementById('tokenSymbol');
-        const totalSupplyInput = document.getElementById('totalSupply');
+        status(
+            "Gas 估算完成。\n预计 Gas Limit：" +
+            gasLimit.toString() +
+            "\n请在钱包中确认部署交易..."
+        );
 
-        // --- 辅助函数: 显示状态 ---
-        function showStatus(message, type = 'info') {
-            statusDiv.innerHTML = message;
-            statusDiv.className = 'status ' + type;
+        const contract = await factory.deploy(
+            ...args,
+            {
+                gasLimit: gasLimit
+            }
+        );
+
+        status(
+            "交易已经发送！\n交易 Hash：\n" +
+            contract.deployTransaction.hash +
+            "\n正在等待区块确认..."
+        );
+
+        const receipt = await contract.deployTransaction.wait(1);
+
+        if (receipt.status !== 1) {
+            throw new Error("链上交易执行失败");
         }
 
-        // --- 辅助函数: 更新钱包显示 ---
-        async function updateWalletInfo() {
-            if (userAddress) {
-                walletAddressSpan.textContent = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
-            } else {
-                walletAddressSpan.textContent = '未连接';
-            }
+        const code = await provider.getCode(contract.address);
 
-            if (provider && window.ethereum) {
-                try {
-                    const network = await provider.getNetwork();
-                    if (network.chainId === 4663) {
-                        networkNameSpan.textContent = 'Robinhood Chain (正确)';
-                        networkNameSpan.style.color = 'green';
-                        deployBtn.disabled = false;
-                    } else {
-                        networkNameSpan.textContent = `网络错误 (Chain ID: ${network.chainId})`;
-                        networkNameSpan.style.color = 'red';
-                        deployBtn.disabled = true;
-                    }
-                } catch (e) {
-                    networkNameSpan.textContent = '获取网络失败';
-                }
-            }
+        if (code === "0x") {
+            throw new Error("部署交易已确认，但未检测到合约代码");
         }
 
-        // --- 核心功能: 连接钱包及网络校验 ---
-        async function connectWallet() {
-            if (typeof window.ethereum === 'undefined') {
-                showStatus('❌ 未检测到 Web3 钱包，请安装 MetaMask 或使用钱包内置浏览器打开', 'error');
-                return;
-            }
+        const explorer =
+            NETWORK.blockExplorerUrls[0];
 
-            try {
-                showStatus('⏳ 请求连接钱包...', 'info');
-                
-                // 1. 请求账户权限
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                userAddress = accounts[0];
-                
-                // 2. 初始化 ethers
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
+        statusBox.className = "status success";
 
-                // 3. 检查并切换网络
-                const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
-                
-                if (currentChainId !== TARGET_CHAIN_ID) {
-                    showStatus('⏳ 正在请求切换至 Robinhood Chain...', 'info');
-                    try {
-                        // 尝试切换网络
-                        await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: TARGET_CHAIN_ID }],
-                        });
-                    } catch (switchError) {
-                        // 如果切换失败，且错误码为 4902 (未添加该网络)，则尝试添加网络
-                        if (switchError.code === 4902) {
-                            showStatus('⏳ 未添加 Robinhood Chain，正在添加...', 'info');
-                            try {
-                                await window.ethereum.request({
-                                    method: 'wallet_addEthereumChain',
-                                    params: [TARGET_CHAIN_PARAMS],
-                                });
-                            } catch (addError) {
-                                throw new Error('添加网络失败，请手动添加网络');
-                            }
-                        } else {
-                            throw switchError;
-                        }
-                    }
-                }
+        statusBox.innerHTML = `
+            <h3>🎉 代币部署成功！</h3>
 
-                // 4. 更新 UI
-                await updateWalletInfo();
-                connectBtn.textContent = '已连接';
-                connectBtn.disabled = true;
-                showStatus('✅ 钱包连接成功，网络正确！', 'success');
+            <br>
 
-                // 监听账户和网络变化
-                window.ethereum.on('accountsChanged', (accounts) => {
-                    if (accounts.length === 0) {
-                        // 断开连接
-                        userAddress = null;
-                        provider = null;
-                        signer = null;
-                        connectBtn.textContent = '连接钱包并切换网络';
-                        connectBtn.disabled = false;
-                        deployBtn.disabled = true;
-                        updateWalletInfo();
-                        showStatus('钱包已断开', 'info');
-                    } else {
-                        userAddress = accounts[0];
-                        provider = new ethers.providers.Web3Provider(window.ethereum);
-                        signer = provider.getSigner();
-                        updateWalletInfo();
-                    }
-                });
+            <b>代币名称：</b>${escapeHTML(name)}
 
-                window.ethereum.on('chainChanged', () => {
-                    window.location.reload(); // 网络改变时刷新页面以确保状态正确
-                });
+            <br><br>
 
-            } catch (error) {
-                console.error(error);
-                let errMsg = error.message || '连接被拒绝';
-                if (errMsg.includes('User rejected')) {
-                    errMsg = '用户拒绝了请求';
-                }
-                showStatus(`❌ 失败: ${errMsg}`, 'error');
-            }
-        }
+            <b>代币符号：</b>${escapeHTML(symbol)}
 
-        // --- 核心功能: 部署代币 ---
-        async function deployToken() {
-            if (!signer) {
-                showStatus('❌ 请先连接钱包', 'error');
-                return;
-            }
+            <br><br>
 
-            const name = tokenNameInput.value.trim();
-            const symbol = tokenSymbolInput.value.trim();
-            const supply = totalSupplyInput.value.trim();
+            <b>发行总量：</b>${escapeHTML(supply)}
 
-            if (!name || !symbol || !supply) {
-                showStatus('❌ 请填写完整的代币信息', 'error');
-                return;
-            }
+            <br><br>
 
-            if (Number(supply) <= 0) {
-                showStatus('❌ 总供应量必须大于 0', 'error');
-                return;
-            }
+            <b>合约地址：</b>
 
-            try {
-                deployBtn.disabled = true;
-                connectBtn.disabled = true;
-                showStatus('⏳ 请在钱包中确认部署交易...', 'info');
+            <br>
 
-                // 注意：真实的代币部署需要正确的字节码和构造参数
-                // 这里因为篇幅原因，使用了简化的构造逻辑，实际使用时请替换为你完整编译的 ERC20 字节码
-                const factory = new ethers.ContractFactory(TOKEN_ABI, TOKEN_BYTECODE, signer);
-                
-                // 部署合约，传入构造参数
-                const contract = await factory.deploy(name, symbol, ethers.utils.parseUnits(supply, 18));
-                
-                showStatus('⏳ 交易已发送，正在等待链上确认...', 'info');
-                
-                await contract.deployed();
+            <span id="contractAddress"></span>
 
-                showStatus(`✅ 发币成功！<br><br>合约地址: <br><span style="font-size:0.8rem">${contract.address}</span><br><br><a href="${TARGET_CHAIN_PARAMS.blockExplorerUrls[0]}/address/${contract.address}" target="_blank" style="color: #0052ff;">在区块浏览器中查看</a>`, 'success');
-                
-                deployBtn.textContent = '重新部署';
-                deployBtn.disabled = false;
-                connectBtn.disabled = false;
+            <br><br>
 
-            } catch (error) {
-                console.error(error);
-                let errMsg = error.message || '部署失败';
-                if (errMsg.includes('User rejected')) {
-                    errMsg = '用户拒绝了交易';
-                } else if (errMsg.includes('insufficient funds')) {
-                    errMsg = '钱包余额不足以支付 Gas 费';
-                }
-                showStatus(`❌ 失败: ${errMsg}`, 'error');
-                deployBtn.disabled = false;
-                connectBtn.disabled = false;
-            }
-        }
+            <b>交易 Hash：</b>
 
-        // --- 绑定事件 ---
-        connectBtn.addEventListener('click', connectWallet);
-        deployBtn.addEventListener('click', deployToken);
+            <br>
 
-        // 初始化检查
-        window.addEventListener('load', () => {
-            if (typeof window.ethereum !== 'undefined') {
-                // 如果已经授权过，尝试静默读取账户并更新UI（不主动弹窗）
-                window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
-                    if (accounts.length > 0) {
-                        userAddress = accounts[0];
-                        provider = new ethers.providers.Web3Provider(window.ethereum);
-                        signer = provider.getSigner();
-                        connectBtn.textContent = '已连接';
-                        connectBtn.disabled = true;
-                        updateWalletInfo();
-                    }
-                });
-            }
-        });
-    </script>
+            <span id="txHash"></span>
+
+            <br><br>
+
+            <a id="explorerLink" target="_blank"
+               rel="noopener noreferrer">
+               在区块浏览器查看合约
+            </a>
+        `;
+
+        document.getElementById("contractAddress").textContent =
+            contract.address;
+
+        document.getElementById("txHash").textContent =
+            contract.deployTransaction.hash;
+
+        document.getElementById("explorerLink").href =
+            explorer + "/address/" + contract.address;
+
+    } catch (e) {
+
+        console.error(e);
+
+        status(
+            "部署失败：" + (e.reason || e.message || "未知错误"),
+            "error"
+        );
+
+    } finally {
+
+        busy = false;
+        deployBtn.disabled = !signer;
+        connectBtn.disabled = false;
+
+    }
+}
+
+
+function escapeHTML(value) {
+    return value.replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+
+// 钱包账户变化
+if (window.ethereum) {
+
+    window.ethereum.on("accountsChanged", () => {
+        window.location.reload();
+    });
+
+    window.ethereum.on("chainChanged", () => {
+        window.location.reload();
+    });
+
+}
+
+</script>
+
 </body>
 </html>
