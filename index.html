@@ -416,12 +416,7 @@ async function deployToken() {
             signer
         );
 
-        const decimals = 18;
-
-        const initialSupply = ethers.parseUnits(
-            supply,
-            decimals
-        );
+       const initialSupply = BigInt(supply);
 
         const contract = await factory.deploy(
             name,
