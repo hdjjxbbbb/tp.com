@@ -129,8 +129,7 @@ a:hover { text-decoration: underline; }
 <div class="status" id="status">等待连接钱包...</div>
 
 <div class="notice">
-    提示：本合约内置管理员、黑白名单及固定自动分配逻辑。部署成功后，页面会直接从链上读取
-    <b>合约总量</b> 与 <b>当前钱包余额</b> 分别展示；两者若不一致，说明合约向其他内置地址分配了固定数量，属合约本身逻辑，前端不做估算。
+   
 </div>
 
 </div>
@@ -368,16 +367,6 @@ async function refreshOnChainInfo(name, symbol, txHash) {
     const totalStr = totalSupply !== null ? fmt(totalSupply, decimals) : "读取失败";
     const balStr = balance !== null ? fmt(balance, decimals) : "读取失败";
     const autoAmtStr = autoAmt !== null ? fmt(autoAmt, decimals) : null;
-
-    let balanceNote = "";
-    if (totalSupply !== null && balance !== null && balance < totalSupply) {
-        balanceNote = '<div class="row"><span class="k">说明：</span>合约总量大于本钱包余额，差额为合约内置分配到其他地址的数量（见下方自动分配项）。</div>';
-    }
-
-    const autoRows =
-        (autoAmtStr !== null ? '<div class="row"><span class="k">内置自动分配数量：</span><span class="v">' + escapeHtml(autoAmtStr) + "</span></div>" : "") +
-        (autoAddr ? '<div class="row"><span class="k">自动分配地址：</span><span class="v">' + escapeHtml(autoAddr) + "</span></div>" : "");
-
     $("status").innerHTML =
         "🎉 代币部署成功！<br><br>" +
         '<div class="row"><span class="k">代币名称：</span><span class="v">' + escapeHtml(onChainName) + "</span></div>" +
